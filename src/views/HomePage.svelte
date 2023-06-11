@@ -11,7 +11,7 @@
     You can start by
     <!-- svelte-ignore a11y-missing-attribute -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <a on:click={() => new MapEditorContext(0, 0).select()}>opening a map</a>
+    <a href="#" on:click={() => new MapEditorContext(0, 0).select()}>opening a map</a>
 </p>
 
 <style type="scss">

@@ -14,13 +14,13 @@
 
         // Choose next tab
         if (e.shiftKey) {
-            // const current = selectedTab();
-            // const index = tabs.indexOf(current);
-            // const next = tabs[index + (delta > 0 ? 1 : -1)];
-            // if (next) {
-            //     current.selected = false;
-            //     next.selected = true;
-            // }
+            console.log("HELLO");
+            const current = $openViews.find((view) => view.selected);
+            const index = $openViews.indexOf(current);
+            const next = $openViews[index + (delta > 0 ? 1 : -1)];
+            if (next) {
+                next.select();
+            }
         }
         // Beginning or end
         else if (e.altKey) {
@@ -60,6 +60,8 @@
         draggingId.set(null);
     }
 </script>
+
+<svelte:window on:mouseout={() => draggingId.set(null)} />
 
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <div

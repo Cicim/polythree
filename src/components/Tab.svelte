@@ -1,4 +1,5 @@
 <script lang="ts">
+    import "iconify-icon";
     import type { EditorContext } from "../systems/editors";
     import { ViewContext, draggingId, openViews } from "../systems/views";
 
@@ -8,7 +9,7 @@
     let needsSave = (<EditorContext>view)?.needsSave;
 
     // ANCHOR Drag and drop functionality
-    function onDragStart(e: DragEvent) {
+    function onDragStart() {
         view.select();
         draggingId.set($openViews.indexOf(view));
     }
@@ -68,15 +69,20 @@
     </span>
     <!-- Close Buttom -->
     <button
+        tabindex="-1"
         class="close"
         class:busy-dragging={$draggingId !== null}
         on:click|stopPropagation|preventDefault={() => view.close()}
-        on:drag|stopPropagation
+        draggable="true"
+        on:dragstart|stopPropagation={(e) => e.preventDefault()}
+        on:dragover|stopPropagation={(e) => e.preventDefault()}
+        on:dragleave|stopPropagation={(e) => e.preventDefault()}
+        on:drop|stopPropagation={(e) => e.preventDefault()}
     >
         {#if needsSave}
-            ○
+            <iconify-icon icon="healthicons:circle-small" />
         {:else}
-            ⨯
+            <iconify-icon icon="ic:round-close" />
         {/if}
     </button>
 </div>
@@ -110,7 +116,7 @@
             border: none;
             width: 20px;
             height: 20px;
-            font-size: 1.45em;
+            font-size: 1em;
             color: var(--strong-fg);
             font-weight: bold;
             background: transparent;
@@ -138,7 +144,7 @@
             }
         }
         &.selected {
-            box-shadow: inset 0 2px var(--accent-shadow);
+            box-shadow: inset 0 -2px var(--accent-shadow);
         }
     }
 </style>
