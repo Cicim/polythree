@@ -1,0 +1,19 @@
+:root {
+    --main-bg: #0f0f12;
+    --main-fg: #f2f2f0;
+    --strong-bg: #000000;
+    --strong-fg: #ffffff;
+    --weak-bg: #1f1f22;
+    --weak-fg: #b2b2b0;
+    --tabs-bg: #08080f;
+    --tabs-fg: var(--main-fg);
+
+    --light-shadow: #f2f2f040;
+    --medium-shadow: #f2f2f080;
+    --hard-shadow: #f2f2f0c0;
+    --accent-shadow: #40d4f2c0;
+    --accent-fg: #40d4f2;
+
+    background-color: var(--main-bg);
+    color: var(--main-fg);
+}

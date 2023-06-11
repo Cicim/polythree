@@ -1,0 +1,144 @@
+<script lang="ts">
+    import type { EditorContext } from "../systems/editors";
+    import { ViewContext, draggingId, openViews } from "../systems/views";
+
+    export let view: ViewContext | EditorContext;
+
+    // Whether the tab needs to be saved
+    let needsSave = (<EditorContext>view)?.needsSave;
+
+    // ANCHOR Drag and drop functionality
+    function onDragStart(e: DragEvent) {
+        view.select();
+        draggingId.set($openViews.indexOf(view));
+    }
+    function onDragOver(e: DragEvent) {
+        e.preventDefault();
+        // Get the tab id of the tab you are hovering over
+        const hoverId = parseInt((<HTMLElement>e.target).id.split("-")[1]);
+        // Set the tab you're over as the active dropzone
+        $openViews[hoverId].activeDropzone = hoverId !== $draggingId;
+    }
+    function onDragLeave(e: DragEvent) {
+        e.preventDefault();
+        // Get the tab id of the tab you are hovering over
+        const hoverId = parseInt((<HTMLElement>e.target).id.split("-")[1]);
+        // Set the tab you're over as the active dropzone
+        $openViews[hoverId].activeDropzone = false;
+    }
+    function onDrop(e: DragEvent) {
+        e.preventDefault();
+        // Get the tab id of the tab you are hovering over
+        const hoverId = parseInt((<HTMLElement>e.target).id.split("-")[1]);
+        // Skip if you're dropping on yourself
+        if (hoverId === $draggingId) return draggingId.set(null);
+
+        // Set the tab you're over as the active dropzone
+        $openViews[hoverId].activeDropzone = false;
+        // Place the tab you're dragging to the left of the tab you're hovering over
+        openViews.update((views) => {
+            const newViews = [...views];
+            const dragId = $draggingId;
+            const dragTab = newViews.splice(dragId, 1)[0];
+            newViews.splice(hoverId, 0, dragTab);
+            return newViews;
+        });
+
+        draggingId.set(null);
+    }
+</script>
+
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<div
+    id="tab-{$openViews.indexOf(view)}"
+    class="tab"
+    class:selected={view.selected}
+    class:show-anyway={!needsSave}
+    class:dropzone={view.activeDropzone}
+    draggable="true"
+    on:click={() => view.select()}
+    on:dragstart={onDragStart}
+    on:dragleave={onDragLeave}
+    on:dragover|preventDefault={onDragOver}
+    on:drop|preventDefault={onDrop}
+>
+    <!-- Text -->
+    <span class="text">
+        {view.name}
+    </span>
+    <!-- Close Buttom -->
+    <button
+        class="close"
+        class:busy-dragging={$draggingId !== null}
+        on:click|stopPropagation|preventDefault={() => view.close()}
+        on:drag|stopPropagation
+    >
+        {#if needsSave}
+            ○
+        {:else}
+            ⨯
+        {/if}
+    </button>
+</div>
+
+<style lang="scss">
+    .tab {
+        display: flex;
+        place-items: center;
+        padding: 0 4px;
+        min-width: 100px;
+        height: 40px;
+        cursor: pointer;
+
+        &.dropzone {
+            background: var(--accent-shadow);
+        }
+
+        .text {
+            padding: 0 5px 0 16px;
+            white-space: nowrap;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            pointer-events: none;
+        }
+
+        .close {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            width: 20px;
+            height: 20px;
+            font-size: 1.45em;
+            color: var(--strong-fg);
+            font-weight: bold;
+            background: transparent;
+            border-radius: 25%;
+            cursor: pointer;
+
+            &:hover {
+                background: var(--light-shadow);
+            }
+            &.busy-dragging {
+                pointer-events: none;
+            }
+        }
+
+        &:not(.selected) {
+            .close {
+                color: var(--weak-fg);
+                font-weight: normal;
+            }
+            &:not(:hover) {
+                &.show-anyway .close {
+                    opacity: 0;
+                    pointer-events: none;
+                }
+            }
+        }
+        &.selected {
+            box-shadow: inset 0 2px var(--accent-shadow);
+        }
+    }
+</style>

@@ -11,6 +11,11 @@ export default defineConfig(async () => ({
           typescript: true,
         }),
       ],
+      onwarn: (warning, handler) => {
+        // ignore the warning about the use of `any` in the code
+        if (warning.code === "a11y-missing-attribute") return;
+        handler(warning);
+      }
     }),
   ],
 
