@@ -95,6 +95,7 @@
         min-width: 100px;
         height: 40px;
         cursor: pointer;
+        background-color: var(--tabs-bg);
 
         &.dropzone {
             background: var(--accent-shadow);
@@ -144,7 +145,7 @@
             }
         }
         &.selected {
-            box-shadow: inset 0 -2px var(--accent-shadow);
+            box-shadow: inset 0 2px var(--accent-shadow);
         }
     }
 </style>

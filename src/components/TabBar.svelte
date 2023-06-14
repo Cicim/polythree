@@ -14,12 +14,16 @@
 
         // Choose next tab
         if (e.shiftKey) {
-            console.log("HELLO");
             const current = $openViews.find((view) => view.selected);
             const index = $openViews.indexOf(current);
             const next = $openViews[index + (delta > 0 ? 1 : -1)];
             if (next) {
                 next.select();
+                // Scroll to the new tab
+                const tab = document.getElementById(`tab-${index}`);
+                if (!tab) return;
+                this.scrollLeft =
+                    tab.offsetLeft - (delta > 0 ? 0 : tab.offsetWidth);
             }
         }
         // Beginning or end
@@ -61,16 +65,14 @@
     }
 </script>
 
-<svelte:window on:mouseout={() => draggingId.set(null)} />
-
-<!-- svelte-ignore a11y-mouse-events-have-key-events -->
+<!-- Tabs -->
 <div
     class="tabs-view"
-    on:wheel|passive={onWheel}
+    class:dropzone={activeDropzone}
+    on:wheel|preventDefault={onWheel}
     on:dragover={onDragOver}
     on:dragleave={onDragLeave}
     on:drop={onDrop}
-    class:dropzone={activeDropzone}
 >
     <!-- Tabs container -->
     <div class="tabs-container">
@@ -80,17 +82,14 @@
     </div>
 </div>
 
+<svelte:window on:mouseout={() => draggingId.set(null)} />
+
 <style type="scss">
     .tabs-view {
-        width: 100vw;
         height: 40px;
         overflow-y: hidden;
         scroll-behavior: auto;
         user-select: none;
-
-        &.dropzone {
-            background: var(--accent-shadow);
-        }
 
         &::-webkit-scrollbar {
             height: 5px;
@@ -119,13 +118,17 @@
                 background: transparent;
             }
         }
+
+        &.dropzone {
+            background: var(--accent-shadow);
+        }
     }
 
     .tabs-container {
-        display: flex;
         width: max-content;
+        display: flex;
         height: 40px;
-        overflow-x: hidden;
+        overflow-x: auto;
         overflow-y: hidden;
         background: var(--tabs-bg);
         color: var(--tabs-fg);
