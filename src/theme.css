@@ -5,8 +5,10 @@
     --strong-fg: #ffffff;
     --weak-bg: #1f1f22;
     --weak-fg: #b2b2b0;
-    --tabs-bg: #08080f;
+    --tabs-bg: #08080c;
     --tabs-fg: var(--main-fg);
+    --ctx-bg: var(--weak-bg);
+    --ctx-fg: var(--main-fg);
 
     --light-shadow: #f2f2f040;
     --medium-shadow: #f2f2f080;

@@ -3,6 +3,7 @@
   import { HomePageContext } from "./views/HomePage";
   import TabBar from "./components/TopBar.svelte";
   import FootBar from "./components/FootBar.svelte";
+  import ContextMenu from "./components/ContextMenu.svelte";
 
   onMount(() => {
     new HomePageContext().select();
@@ -20,6 +21,7 @@
   <footer id="footbar">
     <FootBar />
   </footer>
+  <ContextMenu />
 </main>
 
 <style type="scss">
