@@ -25,7 +25,7 @@
 
     let openSubMenu = async () => {
         // Shake the menu
-        closeSubMenus();
+        onButtonEnter();
 
         // Show the submenu
         (<SubMenuButton>item).isVisible = true;
@@ -34,8 +34,15 @@
         // Get the element's bounding rect
         let rect = element.getBoundingClientRect();
 
+        // Get the value of the css chonkiness variable
+        let chonkiness = parseInt(
+            getComputedStyle(element)
+                .getPropertyValue("--chonkiness")
+                .trim()
+        );
+
         // Set the submenu's position
-        submenu.style.top = `${rect.top - 8}px`;
+        submenu.style.top = `${rect.top - chonkiness}px`;
         submenu.style.left = `${rect.right}px`;
 
         // Move back inbounds if it's outside the window
@@ -49,6 +56,13 @@
         }
     };
 
+    function onButtonEnter() {
+        // Shake the menu
+        closeSubMenus();
+        // Focus the element
+        element.focus();
+    }
+
     function closeSubMenus() {
         // Close all submenus
         ctxMenu.update((menu) => menu.shake(level));
@@ -61,6 +75,14 @@
         // Close the context menu
         closeContextMenu();
     }
+
+    function keyboardHandler(event: KeyboardEvent) {
+        switch (event.key) {
+            case "Tab":
+                event.preventDefault();
+                break;
+        }
+    }
 </script>
 
 <!-- Separator -->
@@ -70,41 +92,52 @@
 {:else if item instanceof TextButton}
     <button
         bind:this={element}
-        on:mouseenter={closeSubMenus}
+        on:keydown={keyboardHandler}
+        on:mouseenter={onButtonEnter}
         class="ctx-item ctx-text-item"
-        on:click={runAction}>{item.text}</button
+        on:click={runAction}
     >
+        <span>{item.text}</span>
+        <span class="keybinding"
+            >{#if item.keybinding}{item.keybinding.toString()}{/if}</span
+        >
+    </button>
     <!-- Icon Button -->
 {:else if item instanceof IconButton}
     <button
         bind:this={element}
-        on:mouseenter={closeSubMenus}
+        on:keydown={keyboardHandler}
+        on:mouseenter={onButtonEnter}
         class="ctx-item ctx-icon-item"
         on:click={runAction}
     >
         <iconify-icon icon={item.icon} height="20px" />
         <span>{item.text}</span>
+        <span class="keybinding"
+            >{#if item.keybinding}{item.keybinding.toString()}{/if}</span
+        >
     </button>
     <!-- Sub Menu Button -->
 {:else if item instanceof SubMenuButton}
     <button
         bind:this={element}
+        on:keydown={keyboardHandler}
         on:mouseenter={openSubMenu}
         class="ctx-item ctx-submenu-item"
     >
         <span>{item.text}</span>
         <iconify-icon icon="eva:arrow-ios-forward-fill" height="16px" />
+        <!-- Submenu -->
+        <div
+            class:hidden={!item.isVisible}
+            class="submenu ctx-menu hidden"
+            bind:this={submenu}
+        >
+            {#each item.menu.items as subitem}
+                <svelte:self item={subitem} level={level + 1} />
+            {/each}
+        </div>
     </button>
-
-    <div
-        class:hidden={!item.isVisible}
-        class="submenu ctx-menu hidden"
-        bind:this={submenu}
-    >
-        {#each item.menu.items as subitem}
-            <svelte:self item={subitem} level={level + 1} />
-        {/each}
-    </div>
 {/if}
 
 <style type="scss">
@@ -124,14 +157,21 @@
             background: var(--ctx-bg);
             color: var(--ctx-fg);
 
-            &:focus,
-            &:hover {
+            &:hover,
+            &:focus {
                 outline: none;
                 background: var(--main-bg);
                 outline: 1px solid var(--strong-bg);
                 color: var(--accent-fg);
             }
         }
+    }
+
+    .keybinding {
+        float: right;
+        text-align: right;
+        min-width: 80px;
+        color: var(--weak-fg);
     }
 
     .ctx-text-item {

@@ -8,7 +8,6 @@
         TextButton,
         closeContextMenu,
         ctxMenu,
-        showContextMenu,
     } from "../systems/context_menu";
 
     const menu = new Menu([
@@ -33,9 +32,14 @@
         new IconButton("Cut", "tabler:cut", () => {
             console.log("Cut");
         }),
-        new IconButton("Copy", "ph:copy", () => {
-            console.log("Copy");
-        }),
+        new IconButton(
+            "Copy",
+            "ph:copy",
+            () => {
+                console.log("Copy");
+            },
+            "Ctrl+C"
+        ),
         new IconButton("Paste", "la:paste", () => {
             console.log("Paste");
         }),
@@ -64,30 +68,38 @@
                 new TextButton("Rename", () => {
                     console.log("Rename");
                 }),
-                new SubMenuButton("Rename", new Menu([
-                    new TextButton("Rename", () => {
-                        console.log("Rename");
-                    }),
-                    new TextButton(
-                        "Delete This File from the Face of the Earth",
-                        () => {
-                            console.log("Delete");
-                        }
-                    ),
-                    new Separator(),
-                    new TextButton("Properties", () => {
-                        console.log("Properties");
-                    }),
-                ])),
+                new SubMenuButton(
+                    "Rename",
+                    new Menu([
+                        new TextButton(
+                            "Rename",
+                            () => {
+                                console.log("Rename");
+                            },
+                            "Ctrl+R"
+                        ),
+                        new TextButton(
+                            "Delete This File from the Face of the Earth",
+                            () => {
+                                console.log("Delete");
+                            }
+                        ),
+                        new Separator(),
+                        new TextButton("Properties", () => {
+                            console.log("Properties");
+                        }),
+                    ])
+                ),
             ])
         ),
     ]);
 </script>
 
 <svelte:window
-    on:contextmenu|preventDefault={(e) => showContextMenu(e, menu)}
+    on:contextmenu|preventDefault={() => null}
     on:resize={() => closeContextMenu()}
-    on:mousedown={(e) => closeContextMenu(e)}
+    on:mousedown={closeContextMenu}
+    on:keydown={(e) => $ctxMenu.checkKeyBindings(e)}
 />
 
 <dialog id="ctx-menu" class="ctx-menu">
@@ -100,7 +112,7 @@
 
 <style type="scss">
     #ctx-menu {
-        --chonkiness: 8px;
+        --chonkiness: 4px;
 
         position: fixed;
         top: 0;
@@ -109,7 +121,7 @@
         z-index: 1000000;
 
         &::backdrop {
-            backdrop-filter: blur(1px);
+            background: transparent;
         }
 
         &:focus {

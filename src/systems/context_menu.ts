@@ -31,6 +31,28 @@ export class Menu {
         }
         return this;
     }
+
+    public checkKeyBindings(e: KeyboardEvent): boolean {
+        // Return if the menu is closed
+        if (!getMenu().open) return false;
+
+        // Navigate the menu and find the button with the keybinding that
+        // corresponds to the key that was pressed
+        for (const item of this.items) {
+            if (item instanceof Separator) continue;
+            if (item instanceof SubMenuButton) {
+                if (item.menu.checkKeyBindings(e)) return true;
+            }
+            if (item instanceof TextButton || item instanceof IconButton) {
+                if (item.keybinding && item.keybinding.isPressed(e)) {
+                    item.action();
+                    closeContextMenu();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
 
 /** A context menu item */
@@ -41,17 +63,72 @@ export abstract class MenuItem {
 export class Separator extends MenuItem {
 }
 
+export class KeyBinding {
+    public code: string;
+    public key: string;
+    public ctrl: boolean;
+    public shift: boolean;
+    public alt: boolean;
+
+    public static fromString(str: string): KeyBinding {
+        let parts = str.split("+");
+        const key = parts.pop();
+        parts = parts.map(p => p.toLowerCase());
+        const ctrl = parts.includes("ctrl");
+        const shift = parts.includes("shift");
+        const alt = parts.includes("alt");
+        return new KeyBinding(key, ctrl, shift, alt);
+    }
+
+    public isPressed(e: KeyboardEvent): boolean {
+        return e.code === this.code &&
+            e.ctrlKey === this.ctrl &&
+            e.shiftKey === this.shift &&
+            e.altKey === this.alt;
+    }
+
+    public constructor(key: string, ctrl: boolean = false, shift: boolean = false, alt: boolean = false) {
+        this.key = key;
+        this.code = this.keyFromKeyname(key);
+        this.ctrl = ctrl;
+        this.shift = shift;
+        this.alt = alt;
+    }
+
+    public keyFromKeyname(key: string) {
+        // If the keyname is a letter, return `Key${keyname.toUpperCase()}`
+        if (key.length === 1 && key.match(/[a-z]/i)) {
+            return `Key${key.toUpperCase()}`;
+            // If the keyname is a number, return `Digit${keyname}`
+        } else if (key.length === 1 && !isNaN(parseInt(key))) {
+            return `Digit${key}`;
+        }
+    }
+
+    public toString(): string {
+        let str = "";
+        if (this.ctrl) str += "Ctrl + ";
+        if (this.shift) str += "Shift + ";
+        if (this.alt) str += "Alt + ";
+        str += this.key;
+        return str;
+    }
+}
+
 /** A context menu text only button */
 export class TextButton extends MenuItem {
     /** The button's text */
     public text: string;
     /** The buttons's action */
     public action: ContextMenuAction;
+    /** The action's associated keybinding */
+    public keybinding: KeyBinding;
 
-    public constructor(text: string, action: ContextMenuAction) {
+    public constructor(text: string, action: ContextMenuAction, keybinding?: string) {
         super();
         this.text = text;
         this.action = action;
+        this.keybinding = !keybinding ? null : KeyBinding.fromString(keybinding);
     }
 }
 
@@ -63,12 +140,15 @@ export class IconButton extends MenuItem {
     public icon: string;
     /** The button's action */
     public action: ContextMenuAction;
+    /** The action's associated keybinding */
+    public keybinding: KeyBinding;
 
-    public constructor(text: string, icon: string, action: ContextMenuAction) {
+    public constructor(text: string, icon: string, action: ContextMenuAction, keybinding?: string) {
         super();
         this.text = text;
         this.icon = icon;
         this.action = action;
+        this.keybinding = !keybinding ? null : KeyBinding.fromString(keybinding);
     }
 }
 
@@ -123,6 +203,8 @@ function setContextMenuPosition(target: HTMLElement, x: number, y: number) {
 }
 
 export function showContextMenu(e: MouseEvent, menu: Menu) {
+    e.preventDefault();
+    e.stopPropagation();
     // Get the menu
     const ctx: HTMLDialogElement = getMenu();
     // If you are clicking on the body of the ctx menu, don't do anything

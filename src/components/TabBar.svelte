@@ -1,6 +1,19 @@
 <script lang="ts">
     import Tab from "./Tab.svelte";
-    import { draggingId, openViews } from "../systems/views";
+    import { draggingId, openViews, reopenLastClosedView } from "../systems/views";
+    import { IconButton, Menu, Separator, TextButton, showContextMenu } from "../systems/context_menu";
+
+    const barMenu = new Menu([
+        new IconButton("Close All", "ic:round-close", () => {
+            [...$openViews].reverse().forEach(view => {
+                view.close();
+            });
+        }, "Ctrl+C"),
+        new Separator(),
+        new TextButton("Reopen Last", () => {
+            reopenLastClosedView();
+        }, "Ctrl+R")
+    ]);
 
     /**
      * Scroll event handler
@@ -66,6 +79,7 @@
 </script>
 
 <!-- Tabs -->
+<!-- svelte-ignore missing-declaration -->
 <div
     class="tabs-view"
     class:dropzone={activeDropzone}
@@ -73,6 +87,7 @@
     on:dragover={onDragOver}
     on:dragleave={onDragLeave}
     on:drop={onDrop}
+    on:contextmenu={(e) => showContextMenu(e, barMenu)}
 >
     <!-- Tabs container -->
     <div class="tabs-container">

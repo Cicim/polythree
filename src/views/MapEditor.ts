@@ -15,11 +15,8 @@ export class MapEditorContext extends EditorContext {
         return true;
     }
 
-    public constructor(group: number, index: number) {
+    public constructor(props: MapEditorProperties, position: number = null) {
         // Create the editor element
-        super(MapEditor, {
-            group,
-            index,
-        });
+        super(MapEditor, props, position);
     }
 }

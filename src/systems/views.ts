@@ -3,6 +3,17 @@ import { writable } from "svelte/store";
 
 /** All of the currently open views */
 export let openViews = writable<ViewContext[]>([]);
+/** All of the views that have been closed */
+export let lastClosedViews = writable<LastClosedContext[]>([]);
+
+export interface LastClosedContext {
+    /** The context's constructor */
+    constructor: typeof ViewContext;
+    /** The props that were passed to the context */
+    props: Record<string, any>;
+    /** The position of the context in the lastClosedViews store */
+    position: number;
+}
 
 /** The ID of the view that is currently being dragged */
 export let draggingId = writable<number | null>(null);
@@ -21,7 +32,7 @@ export abstract class ViewContext {
     /** Whether or not the view is a valid dropzone for the currently dragged view */
     public activeDropzone: boolean = false;
 
-    public constructor(ComponentClass: typeof SvelteComponent, props: Record<string, any>) {
+    public constructor(ComponentClass: typeof SvelteComponent, props: Record<string, any>, position: number = null) {
         // Get the view element
         const viewContainer = document.getElementById("views");
         // Create the view's container
@@ -38,7 +49,13 @@ export abstract class ViewContext {
             }
         });
         // Update the view store
-        openViews.update(views => [...views, this]);
+        openViews.update(views => {
+            if (position === null)
+                views.push(this);
+            else views.splice(position, 0, this)
+
+            return views;
+        });
     }
 
     /** Function to run when the view is selected to be the active one */
@@ -58,18 +75,60 @@ export abstract class ViewContext {
     }
     /** Function to run when the view is closed */
     public close() {
-        // Remove the view from the store
-        openViews.update(views => views.filter(view => view !== this));
+        // Find this view's position in the store
+        let index = -1;
+        openViews.update((views: ViewContext[]) => {
+            index = views.indexOf(this);
+            // Remove the view from the store
+            views.splice(index, 1);
+            // Add the view to the closed views store
+            this.addToLastClosed(index);
+
+            return views;
+        });
         // Destroy the view
         this.component.$destroy();
         // Remove the view's container
         this.container.remove();
-        // Set the next view as selected
         openViews.update(views => {
+            // Select the view to the right of this one if it exists
             if (views.length > 0) {
-                views[0].select();
+                if (index >= views.length) {
+                    views[views.length - 1].select();
+                } else {
+                    views[index].select();
+                }
             }
+
             return views;
         });
     }
+
+    public addToLastClosed(position: number) {
+        // Save the view's position
+        lastClosedViews.update(views => {
+            views.push({
+                //@ts-ignore
+                Class: this.__proto__.constructor,
+                props: this.props,
+                position,
+            });
+            return views;
+        });
+    }
+}
+
+export function reopenLastClosedView() {
+    lastClosedViews.update(ctx => {
+        if (ctx.length > 0) {
+            const lastClosed = ctx[ctx.length - 1];
+            // @ts-ignore Do some class mumbo-jumbo to create a new instance of the view
+            const view = new lastClosed.Class(lastClosed.props, lastClosed.position);
+            // Select the view
+            (<ViewContext>view).select();
+            // Remove the view from the last closed store
+            ctx.pop();
+        }
+        return ctx;
+    });
 }

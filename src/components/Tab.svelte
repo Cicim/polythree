@@ -2,8 +2,15 @@
     import "iconify-icon";
     import type { EditorContext } from "../systems/editors";
     import { ViewContext, draggingId, openViews } from "../systems/views";
+    import { IconButton, Menu, showContextMenu } from "../systems/context_menu";
 
     export let view: ViewContext | EditorContext;
+
+    const tabMenu = new Menu([
+        new IconButton("Close", "ic:round-close", () => {
+            view.close();
+        }),
+    ]);
 
     // Whether the tab needs to be saved
     let needsSave = (<EditorContext>view)?.needsSave;
@@ -62,6 +69,9 @@
     on:dragleave={onDragLeave}
     on:dragover|preventDefault={onDragOver}
     on:drop|preventDefault={onDrop}
+    on:contextmenu={(e) => {
+        showContextMenu(e, tabMenu);
+    }}
 >
     <!-- Text -->
     <span class="text">
