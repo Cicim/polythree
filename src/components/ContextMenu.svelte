@@ -38,7 +38,6 @@
             () => {
                 console.log("Copy");
             },
-            "Ctrl+C"
         ),
         new IconButton("Paste", "la:paste", () => {
             console.log("Paste");
@@ -76,7 +75,6 @@
                             () => {
                                 console.log("Rename");
                             },
-                            "Ctrl+R"
                         ),
                         new TextButton(
                             "Delete This File from the Face of the Earth",
@@ -99,7 +97,6 @@
     on:contextmenu|preventDefault={() => null}
     on:resize={() => closeContextMenu()}
     on:mousedown={closeContextMenu}
-    on:keydown={(e) => $ctxMenu.checkKeyBindings(e)}
 />
 
 <dialog id="ctx-menu" class="ctx-menu">

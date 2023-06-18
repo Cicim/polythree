@@ -10,6 +10,7 @@
         closeContextMenu,
     } from "../systems/context_menu";
     import { tick } from "svelte";
+    import { Bindings } from "../systems/bindings";
 
     /** The menu item this component represents */
     export let item: MenuItem;
@@ -29,6 +30,8 @@
 
         // Show the submenu
         (<SubMenuButton>item).isVisible = true;
+        submenu.style.top = "0px";
+        submenu.style.left = "0px";
         await tick();
 
         // Get the element's bounding rect
@@ -36,9 +39,7 @@
 
         // Get the value of the css chonkiness variable
         let chonkiness = parseInt(
-            getComputedStyle(element)
-                .getPropertyValue("--chonkiness")
-                .trim()
+            getComputedStyle(element).getPropertyValue("--chonkiness").trim()
         );
 
         // Set the submenu's position
@@ -69,7 +70,7 @@
     }
 
     function runAction() {
-        ctxMenu.update((menu) => menu.shake(level));
+        $ctxMenu.shake(0);
         // @ts-ignore
         item.action();
         // Close the context menu
@@ -98,9 +99,12 @@
         on:click={runAction}
     >
         <span>{item.text}</span>
-        <span class="keybinding"
-            >{#if item.keybinding}{item.keybinding.toString()}{/if}</span
-        >
+        {#if item.keybinding !== ""}
+            <span class="keybinding"
+                >{#if item.keybinding}{Bindings.formatBinding(
+                        item.keybinding
+                    )}{/if}</span
+            >{/if}
     </button>
     <!-- Icon Button -->
 {:else if item instanceof IconButton}
@@ -113,9 +117,9 @@
     >
         <iconify-icon icon={item.icon} height="20px" />
         <span>{item.text}</span>
-        <span class="keybinding"
-            >{#if item.keybinding}{item.keybinding.toString()}{/if}</span
-        >
+        {#if item.keybinding !== ""}
+            <span class="keybinding">{Bindings.formatBinding(item.keybinding)}</span
+            >{/if}
     </button>
     <!-- Sub Menu Button -->
 {:else if item instanceof SubMenuButton}
@@ -172,6 +176,7 @@
         text-align: right;
         min-width: 80px;
         color: var(--weak-fg);
+        padding-left: 20px;
     }
 
     .ctx-text-item {

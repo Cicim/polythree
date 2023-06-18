@@ -1,4 +1,6 @@
+import { tick } from "svelte";
 import { writable } from "svelte/store";
+import { Bindings, type ActionName } from "./bindings";
 
 /** A context menu action definition */
 export type ContextMenuAction = () => void;
@@ -31,28 +33,6 @@ export class Menu {
         }
         return this;
     }
-
-    public checkKeyBindings(e: KeyboardEvent): boolean {
-        // Return if the menu is closed
-        if (!getMenu().open) return false;
-
-        // Navigate the menu and find the button with the keybinding that
-        // corresponds to the key that was pressed
-        for (const item of this.items) {
-            if (item instanceof Separator) continue;
-            if (item instanceof SubMenuButton) {
-                if (item.menu.checkKeyBindings(e)) return true;
-            }
-            if (item instanceof TextButton || item instanceof IconButton) {
-                if (item.keybinding && item.keybinding.isPressed(e)) {
-                    item.action();
-                    closeContextMenu();
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }
 
 /** A context menu item */
@@ -63,58 +43,6 @@ export abstract class MenuItem {
 export class Separator extends MenuItem {
 }
 
-export class KeyBinding {
-    public code: string;
-    public key: string;
-    public ctrl: boolean;
-    public shift: boolean;
-    public alt: boolean;
-
-    public static fromString(str: string): KeyBinding {
-        let parts = str.split("+");
-        const key = parts.pop();
-        parts = parts.map(p => p.toLowerCase());
-        const ctrl = parts.includes("ctrl");
-        const shift = parts.includes("shift");
-        const alt = parts.includes("alt");
-        return new KeyBinding(key, ctrl, shift, alt);
-    }
-
-    public isPressed(e: KeyboardEvent): boolean {
-        return e.code === this.code &&
-            e.ctrlKey === this.ctrl &&
-            e.shiftKey === this.shift &&
-            e.altKey === this.alt;
-    }
-
-    public constructor(key: string, ctrl: boolean = false, shift: boolean = false, alt: boolean = false) {
-        this.key = key;
-        this.code = this.keyFromKeyname(key);
-        this.ctrl = ctrl;
-        this.shift = shift;
-        this.alt = alt;
-    }
-
-    public keyFromKeyname(key: string) {
-        // If the keyname is a letter, return `Key${keyname.toUpperCase()}`
-        if (key.length === 1 && key.match(/[a-z]/i)) {
-            return `Key${key.toUpperCase()}`;
-            // If the keyname is a number, return `Digit${keyname}`
-        } else if (key.length === 1 && !isNaN(parseInt(key))) {
-            return `Digit${key}`;
-        }
-    }
-
-    public toString(): string {
-        let str = "";
-        if (this.ctrl) str += "Ctrl + ";
-        if (this.shift) str += "Shift + ";
-        if (this.alt) str += "Alt + ";
-        str += this.key;
-        return str;
-    }
-}
-
 /** A context menu text only button */
 export class TextButton extends MenuItem {
     /** The button's text */
@@ -122,13 +50,19 @@ export class TextButton extends MenuItem {
     /** The buttons's action */
     public action: ContextMenuAction;
     /** The action's associated keybinding */
-    public keybinding: KeyBinding;
+    public keybinding: string;
 
-    public constructor(text: string, action: ContextMenuAction, keybinding?: string) {
+    public constructor(text: string, action: ActionName | ContextMenuAction) {
         super();
         this.text = text;
-        this.action = action;
-        this.keybinding = !keybinding ? null : KeyBinding.fromString(keybinding);
+        if (typeof action === "string") {
+            this.action = Bindings.getActionFromName(action);
+            this.keybinding = Bindings.defaults[action];
+        }
+        else {
+            this.action = action
+            this.keybinding = "";
+        };
     }
 }
 
@@ -141,14 +75,20 @@ export class IconButton extends MenuItem {
     /** The button's action */
     public action: ContextMenuAction;
     /** The action's associated keybinding */
-    public keybinding: KeyBinding;
+    public keybinding: string;
 
-    public constructor(text: string, icon: string, action: ContextMenuAction, keybinding?: string) {
+    public constructor(text: string, icon: string, action: ActionName | ContextMenuAction) {
         super();
         this.text = text;
         this.icon = icon;
-        this.action = action;
-        this.keybinding = !keybinding ? null : KeyBinding.fromString(keybinding);
+        if (typeof action === "string") {
+            this.action = Bindings.getActionFromName(action);
+            this.keybinding = Bindings.defaults[action];
+        }
+        else {
+            this.action = action
+            this.keybinding = "";
+        };
     }
 }
 
@@ -182,7 +122,10 @@ function isBody(e: MouseEvent) {
 }
 /** Places the given element on the screen, careful not to make it 
  * overflow outside of the page */
-function setContextMenuPosition(target: HTMLElement, x: number, y: number) {
+async function setContextMenuPosition(target: HTMLElement, x: number, y: number) {
+    target.style.left = "0px";
+    target.style.top = "0px";
+    await tick();
     // Get the width and height of the target
     const width = target.offsetWidth;
     const height = target.offsetHeight;

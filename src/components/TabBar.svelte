@@ -1,19 +1,38 @@
 <script lang="ts">
     import Tab from "./Tab.svelte";
-    import { draggingId, openViews, reopenLastClosedView } from "../systems/views";
-    import { IconButton, Menu, Separator, TextButton, showContextMenu } from "../systems/context_menu";
+    import {
+        draggingId,
+        openViews,
+        reopenLastClosedView,
+    } from "../systems/views";
+    import {
+        IconButton,
+        Menu,
+        Separator,
+        TextButton,
+        showContextMenu,
+    } from "../systems/context_menu";
 
-    const barMenu = new Menu([
-        new IconButton("Close All", "ic:round-close", () => {
-            [...$openViews].reverse().forEach(view => {
+    import { onMount } from "svelte";
+    import { Bindings } from "../systems/bindings";
+
+    // Add the actions to the global keybindings
+    Bindings.register({
+        "tabbar/close_all": () =>
+            [...$openViews].reverse().forEach((view) => {
                 view.close();
-            });
-        }, "Ctrl+C"),
-        new Separator(),
-        new TextButton("Reopen Last", () => {
-            reopenLastClosedView();
-        }, "Ctrl+R")
-    ]);
+            }),
+        "tabbar/reopen_last": () => reopenLastClosedView(),
+    });
+
+    let barMenu: Menu;
+    onMount(() => {
+        barMenu = new Menu([
+            new IconButton("Close All", "ic:round-close", "tabbar/close_all"),
+            new Separator(),
+            new TextButton("Reopen Last", "tabbar/reopen_last"),
+        ]);
+    });
 
     /**
      * Scroll event handler

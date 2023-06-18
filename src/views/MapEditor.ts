@@ -7,9 +7,13 @@ export interface MapEditorProperties {
 }
 
 export class MapEditorContext extends EditorContext {
-    declare protected component: MapEditor;
-    declare public props: MapEditorProperties;
     public name = "Map Editor";
+    declare public props: MapEditorProperties;
+    public actions = {
+        "map_editor/print_group": () => {
+            console.log("Printing group", this.props.group);
+        }
+    }
 
     public save() {
         return true;

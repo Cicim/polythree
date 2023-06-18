@@ -1,5 +1,6 @@
 import type { SvelteComponent } from "svelte";
 import { writable } from "svelte/store";
+import { Bindings } from "./bindings";
 
 /** All of the currently open views */
 export let openViews = writable<ViewContext[]>([]);
@@ -19,17 +20,20 @@ export interface LastClosedContext {
 export let draggingId = writable<number | null>(null);
 
 export abstract class ViewContext {
-    /** The HTML element that the view is rendered in */
-    public container: HTMLDivElement;
-    /** The Svelte component for the view's view */
-    protected component: SvelteComponent;
     /** The name of the view */
     public abstract name: string;
     /** The props that were passed to the view */
     public props: Record<string, any>;
+    /** The Svelte component for the view's view */
+    protected component: SvelteComponent;
+    /** The list of key-bindable actions for this editor */
+    public abstract actions: Record<string, () => void>;
+
+    /** The HTML element that the view is rendered in */
+    public container: HTMLDivElement;
     /** Whether or not the view is currently active */
     public selected: boolean = false;
-    /** Whether or not the view is a valid dropzone for the currently dragged view */
+    /** Whether or not the tab is a valid dropzone for the currently dragged tab */
     public activeDropzone: boolean = false;
 
     public constructor(ComponentClass: typeof SvelteComponent, props: Record<string, any>, position: number = null) {
@@ -63,10 +67,16 @@ export abstract class ViewContext {
         // Loop through all the open views
         openViews.update((views: ViewContext[]) => {
             for (const otherView of views) {
+                // Unregister all the other editor's actions
+                Bindings.unregister(otherView.actions);
                 // Hide all the views that aren't the selected one
                 otherView.container.classList.add("hidden");
                 otherView.selected = false;
             }
+
+            // Register this editor's actions
+            Bindings.register(this.actions);
+
             // Show the selected view
             this.container.classList.remove("hidden");
             this.selected = true;
@@ -86,6 +96,8 @@ export abstract class ViewContext {
 
             return views;
         });
+        // Unregister the view's actions
+        Bindings.unregister(this.actions);
         // Destroy the view
         this.component.$destroy();
         // Remove the view's container
@@ -104,6 +116,8 @@ export abstract class ViewContext {
         });
     }
 
+    /** Saves this editor to an object where startup information can be stored 
+     * in order to be able to quickly reopen this editor */
     public addToLastClosed(position: number) {
         // Save the view's position
         lastClosedViews.update(views => {

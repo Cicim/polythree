@@ -4,11 +4,14 @@
   import TabBar from "./components/TopBar.svelte";
   import FootBar from "./components/FootBar.svelte";
   import ContextMenu from "./components/ContextMenu.svelte";
+  import { Bindings } from "./systems/bindings";
 
   onMount(() => {
     new HomePageContext().select();
   });
 </script>
+
+<svelte:window on:keydown={Bindings.handleKeypress} />
 
 <!-- Page container -->
 <main id="container">
