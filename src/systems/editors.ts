@@ -1,5 +1,4 @@
-import { Bindings } from "./bindings";
-import { ViewContext, openViews } from "./views";
+import { ViewContext } from "./views";
 import { writable, type Writable } from "svelte/store";
 
 

@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import Tab from "./Tab.svelte";
+
     import {
         draggingId,
         openViews,
@@ -9,12 +11,14 @@
         IconButton,
         Menu,
         Separator,
+        SubMenuButton,
         TextButton,
         showContextMenu,
     } from "../systems/context_menu";
-
-    import { onMount } from "svelte";
     import { Bindings } from "../systems/bindings";
+
+    import { MapEditorContext } from "../views/MapEditor";
+    import { HomePageContext } from "../views/HomePage";
 
     // Add the actions to the global keybindings
     Bindings.register({
@@ -28,8 +32,22 @@
     let barMenu: Menu;
     onMount(() => {
         barMenu = new Menu([
-            new IconButton("Close All", "ic:round-close", "tabbar/close_all"),
+            new SubMenuButton(
+                "New editor",
+                new Menu([
+                    new IconButton("Home Page", "material-symbols:home", () => {
+                        new HomePageContext().select();
+                    }),
+                    new TextButton("Map Editor", () => {
+                        new MapEditorContext({
+                            group: 0,
+                            index: 0,
+                        }).select();
+                    }),
+                ])
+            ),
             new Separator(),
+            new IconButton("Close All", "ic:round-close", "tabbar/close_all"),
             new TextButton("Reopen Last", "tabbar/reopen_last"),
         ]);
     });

@@ -118,7 +118,8 @@
         <iconify-icon icon={item.icon} height="20px" />
         <span>{item.text}</span>
         {#if item.keybinding !== ""}
-            <span class="keybinding">{Bindings.formatBinding(item.keybinding)}</span
+            <span class="keybinding"
+                >{Bindings.formatBinding(item.keybinding)}</span
             >{/if}
     </button>
     <!-- Sub Menu Button -->
@@ -149,7 +150,7 @@
         &:not(.ctx-separator) {
             min-width: 160px;
             max-width: 400px;
-            padding: 4px 8px;
+            padding: 0.5em 8px;
             padding-left: 32px;
             border-radius: 4px;
 
@@ -161,12 +162,13 @@
             background: var(--ctx-bg);
             color: var(--ctx-fg);
 
-            &:hover,
-            &:focus {
-                outline: none;
+            &:hover {
                 background: var(--main-bg);
                 outline: 1px solid var(--strong-bg);
                 color: var(--accent-fg);
+            }
+            &:focus {
+                outline: none;
             }
         }
     }

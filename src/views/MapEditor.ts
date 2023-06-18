@@ -23,6 +23,5 @@ export class MapEditorContext extends EditorContext {
     public constructor(props: MapEditorProperties, position: number = null) {
         // Create the editor element
         super(MapEditor, props, position);
-        this.needsSave.set(true);
     }
 }
