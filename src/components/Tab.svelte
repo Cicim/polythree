@@ -55,6 +55,7 @@
     }
     // ANCHOR Other handlers
     function handleSelect(e: MouseEvent) {
+        if (e.button === 1) e.preventDefault();
         if (e.button === 0) view.select();
     }
     function handleClose(e: MouseEvent) {
