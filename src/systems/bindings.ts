@@ -11,6 +11,9 @@ export class Bindings {
     static defaults: BindingMap = {
         "tabbar/reopen_last": "Ctrl+Shift+T",
         "tabbar/close_all": "Ctrl+Shift+W",
+        "editor/save": "Ctrl+S",
+        "tab/close": "Ctrl+W",
+        
         "home_page/open_last_project": "Alt+O",
         "map_editor/print_group": "Alt+O",
     };

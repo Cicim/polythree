@@ -27,7 +27,9 @@ export abstract class ViewContext {
     /** The Svelte component for the view's view */
     protected component: SvelteComponent;
     /** The list of key-bindable actions for this editor */
-    public abstract actions: Record<string, () => void>;
+    public actions: Record<string, () => void> = {};
+    /** The list of key-bindable actions for this editor's tab */
+    public tabActions: Record<string, () => void> = this.getTabActions();
 
     /** The HTML element that the view is rendered in */
     public container: HTMLDivElement;
@@ -69,6 +71,7 @@ export abstract class ViewContext {
             for (const otherView of views) {
                 // Unregister all the other editor's actions
                 Bindings.unregister(otherView.actions);
+                Bindings.unregister(otherView.tabActions);
                 // Hide all the views that aren't the selected one
                 otherView.container.classList.add("hidden");
                 otherView.selected = false;
@@ -76,6 +79,7 @@ export abstract class ViewContext {
 
             // Register this editor's actions
             Bindings.register(this.actions);
+            Bindings.register(this.tabActions);
 
             // Show the selected view
             this.container.classList.remove("hidden");
@@ -98,6 +102,7 @@ export abstract class ViewContext {
         });
         // Unregister the view's actions
         Bindings.unregister(this.actions);
+        Bindings.unregister(this.tabActions);
         // Destroy the view
         this.component.$destroy();
         // Remove the view's container
@@ -129,6 +134,15 @@ export abstract class ViewContext {
             });
             return views;
         });
+    }
+
+    /** Returns the list of actions that are specific to the tab */
+    protected getTabActions() {
+        return {
+            "tab/close": () => {
+                this.close();
+            }
+        }
     }
 }
 

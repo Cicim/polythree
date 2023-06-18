@@ -3,17 +3,16 @@
     import type { EditorContext } from "../systems/editors";
     import { ViewContext, draggingId, openViews } from "../systems/views";
     import { IconButton, Menu, showContextMenu } from "../systems/context_menu";
+    import { writable } from "svelte/store";
 
     export let view: ViewContext | EditorContext;
 
     const tabMenu = new Menu([
-        new IconButton("Close", "ic:round-close", () => {
-            view.close();
-        }),
+        new IconButton("Close", "ic:round-close", view.close),
     ]);
 
     // Whether the tab needs to be saved
-    let needsSave = (<EditorContext>view)?.needsSave;
+    $: needsSave = (<EditorContext>view)?.needsSave ?? writable(false);
 
     // ANCHOR Drag and drop functionality
     function onDragStart() {
@@ -54,6 +53,13 @@
 
         draggingId.set(null);
     }
+    // ANCHOR Other handlers
+    function handleSelect(e: MouseEvent) {
+        if (e.button === 0) view.select();
+    }
+    function handleClose(e: MouseEvent) {
+        if (e.button === 1) view.close();
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -61,10 +67,11 @@
     id="tab-{$openViews.indexOf(view)}"
     class="tab"
     class:selected={view.selected}
-    class:show-anyway={!needsSave}
+    class:show-anyway={!$needsSave}
     class:dropzone={view.activeDropzone}
     draggable="true"
-    on:click={() => view.select()}
+    on:mousedown={handleSelect}
+    on:mouseup={handleClose}
     on:dragstart={onDragStart}
     on:dragleave={onDragLeave}
     on:dragover|preventDefault={onDragOver}
@@ -89,7 +96,7 @@
         on:dragleave|stopPropagation={(e) => e.preventDefault()}
         on:drop|stopPropagation={(e) => e.preventDefault()}
     >
-        {#if needsSave}
+        {#if $needsSave}
             <iconify-icon icon="healthicons:circle-small" />
         {:else}
             <iconify-icon icon="ic:round-close" />
@@ -133,6 +140,8 @@
             background: transparent;
             border-radius: 25%;
             cursor: pointer;
+
+            transition: opacity 100ms ease-out;
 
             &:hover {
                 background: var(--light-shadow);
