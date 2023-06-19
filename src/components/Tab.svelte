@@ -10,57 +10,52 @@
         showContextMenu,
     } from "../systems/context_menu";
     import { writable } from "svelte/store";
-    import { Bindings } from "../systems/bindings";
 
     export let view: ViewContext | EditorContext;
     // Whether the tab needs to be saved
     $: needsSave = (<EditorContext>view)?.needsSave ?? writable(false);
+    $: isSaving = (<EditorContext>view)?.isSaving ?? writable(false);
 
     // ANCHOR TabMenu
-    function closeOthers() {
-        openViews.update((views) => {
-            const newViews = [...views];
-            const index = newViews.indexOf(view);
-            const left = newViews.splice(
-                index + 1,
-                newViews.length - index - 1
-            );
-            const right = newViews.splice(0, index);
-            // Close all the tabs that were removed
-            left.concat(right).forEach((v) => v.close());
-            view.select();
-            return newViews;
-        });
+    // Closes all tabs except the current tab
+    async function closeOthers() {
+        const index = $openViews.indexOf(view);
+        const toTheLeft = $openViews.slice(0, index);
+        const toTheRight = $openViews.slice(index + 1, $openViews.length);
+        // Close all the tabs that were removed
+        for (const view of [...toTheLeft, ...toTheRight]) {
+            await view.askClose();
+        }
     }
-    function closeToRight() {
-        openViews.update((views) => {
-            const newViews = [...views];
-            const index = newViews.indexOf(view);
-            const other = newViews.splice(index + 1, newViews.length - index);
-            // Close all the tabs that were removed
-            other.forEach((v) => v.close());
-            return newViews;
-        });
+    // Closes all tabs to the right of the current tab
+    async function closeToRight() {
+        const index = $openViews.indexOf(view);
+        const toTheRight = $openViews.slice(index + 1, $openViews.length);
+        // Close all the tabs that were removed
+        for (const view of toTheRight) {
+            await view.askClose();
+        }
     }
-    function closeToLeft() {
-        openViews.update((views) => {
-            const newViews = [...views];
-            const index = newViews.indexOf(view);
-            const other = newViews.splice(0, index);
-            // Close all the tabs that were removed
-            other.forEach((v) => v.close());
-            return newViews;
-        });
+    // Closes all tabs to the left of the current tab
+    async function closeToLeft() {
+        const index = $openViews.indexOf(view);
+        let toTheLeft: ViewContext[] = $openViews.slice(0, index);
+        // Close all the tabs that were removed
+        for (const view of toTheLeft.reverse()) {
+            await view.askClose();
+        }
     }
 
     const tabMenu = new Menu([
-        new IconButton("Close", "ic:round-close", view.close),
+        new Separator("This tab"),
+        new IconButton("Close", "ic:round-close", () => view.close()),
         new TextButton("Close Others", closeOthers),
         new TextButton("Close To Left", closeToLeft),
         new TextButton("Close To Right", closeToRight),
-        new Separator(),
+        new Separator("Other tabs"),
         new TextButton("Close All", "tabbar/close_all"),
         new TextButton("Reopen Last", "tabbar/reopen_last"),
+        new TextButton("Close Saved", "tabbar/close_saved"),
     ]);
 
     // ANCHOR Drag and drop functionality
@@ -147,7 +142,11 @@
         on:drop|stopPropagation={(e) => e.preventDefault()}
     >
         {#if $needsSave}
-            <iconify-icon icon="healthicons:circle-small" />
+            {#if $isSaving}
+                <iconify-icon icon="eos-icons:loading" />
+            {:else}
+                <iconify-icon icon="healthicons:circle-small" />
+            {/if}
         {:else}
             <iconify-icon icon="ic:round-close" />
         {/if}

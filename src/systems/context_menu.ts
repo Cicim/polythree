@@ -41,6 +41,9 @@ export abstract class MenuItem {
 
 /** A context menu separator */
 export class Separator extends MenuItem {
+    public constructor(public text: string = null) {
+        super();
+    }
 }
 
 /** A context menu text only button */

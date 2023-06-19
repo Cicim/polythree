@@ -1,8 +1,16 @@
+import { Dialog } from "./dialogs";
+
+/** A hashed keyboard combination */
 type KeyHash = string;
+/** The name of an action */
 export type ActionName = string;
+/** The function bound to the action */
 type Action = () => void;
+/** A map of actions to their names */
 type ActionMap = Record<ActionName, Action>;
+/** A map of key hashes to their actions */
 type KeypressMap = Record<KeyHash, Action>;
+/** A map of action names to their key hashes */
 type BindingMap = Record<ActionName, KeyHash>;
 
 export class Bindings {
@@ -10,10 +18,13 @@ export class Bindings {
     static stored: ActionMap[] = [];
     static defaults: BindingMap = {
         "tabbar/reopen_last": "Ctrl+Shift+T",
+        "tabbar/close_saved": "Ctrl+Shift+Q",
         "tabbar/close_all": "Ctrl+Shift+W",
+        "tabbar/next": "Ctrl+Tab",
+
         "editor/save": "Ctrl+S",
         "tab/close": "Ctrl+W",
-        
+
         "home_page/open_last_project": "Alt+O",
         "map_editor/print_group": "Alt+O",
     };
@@ -36,22 +47,25 @@ export class Bindings {
     }
 
     // ANCHOR Events
+    static isAlphanumeric(event: KeyboardEvent) {
+        return event.code.startsWith("Key") || event.code.startsWith("Digit");
+    }
     /** Returns the key hash from the given key */
-    static getKeyHash(event: {
-        ctrlKey: boolean, shiftKey: boolean,
-        altKey: boolean, key: string
-    }) {
+    static getKeyHash(event: KeyboardEvent) {
         // Get the key hash
         let keyHash = "";
         if (event.ctrlKey) keyHash += "Ctrl+";
         if (event.shiftKey) keyHash += "Shift+";
         if (event.altKey) keyHash += "Alt+";
-        keyHash += event.key.toUpperCase();
+
+        if (this.isAlphanumeric(event)) keyHash += event.key.toUpperCase();
+        else keyHash += event.code;
         return keyHash;
     }
 
     /** Handles a keypress event */
     static handleKeypress(event: KeyboardEvent) {
+        if (Dialog.isOpen) return;
         // Get the key hash
         const keyHash = Bindings.getKeyHash(event);
         // Check if the key hash is in activeBindings

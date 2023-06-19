@@ -34,3 +34,27 @@ body {
 .hidden {
   display: none;
 }
+
+.dialog {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+
+  width: 400px;
+  height: 200px;
+
+  border-radius: 20px;
+
+  background: var(--weak-bg);
+
+  box-shadow: 0 0 20px var(--medium-shadow);
+}
+
+.dialog-message {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--weak-fg);
+  padding: 1rem;
+}

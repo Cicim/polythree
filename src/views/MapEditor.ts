@@ -15,13 +15,18 @@ export class MapEditorContext extends EditorContext {
         }
     }
 
-    public save() {
-        this.needsSave.set(false);
+    public async save(): Promise<boolean> {
+        this.startSaving();
+        // Wait 1 seconds
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        this.doneSaving();
         return true;
     }
 
     public constructor(props: MapEditorProperties, position: number = null) {
         // Create the editor element
         super(MapEditor, props, position);
+        this.needsSave.set(true);
     }
 }

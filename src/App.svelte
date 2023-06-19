@@ -11,10 +11,10 @@
   });
 </script>
 
-<svelte:window on:keydown={Bindings.handleKeypress} />
+<svelte:body on:keydown={Bindings.handleKeypress} />
 
 <!-- Page container -->
-<main id="container">
+<main id="container" >
   <!-- Tabs -->
   <header id="tabs">
     <TabBar />

@@ -88,7 +88,12 @@
 
 <!-- Separator -->
 {#if item instanceof Separator}
-    <hr class="ctx-item ctx-separator" bind:this={element} />
+    <span class="ctx-item ctx-separator" bind:this={element}>
+        {#if item.text}
+            <span class="ctx-separator-caption">{item.text}</span>
+        {/if}
+        <hr class="ctx-separator-hr" bind:this={element} />
+    </span>
     <!-- Text Button -->
 {:else if item instanceof TextButton}
     <button
@@ -209,8 +214,23 @@
     .ctx-separator {
         width: 100%;
         min-width: 100px;
-        border: 1px solid var(--light-shadow);
-        border-top: none;
+
+        & .ctx-separator-hr {
+            border: 1px solid var(--light-shadow);
+            border-top: none;
+            margin: 0.4em;
+
+            &:not(:only-child) {
+                margin-top: 0.2em;
+            }
+        }
+
+        & .ctx-separator-caption {
+            color: var(--weak-fg);
+            font-size: 1.2em;
+            margin: 0.4em;
+            margin-bottom: 0.2em;
+        }
     }
 
     .submenu {

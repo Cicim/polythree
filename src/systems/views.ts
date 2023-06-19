@@ -84,11 +84,12 @@ export abstract class ViewContext {
             // Show the selected view
             this.container.classList.remove("hidden");
             this.selected = true;
+
             return views;
         });
     }
     /** Function to run when the view is closed */
-    public close() {
+    public async close(): Promise<void> {
         // Find this view's position in the store
         let index = -1;
         openViews.update((views: ViewContext[]) => {
@@ -119,6 +120,10 @@ export abstract class ViewContext {
 
             return views;
         });
+    }
+
+    public async askClose(): Promise<void> {
+        return this.close();
     }
 
     /** Saves this editor to an object where startup information can be stored 

@@ -19,38 +19,54 @@
 
     import { MapEditorContext } from "../views/MapEditor";
     import { HomePageContext } from "../views/HomePage";
+    import type { EditorContext } from "../systems/editors";
 
     // Add the actions to the global keybindings
     Bindings.register({
-        "tabbar/close_all": () =>
-            [...$openViews].reverse().forEach((view) => {
-                view.close();
-            }),
+        "tabbar/close_all": async () => {
+            let views = [...$openViews];
+            for (const view of views.reverse()) {
+                await view.askClose();
+            }
+        },
         "tabbar/reopen_last": () => reopenLastClosedView(),
+        "tabbar/close_saved": () =>
+            [...$openViews].reverse().forEach((view) => {
+                if (!(<EditorContext>view)?.needsSaveNow) view.close();
+            }),
+        // Goes to the next tab to the right
+        // Wraps around if it's the last tab
+        "tabbar/next": () => {
+            const current = $openViews.find((view) => view.selected);
+            const index = $openViews.indexOf(current);
+            const next = $openViews[index + 1] ?? $openViews[0];
+            next.select();
+        },
     });
 
-    let barMenu: Menu;
-    onMount(() => {
-        barMenu = new Menu([
-            new SubMenuButton(
-                "New editor",
-                new Menu([
-                    new IconButton("Home Page", "material-symbols:home", () => {
-                        new HomePageContext().select();
-                    }),
-                    new TextButton("Map Editor", () => {
-                        new MapEditorContext({
-                            group: 0,
-                            index: 0,
-                        }).select();
-                    }),
-                ])
-            ),
-            new Separator(),
-            new IconButton("Close All", "ic:round-close", "tabbar/close_all"),
-            new TextButton("Reopen Last", "tabbar/reopen_last"),
-        ]);
-    });
+    let barMenu = new Menu([
+        new SubMenuButton(
+            "New editor",
+            new Menu([
+                new IconButton("Home Page", "material-symbols:home", () => {
+                    new HomePageContext().select();
+                }),
+                new TextButton("Map Editor", () => {
+                    new MapEditorContext({
+                        group: 0,
+                        index: 0,
+                    }).select();
+                }),
+            ])
+        ),
+        new Separator(),
+        new IconButton("Close All", "ic:round-close", "tabbar/close_all"),
+        new TextButton("Close Saved", "tabbar/close_saved"),
+        new TextButton("Reopen Last", "tabbar/reopen_last"),
+    ]);
+    // onMount(() => {
+    //     barMenu = ;
+    // });
 
     /**
      * Scroll event handler
