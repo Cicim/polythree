@@ -21,6 +21,7 @@ export class Bindings {
         "tabbar/close_saved": "Ctrl+Shift+Q",
         "tabbar/close_all": "Ctrl+Shift+W",
         "tabbar/next": "Ctrl+Tab",
+        "tabbar/prev": "Ctrl+Shift+Tab",
 
         "editor/save": "Ctrl+S",
         "tab/close": "Ctrl+W",

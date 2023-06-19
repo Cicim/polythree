@@ -42,6 +42,12 @@
             const next = $openViews[index + 1] ?? $openViews[0];
             next.select();
         },
+        "tabbar/prev": () => {
+            const current = $openViews.find((view) => view.selected);
+            const index = $openViews.indexOf(current);
+            const prev = $openViews[index - 1] ?? $openViews[$openViews.length - 1];
+            prev.select();
+        },
     });
 
     let barMenu = new Menu([

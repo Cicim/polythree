@@ -11,6 +11,9 @@ export abstract class EditorContext extends ViewContext {
     public needsSave: Writable<boolean> = writable(false);
     /** Whether or not the editor is currently saving */
     public isSaving: Writable<boolean> = writable(false);
+    /** If this value is true, the editor will close 
+     * as soon as it is done saving */
+    protected slatedForClose: boolean = false;
 
     public tabActions = {
         ...super.getTabActions(),
@@ -27,10 +30,14 @@ export abstract class EditorContext extends ViewContext {
         this.isSaving.set(true);
     }
 
-    /** Reverts the icons to their original states */
+    /** Execute after saving. Reverts the icons to their original states */
     public doneSaving() {
+        // Reset the dot icon
         this.needsSave.set(false);
+        // Reset the loading icon
         this.isSaving.set(false);
+        // Close the editor if it was slated for closing
+        if (this.slatedForClose) super.close();
     }
 
     public select() {
@@ -38,22 +45,25 @@ export abstract class EditorContext extends ViewContext {
     }
 
     public get needsSaveNow() {
-        let needsSave: boolean;
-        this.needsSave.update((value) =>
-            (needsSave = value, value));
-        return needsSave;
+        let $needsSave: boolean;
+        let unsub = this.needsSave.subscribe(v => $needsSave = v);
+        unsub();
+        return $needsSave;
     }
     public get isSavingNow() {
-        let isSaving: boolean;
-        this.isSaving.update((value) =>
-            (isSaving = value, value));
-        return isSaving;
+        let $isSaving: boolean;
+        let unsub = this.isSaving.subscribe(v => $isSaving = v);
+        unsub();
+        return $isSaving;
     }
 
     /** Asks the user for the needs save prompt and awaits for them to answer */
     public async promptClose() {
-        // Skip if the editor is in the process of saving
-        if (this.isSavingNow) return;
+        // If the editor is saving, just slate it to be closed later
+        if (this.isSavingNow) {
+            this.slatedForClose = true;
+            return false;
+        }
         // If it doesn't need saving, just close it
         if (!this.needsSaveNow) return super.close();
         this.select();
