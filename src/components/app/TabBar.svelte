@@ -5,7 +5,7 @@
         draggingId,
         openViews,
         reopenLastClosedView,
-    } from "../../systems/views";
+    } from "src/systems/views";
     import {
         IconButton,
         Menu,
@@ -13,12 +13,12 @@
         SubMenuButton,
         TextButton,
         showContextMenu,
-    } from "../../systems/context_menu";
-    import { Bindings } from "../../systems/bindings";
+    } from "src/systems/context_menu";
+    import { Bindings } from "src/systems/bindings";
 
-    import { MapEditorContext } from "../../views/MapEditor";
-    import { HomePageContext } from "../../views/HomePage";
-    import type { EditorContext } from "../../systems/editors";
+    import { MapEditorContext } from "src/views/MapEditor";
+    import { HomePageContext } from "src/views/HomePage";
+    import type { EditorContext } from "src/systems/editors";
 
     // Add the actions to the global keybindings
     Bindings.register({

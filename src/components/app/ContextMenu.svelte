@@ -8,7 +8,7 @@
         TextButton,
         closeContextMenu,
         ctxMenu,
-    } from "../../systems/context_menu";
+    } from "src/systems/context_menu";
 
     const menu = new Menu([
         new IconButton("New File", "mingcute:file-new-line", () => {

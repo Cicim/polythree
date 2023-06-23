@@ -8,9 +8,9 @@
         TextButton,
         ctxMenu,
         closeContextMenu,
-    } from "../../systems/context_menu";
+    } from "src/systems/context_menu";
     import { tick } from "svelte";
-    import { Bindings } from "../../systems/bindings";
+    import { Bindings } from "src/systems/bindings";
 
     /** The menu item this component represents */
     export let item: MenuItem;

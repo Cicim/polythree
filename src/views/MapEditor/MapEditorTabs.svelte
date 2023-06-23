@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { MapEditorContext, MapEditorData } from "../MapEditor";
+    import Input from "src/components/Input.svelte";
+    import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
 
@@ -10,6 +11,8 @@
 {$data.width}
 {$data.height}
 {$data.tilemap}
+
+<Input type="text" />
 
 <style type="scss">
 </style>

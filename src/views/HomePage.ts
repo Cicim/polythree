@@ -1,5 +1,5 @@
-import HomePage from "../views/HomePage.svelte";
-import { ViewContext } from "../systems/views";
+import HomePage from "src/views/HomePage.svelte";
+import { ViewContext } from "src/systems/views";
 
 export class HomePageContext extends ViewContext {
     public name = "Home Page";
