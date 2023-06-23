@@ -7,14 +7,14 @@
   import { Bindings } from "./systems/bindings";
 
   onMount(() => {
-    new HomePageContext().select();
+    new HomePageContext().create().select();
   });
 </script>
 
 <svelte:body on:keydown={Bindings.handleKeypress} />
 
 <!-- Page container -->
-<main id="container" >
+<main id="container">
   <!-- Tabs -->
   <header id="tabs">
     <TabBar />

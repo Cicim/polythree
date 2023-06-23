@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import Tab from "./Tab.svelte";
 
     import {
@@ -55,13 +54,13 @@
             "New editor",
             new Menu([
                 new IconButton("Home Page", "material-symbols:home", () => {
-                    new HomePageContext().select();
+                    new HomePageContext().create().select();
                 }),
                 new TextButton("Map Editor", () => {
                     new MapEditorContext({
                         group: 0,
                         index: 0,
-                    }).select();
+                    }).create().select();
                 }),
             ])
         ),

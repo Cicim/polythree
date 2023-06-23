@@ -10,8 +10,8 @@ export let lastClosedViews = writable<LastClosedContext[]>([]);
 export interface LastClosedContext {
     /** The context's constructor */
     constructor: typeof ViewContext;
-    /** The props that were passed to the context */
-    props: Record<string, any>;
+    /** The data that identifies this context */
+    indentifier: Record<string, any>;
     /** The position of the context in the lastClosedViews store */
     position: number;
 }
@@ -22,8 +22,10 @@ export let draggingId = writable<number | null>(null);
 export abstract class ViewContext {
     /** The name of the view */
     public abstract name: string;
-    /** The props that were passed to the view */
-    public props: Record<string, any>;
+    /** The class of the view's component */
+    protected componentClass: typeof SvelteComponent;
+    /** The data that identifies this editor */
+    public identifier: Record<string, any>;
     /** The Svelte component for the view's view */
     protected component: SvelteComponent;
     /** The list of key-bindable actions for this editor */
@@ -38,17 +40,24 @@ export abstract class ViewContext {
     /** Whether or not the tab is a valid dropzone for the currently dragged tab */
     public activeDropzone: boolean = false;
 
-    public constructor(ComponentClass: typeof SvelteComponent, props: Record<string, any>, position: number = null) {
+    public constructor(ComponentClass: typeof SvelteComponent, id: Record<string, any>) {
+        // Set the identifiers
+        this.identifier = id;
+        // Set the component class
+        this.componentClass = ComponentClass;
+    }
+
+    /** Creates the svelte component */
+    public create(position: number = null) {
         // Get the view element
         const viewContainer = document.getElementById("views");
         // Create the view's container
         this.container = document.createElement("div");
         this.container.classList.add("view", "hidden");
         viewContainer.appendChild(this.container);
-        // Set the props
-        this.props = props;
+
         // Create the svelte component
-        this.component = new ComponentClass({
+        this.component = new this.componentClass({
             target: this.container,
             props: {
                 context: this,
@@ -62,8 +71,9 @@ export abstract class ViewContext {
 
             return views;
         });
-    }
 
+        return this;
+    }
     /** Function to run when the view is selected to be the active one */
     public select() {
         // Loop through all the open views
@@ -134,7 +144,7 @@ export abstract class ViewContext {
             views.push({
                 //@ts-ignore
                 Class: this.__proto__.constructor,
-                props: this.props,
+                indentifier: this.identifier,
                 position,
             });
             return views;
@@ -156,9 +166,9 @@ export function reopenLastClosedView() {
         if (ctx.length > 0) {
             const lastClosed = ctx[ctx.length - 1];
             // @ts-ignore Do some class mumbo-jumbo to create a new instance of the view
-            const view = new lastClosed.Class(lastClosed.props, lastClosed.position);
+            const view = new lastClosed.Class(lastClosed.indentifier, lastClosed.position);
             // Select the view
-            (<ViewContext>view).select();
+            (<ViewContext>view).create(lastClosed.position).select();
             // Remove the view from the last closed store
             ctx.pop();
         }

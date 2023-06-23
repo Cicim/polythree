@@ -17,7 +17,7 @@
             new MapEditorContext({
                 group: Math.floor(Math.random() * 255),
                 index: Math.floor(Math.random() * 255),
-            })}>opening a map</a
+            }).create()}>opening a map</a
     >
 </p>
 

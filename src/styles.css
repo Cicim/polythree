@@ -35,6 +35,10 @@ body {
   display: none;
 }
 
+.view {
+  height: 100%;
+}
+
 .dialog {
   position: fixed;
   transform: translate(-50%, -50%);

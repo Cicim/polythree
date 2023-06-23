@@ -1,16 +1,21 @@
+import type { SvelteComponent } from "svelte";
 import { KeepChangesDialog } from "./dialogs";
 import { ViewContext } from "./views";
-import { writable, type Writable } from "svelte/store";
+import { writable, get, type Writable } from "svelte/store";
 
 
 /** The container for all of the editor's functionalities
  * that integrate with Svelte or the DOM.
  */
 export abstract class EditorContext extends ViewContext {
+    public data: Writable<Record<string, any>>;
     /** Whether or not the editor needs to be saved */
-    public needsSave: Writable<boolean> = writable(false);
+    public needsSave: Writable<boolean>;
     /** Whether or not the editor is currently saving */
-    public isSaving: Writable<boolean> = writable(false);
+    public isSaving: Writable<boolean>;
+    /** Whether or not the editor is currently loading */
+    public isLoading: Writable<boolean>;
+
     /** If this value is true, the editor will close 
      * as soon as it is done saving */
     protected slatedForClose: boolean = false;
@@ -22,8 +27,20 @@ export abstract class EditorContext extends ViewContext {
         }
     }
 
+    public constructor(ComponentClass: typeof SvelteComponent,
+        id: Record<string, any>) {
+        super(ComponentClass, { ...id });
+
+        this.data = writable({});
+        this.needsSave = writable(false);
+        this.isSaving = writable(false);
+        this.isLoading = writable(true);
+    }
+
     /** Function to run when the editor needs saving */
     public abstract save(): Promise<boolean>;
+    /** Function to run when the editor first opens */
+    public abstract load(): Promise<void>;
 
     /** Signals the user the saving process has started */
     public startSaving() {
@@ -38,23 +55,20 @@ export abstract class EditorContext extends ViewContext {
         this.isSaving.set(false);
         // Close the editor if it was slated for closing
         if (this.slatedForClose) super.close();
+
+        return true;
     }
 
     public select() {
         super.select();
     }
 
+
     public get needsSaveNow() {
-        let $needsSave: boolean;
-        let unsub = this.needsSave.subscribe(v => $needsSave = v);
-        unsub();
-        return $needsSave;
+        return get(this.needsSave);
     }
     public get isSavingNow() {
-        let $isSaving: boolean;
-        let unsub = this.isSaving.subscribe(v => $isSaving = v);
-        unsub();
-        return $isSaving;
+        return get(this.isSaving);
     }
 
     /** Asks the user for the needs save prompt and awaits for them to answer */
