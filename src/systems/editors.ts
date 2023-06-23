@@ -83,29 +83,35 @@ export abstract class EditorContext extends ViewContext {
         // If the editor is saving, just slate it to be closed later
         if (this.isSavingNow) {
             this.slatedForClose = true;
-            return false;
+            // Don't close now, wait for it to be done saving
+            return null;
         }
         // If it doesn't need saving, just close it
-        if (!this.needsSaveNow) return super.close();
-        this.select();
+        if (!this.needsSaveNow) return false;
         // Otherwise, open the dialog
+        this.select();
         return await new KeepChangesDialog().open();
     }
 
     /** Awaits for the editor to close */
     public async close() {
-        if (await this.promptClose()) {
-            // If the user wants to save, save it
-            if (await this.save()) {
-                // If the save was successful, close it
-                await super.close();
-            }
-        }
+        const promptResult = await this.promptClose();
+
+        if (promptResult === null) return;
+        // If the user wants to save, save it
+        if (promptResult === true)
+            await this.save()
+        // If the save was successful, close it
+        await super.close();
     }
 
     /** Closes the editor, but does not stick around for it to finish closing */
     public async askClose(): Promise<void> {
-        if (await this.promptClose())
+        const promptResult = await this.promptClose();
+
+        if (promptResult === null) return;
+        if (promptResult === true)
             this.save().then(() => super.close());
+        else super.close();
     }
 }
