@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
+    import type { MapEditorContext, MapEditorData } from "../MapEditor";
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
 

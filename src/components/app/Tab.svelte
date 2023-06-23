@@ -1,14 +1,14 @@
 <script lang="ts">
     import "iconify-icon";
-    import type { EditorContext } from "../systems/editors";
-    import { ViewContext, draggingId, openViews } from "../systems/views";
+    import type { EditorContext } from "../../systems/editors";
+    import { ViewContext, draggingId, openViews } from "../../systems/views";
     import {
         IconButton,
         Menu,
         Separator,
         TextButton,
         showContextMenu,
-    } from "../systems/context_menu";
+    } from "../../systems/context_menu";
     import { writable } from "svelte/store";
 
     export let view: ViewContext | EditorContext;

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { HomePageContext } from "./views/HomePage";
-  import TabBar from "./components/TopBar.svelte";
-  import FootBar from "./components/FootBar.svelte";
-  import ContextMenu from "./components/ContextMenu.svelte";
+  import TabBar from "./components/app/TopBar.svelte";
+  import FootBar from "./components/app/FootBar.svelte";
+  import ContextMenu from "./components/app/ContextMenu.svelte";
   import { Bindings } from "./systems/bindings";
 
   onMount(() => {

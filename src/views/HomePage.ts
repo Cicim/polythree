@@ -11,7 +11,7 @@ export class HomePageContext extends ViewContext {
     }
 
     public constructor(props: {} = {}, position: number = null) {
-        super(HomePage, props, position);
+        super(HomePage, props);
     }
 
     public save() { return true; }

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount, setContext } from "svelte";
-    import type { Writable } from "svelte/store";
     import type { MapEditorContext } from "./MapEditor";
     import MapEditorTabs from "./MapEditor/MapEditorTabs.svelte";
     import LoadingScreen from "../components/LoadingScreen.svelte";

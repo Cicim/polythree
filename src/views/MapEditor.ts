@@ -1,7 +1,5 @@
-import type { Writable } from "svelte/store";
 import { EditorContext } from "../systems/editors";
 import MapEditor from "./MapEditor.svelte";
-import { tick } from "svelte";
 
 export interface MapEditorProperties {
     group: number;
