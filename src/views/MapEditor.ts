@@ -25,9 +25,9 @@ export class MapEditorContext extends EditorContext {
     }
 
     public async save(): Promise<boolean> {
-        this.startSaving();
+        if (this.startSaving()) return;
         // Wait 1 seconds
-        // await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         return this.doneSaving();
     }
@@ -47,13 +47,16 @@ export class MapEditorContext extends EditorContext {
 
 async function invokeMapData(msg: string, props: Object) {
     // Wait 20 millisecs, then return the data
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 200));
     return {
         name: "Test Map",
         width: 100,
         height: 100,
         tileset: 0,
         tilemap: [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ]
     };

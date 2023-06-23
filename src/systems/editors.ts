@@ -1,18 +1,19 @@
 import type { SvelteComponent } from "svelte";
+import { writable, get, type Writable } from "svelte/store";
+
 import { KeepChangesDialog } from "./dialogs";
 import { ViewContext } from "./views";
-import { writable, get, type Writable } from "svelte/store";
+import { EditorChanges } from "./changes";
 
 
 /** The container for all of the editor's functionalities
  * that integrate with Svelte or the DOM.
  */
 export abstract class EditorContext extends ViewContext {
+    /** The changes made to the editor */
+    public changes: EditorChanges;
+    /** This editor's data, used for displaying information */
     public data: Writable<Record<string, any>>;
-    /** Whether or not the editor needs to be saved */
-    public needsSave: Writable<boolean>;
-    /** Whether or not the editor is currently saving */
-    public isSaving: Writable<boolean>;
     /** Whether or not the editor is currently loading */
     public isLoading: Writable<boolean>;
 
@@ -24,6 +25,12 @@ export abstract class EditorContext extends ViewContext {
         ...super.getTabActions(),
         "editor/save": () => {
             this.save();
+        },
+        "editor/undo": () => {
+            this.changes.undo();
+        },
+        "editor/redo": () => {
+            this.changes.redo();
         }
     }
 
@@ -32,8 +39,7 @@ export abstract class EditorContext extends ViewContext {
         super(ComponentClass, { ...id });
 
         this.data = writable({});
-        this.needsSave = writable(false);
-        this.isSaving = writable(false);
+        this.changes = new EditorChanges(this.data);
         this.isLoading = writable(true);
     }
 
@@ -44,15 +50,16 @@ export abstract class EditorContext extends ViewContext {
 
     /** Signals the user the saving process has started */
     public startSaving() {
-        this.isSaving.set(true);
+        if (!this.needsSaveNow) return true;
+        this.changes.saving.set(true);
+        this.changes.locked = true;
+        return false;
     }
 
     /** Execute after saving. Reverts the icons to their original states */
     public doneSaving() {
-        // Reset the dot icon
-        this.needsSave.set(false);
-        // Reset the loading icon
-        this.isSaving.set(false);
+        // Applies the changes
+        this.changes.setSaved();
         // Close the editor if it was slated for closing
         if (this.slatedForClose) super.close();
 
@@ -65,10 +72,10 @@ export abstract class EditorContext extends ViewContext {
 
 
     public get needsSaveNow() {
-        return get(this.needsSave);
+        return get(this.changes.unsaved);
     }
     public get isSavingNow() {
-        return get(this.isSaving);
+        return get(this.changes.saving);
     }
 
     /** Asks the user for the needs save prompt and awaits for them to answer */

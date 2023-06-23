@@ -24,6 +24,8 @@ export class Bindings {
         "tabbar/prev": "Ctrl+Shift+Tab",
 
         "editor/save": "Ctrl+S",
+        "editor/undo": "Ctrl+Z",
+        "editor/redo": "Ctrl+Y",
         "tab/close": "Ctrl+W",
 
         "home_page/open_last_project": "Alt+O",

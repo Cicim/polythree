@@ -13,8 +13,8 @@
 
     export let view: ViewContext | EditorContext;
     // Whether the tab needs to be saved
-    $: needsSave = (<EditorContext>view)?.needsSave ?? writable(false);
-    $: isSaving = (<EditorContext>view)?.isSaving ?? writable(false);
+    $: needsSave = (<EditorContext>view)?.changes?.unsaved ?? writable(false);
+    $: isSaving = (<EditorContext>view)?.changes?.saving ?? writable(false);
 
     // ANCHOR TabMenu
     // Closes all tabs except the current tab
