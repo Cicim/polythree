@@ -1,9 +1,10 @@
 import type { SvelteComponent } from "svelte";
 import { writable, get, type Writable } from "svelte/store";
 
-import { KeepChangesDialog } from "./dialogs";
-import { ViewContext } from "./views";
+import { spawnDialog } from "./dialogs";
+import { ViewContext, openViews } from "./views";
 import { EditorChanges } from "./changes";
+import SaveDialog from "src/components/dialog/SaveDialog.svelte";
 
 
 /** The container for all of the editor's functionalities
@@ -91,7 +92,7 @@ export abstract class EditorContext extends ViewContext {
         if (!this.needsSaveNow) return false;
         // Otherwise, open the dialog
         this.select();
-        return await new KeepChangesDialog().open();
+        return await spawnDialog(SaveDialog, { editorName: "Map Editor" });
     }
 
     /** Awaits for the editor to close */
@@ -99,9 +100,13 @@ export abstract class EditorContext extends ViewContext {
         const promptResult = await this.promptClose();
 
         if (promptResult === null) return;
+
         // If the user wants to save, save it
         if (promptResult === true)
             await this.save()
+
+        // If it's already closed, just return
+        if (get(openViews).indexOf(this) === -1) return;
         // If the save was successful, close it
         await super.close();
     }
@@ -109,7 +114,7 @@ export abstract class EditorContext extends ViewContext {
     /** Closes the editor, but does not stick around for it to finish closing */
     public async askClose(): Promise<void> {
         const promptResult = await this.promptClose();
-
+        
         if (promptResult === null) return;
         if (promptResult === true)
             this.save().then(() => super.close());

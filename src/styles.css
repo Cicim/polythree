@@ -39,7 +39,7 @@ body {
   height: 100%;
 }
 
-.dialog {
+/* .dialog {
   position: fixed;
   transform: translate(-50%, -50%);
   top: 50%;
@@ -61,4 +61,4 @@ body {
   font-weight: 600;
   color: var(--weak-fg);
   padding: 1rem;
-}
+} */

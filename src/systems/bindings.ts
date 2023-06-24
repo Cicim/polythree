@@ -1,4 +1,4 @@
-import { Dialog } from "./dialogs";
+import { isDialogOpen } from "./dialogs";
 
 /** A hashed keyboard combination */
 type KeyHash = string;
@@ -68,7 +68,7 @@ export class Bindings {
 
     /** Handles a keypress event */
     static handleKeypress(event: KeyboardEvent) {
-        if (Dialog.isOpen) return;
+        if (isDialogOpen()) return;
         // Get the key hash
         const keyHash = Bindings.getKeyHash(event);
         // Check if the key hash is in activeBindings

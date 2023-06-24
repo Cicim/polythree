@@ -31,6 +31,11 @@
     --btn-secondary-fg-disabled: var(--weak-fg);
     --btn-secondary-border-disabled: #72829c;
 
+    /* Dialogs */
+    --dialog-bg: #1f1f22;
+    --dialog-backdrop: transparent;
+    --dialog-shadow: #00000080;
+
     --light-shadow: #f2f2f040;
     --medium-shadow: #f2f2f080;
     --hard-shadow: #f2f2f0c0;
