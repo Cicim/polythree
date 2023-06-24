@@ -80,6 +80,7 @@ export abstract class EditorContext extends ViewContext {
 
     /** Asks the user for the needs save prompt and awaits for them to answer */
     public async promptClose() {
+        (<HTMLInputElement>document.activeElement)?.blur();
         // If the editor is saving, just slate it to be closed later
         if (this.isSavingNow) {
             this.slatedForClose = true;
