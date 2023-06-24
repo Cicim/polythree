@@ -21,5 +21,5 @@
     >
 </p>
 
-<style type="scss">
+<style lang="scss">
 </style>

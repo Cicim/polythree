@@ -15,7 +15,7 @@
     <slot />
 </button>
 
-<style type="scss">
+<style lang="scss">
     .button.secondary {
         --btn-bg: var(--btn-secondary-bg);
         --btn-bg-hover: var(--btn-secondary-bg-hover);

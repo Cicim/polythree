@@ -32,7 +32,7 @@
   <ContextMenu />
 </main>
 
-<style type="scss">
+<style lang="scss">
   #container {
     display: grid;
     height: 100vh;

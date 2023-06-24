@@ -121,7 +121,7 @@
     {/each}
 </div>
 
-<style type="scss">
+<style lang="scss">
     .grid {
         width: 100%;
         display: grid;

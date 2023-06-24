@@ -9,7 +9,7 @@
     <NavBar />
 </div>
 
-<style type="scss">
+<style lang="scss">
     .top-bar {
         display: grid;
         width: 100vw;

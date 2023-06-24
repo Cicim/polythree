@@ -107,7 +107,7 @@
     </div>
 </dialog>
 
-<style type="scss">
+<style lang="scss">
     #ctx-menu {
         --chonkiness: 4px;
 

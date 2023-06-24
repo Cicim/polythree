@@ -6,7 +6,7 @@
     <iconify-icon icon="quill:meatballs-v" width="24px" />
 </div>
 
-<style type="scss">
+<style lang="scss">
     .navbar {
         display: flex;
         height: 40px;

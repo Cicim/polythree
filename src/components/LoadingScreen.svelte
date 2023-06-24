@@ -35,7 +35,7 @@
     <iconify-icon icon="eos-icons:loading" />&nbsp; Loading...
 </div>
 
-<style type="scss">
+<style lang="scss">
     .loading-screen {
         display: flex;
         width: 100%;

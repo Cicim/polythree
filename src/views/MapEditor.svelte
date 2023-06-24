@@ -38,5 +38,5 @@ Stack: {changes.top}
     </div>
 {/each}
 
-<style type="scss">
+<style lang="scss">
 </style>

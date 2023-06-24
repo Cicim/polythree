@@ -35,5 +35,5 @@
 
 <input {type} value={r.get($data, edits)} on:change={(e) => update(e)} />
 
-<style type="scss">
+<style lang="scss">
 </style>

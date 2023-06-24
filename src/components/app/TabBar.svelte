@@ -157,7 +157,7 @@
 
 <svelte:window on:mouseout={() => draggingId.set(null)} />
 
-<style type="scss">
+<style lang="scss">
     .tabs-view {
         height: 40px;
         overflow-y: hidden;

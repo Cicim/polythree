@@ -150,7 +150,7 @@
     </button>
 {/if}
 
-<style type="scss">
+<style lang="scss">
     .ctx-item {
         &:not(.ctx-separator) {
             min-width: 160px;

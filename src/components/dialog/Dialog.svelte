@@ -39,7 +39,7 @@
     <svelte:component this={dialogComponent} {close} {...$$restProps} />
 </dialog>
 
-<style type="scss">
+<style lang="scss">
     dialog {
         background: var(--dialog-bg);
         padding: 10px;
