@@ -14,7 +14,6 @@
 
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
-
 </script>
 
 <div class="grid">
@@ -25,7 +24,7 @@
             e.target.setAttribute("disabled", true);
         }}>1</Button
     >
-    <Button on:click={() => console.log("Button 2")}>2</Button>
+    <Input />
     <Button on:click={() => console.log("Button 3")} disabled>3</Button>
     <Button color="secondary" on:click={() => console.log("Button 1")}>1</Button
     >
@@ -91,7 +90,7 @@
 
     <br />
 
-    width: <Input edits="name" /><br />
+    name: <Input placeholder="Name" edits="name" /><br />
     width: <Input type="number" edits="width" /><br />
     height: <Input type="number" edits="height" /><br />
 

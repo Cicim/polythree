@@ -4,21 +4,29 @@
     import r from "src/systems/navigate";
     import type { Writable } from "svelte/store";
     import type { EditorContext } from "src/systems/editors";
-    import { ValueChange } from "src/systems/changes";
 
     type InputType = "text" | "number";
 
     /** The type of the input, used for type inference */
     export let type: InputType = "text";
+    export let spellcheck: boolean = false;
     /** The path to the object this input updates */
-    export let edits: string;
+    export let edits: string = null;
 
-    let data: Writable<any> = getContext("data");
-    let context: EditorContext = getContext("context");
+    let data: Writable<any>, context: EditorContext;
+        
+    if (edits !== null) {
+        data = getContext("data");
+        context = getContext("context");
+    }
+
+    $: value = edits !== null ? r.get($data, edits) : "";
 
     function update(
         event: Event & { currentTarget: EventTarget & HTMLInputElement }
     ) {
+        if (edits === null) return;
+
         const value = event.currentTarget.value;
 
         if (type === "number") {
@@ -33,7 +41,44 @@
     }
 </script>
 
-<input {type} value={r.get($data, edits)} on:change={(e) => update(e)} />
+<input
+    {type}
+    {value}
+    on:change={(e) => update(e)}
+    {spellcheck}
+    {...$$restProps}
+/>
 
 <style lang="scss">
+    input {
+        background: var(--input-bg);
+        color: var(--input-fg);
+        border: 1px solid var(--input-border);
+
+        cursor: text;
+        user-select: none;
+
+        border-radius: 4px;
+        padding: 4px 6px;
+        margin: 2px;
+
+        &[type="number"] {
+            &::-webkit-inner-spin-button,
+            &::-webkit-outer-spin-button {
+                position: absolute;
+                top: 0;
+                right: 1px;
+                height: 100%;
+            }
+        }
+
+        &::-webkit-input-placeholder {
+            color: var(--input-placeholder);
+        }
+
+        &:focus {
+            outline: 1px solid var(--accent-fg);
+            outline-offset: 1px;
+        }
+    }
 </style>

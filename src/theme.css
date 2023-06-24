@@ -31,6 +31,12 @@
     --btn-secondary-fg-disabled: var(--weak-fg);
     --btn-secondary-border-disabled: #72829c;
 
+    /* Inputs */
+    --input-bg: #1f1f22;
+    --input-fg: var(--main-fg);
+    --input-border: #39393d;
+    --input-placeholder: var(--weak-fg);
+
     /* Dialogs */
     --dialog-bg: #1f1f22;
     --dialog-backdrop: transparent;

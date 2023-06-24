@@ -103,7 +103,7 @@ export class Bindings {
     /** Returns a pretty version of the given keybinding */
     static formatBinding(keybinding: string) {
         // Split the keybinding into parts
-        return keybinding.replace("+", " + ");
+        return keybinding.replaceAll("+", " + ");
     }
     /** Returns the action from the given action name */
     static getActionFromName(actionName: ActionName) {
