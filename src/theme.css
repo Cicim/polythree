@@ -10,6 +10,27 @@
     --ctx-bg: var(--weak-bg);
     --ctx-fg: var(--main-fg);
 
+    /* Buttons */
+    --btn-primary-bg: #2f2f32;
+    --btn-primary-fg: var(--main-fg);
+    --btn-primary-border: #39393d;
+    --btn-primary-bg-hover: #555558;
+    --btn-primary-fg-hover: var(--strong-fg);
+    --btn-primary-border-hover: #7f7f85;
+    --btn-primary-bg-disabled: #5f5f63;
+    --btn-primary-fg-disabled: var(--weak-fg);
+    --btn-primary-border-disabled: #5c5c5f;
+
+    --btn-secondary-bg: #2760b6;
+    --btn-secondary-fg: var(--strong-fg);
+    --btn-secondary-border: #193b6e;
+    --btn-secondary-bg-hover: #4886e2;
+    --btn-secondary-fg-hover: var(--strong-fg);
+    --btn-secondary-border-hover: #81b3ff;
+    --btn-secondary-bg-disabled: #566a86;
+    --btn-secondary-fg-disabled: var(--weak-fg);
+    --btn-secondary-border-disabled: #72829c;
+
     --light-shadow: #f2f2f040;
     --medium-shadow: #f2f2f080;
     --hard-shadow: #f2f2f0c0;

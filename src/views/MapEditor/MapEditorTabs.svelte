@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Button from "src/components/Button.svelte";
     import Input from "src/components/Input.svelte";
     import { ValueChange } from "src/systems/changes";
     import {
@@ -13,7 +14,28 @@
 
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
+
 </script>
+
+<div class="grid">
+    <Button
+        on:click={(e) => {
+            console.log("Button 1");
+            // @ts-ignore
+            e.target.setAttribute("disabled", true);
+        }}>1</Button
+    >
+    <Button on:click={() => console.log("Button 2")}>2</Button>
+    <Button on:click={() => console.log("Button 3")} disabled>3</Button>
+    <Button color="secondary" on:click={() => console.log("Button 1")}>1</Button
+    >
+    <Button color="secondary" on:click={() => console.log("Button 2")}>
+        2
+    </Button>
+    <Button color="secondary" on:click={() => console.log("Button 3")} disabled
+        >3</Button
+    >
+</div>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
@@ -73,9 +95,9 @@
     width: <Input type="number" edits="width" /><br />
     height: <Input type="number" edits="height" /><br />
 
-    <button on:click={() => context.changes.setValue("name", "Pallet Town")}>
+    <Button on:click={() => context.changes.setValue("name", "Pallet Town")}>
         Set to Pallet Town
-    </button>
+    </Button>
 
     {JSON.stringify($data)}
 
@@ -83,8 +105,8 @@
         <div>
             {#each row as tile, x}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <button
-                    style="display: inline-block; border: 1px solid white; padding: 10px"
+                <Button
+                    style="display: inline-block; padding: 10px"
                     on:click={(e) => {
                         context.changes.setValue(
                             `tilemap.${y}.${x}`,
@@ -93,11 +115,17 @@
                     }}
                 >
                     {tile}
-                </button>
+                </Button>
             {/each}
         </div>
     {/each}
 </div>
 
 <style type="scss">
+    .grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        place-items: stretch;
+    }
 </style>
