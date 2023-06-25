@@ -174,7 +174,6 @@
                 background: var(--ctx-hover-bg);
                 color: var(--ctx-hover-fg);
                 outline: 1px dashed var(--ctx-hover-outline) !important;
-                z-index: 1000001;
             }
             &:focus {
                 outline: none;
