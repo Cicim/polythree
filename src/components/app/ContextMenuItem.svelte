@@ -103,6 +103,7 @@
         class="ctx-item ctx-text-item"
         on:click={runAction}
     >
+        <span />
         <span>{item.text}</span>
         {#if item.keybinding !== ""}
             <span class="keybinding"
@@ -120,7 +121,7 @@
         class="ctx-item ctx-icon-item"
         on:click={runAction}
     >
-        <iconify-icon icon={item.icon} height="20px" />
+        <iconify-icon class="ctx-icon" icon={item.icon} />
         <span>{item.text}</span>
         {#if item.keybinding !== ""}
             <span class="keybinding"
@@ -135,8 +136,9 @@
         on:mouseenter={openSubMenu}
         class="ctx-item ctx-submenu-item"
     >
+        <span />
         <span>{item.text}</span>
-        <iconify-icon icon="eva:arrow-ios-forward-fill" height="16px" />
+        <iconify-icon icon="ep:arrow-right-bold" />
         <!-- Submenu -->
         <div
             class:hidden={!item.isVisible}
@@ -153,10 +155,11 @@
 <style lang="scss">
     .ctx-item {
         &:not(.ctx-separator) {
+            --padding: 0.5em 8px;
+            --left-padding: 28px;
+
             min-width: 160px;
             max-width: 400px;
-            padding: 0.5em 8px;
-            padding-left: 32px;
             border-radius: 4px;
 
             white-space: nowrap;
@@ -168,9 +171,10 @@
             color: var(--ctx-fg);
 
             &:hover {
-                background: var(--main-bg);
-                outline: 1px solid var(--strong-bg);
-                color: var(--accent-fg);
+                background: var(--ctx-hover-bg);
+                color: var(--ctx-hover-fg);
+                outline: 1px dashed var(--ctx-hover-outline) !important;
+                z-index: 1000001;
             }
             &:focus {
                 outline: none;
@@ -179,36 +183,39 @@
     }
 
     .keybinding {
-        float: right;
-        text-align: right;
-        min-width: 80px;
         color: var(--weak-fg);
-        padding-left: 20px;
+        padding-left: var(--left-padding) !important;
     }
 
     .ctx-text-item {
         border: none;
+        padding: var(--padding);
+        display: grid;
+        grid-template-columns: var(--left-padding) 1fr min-content;
     }
 
     .ctx-icon-item {
         border: none;
+        padding: var(--padding);
+        display: grid;
+        grid-template-columns: var(--left-padding) 1fr min-content;
 
-        & iconify-icon {
-            position: absolute;
-            transform: translateX(-28px) translateY(-4px);
+        & iconify-icon.ctx-icon {
+            width: 1em;
+            height: 1em;
+            padding-right: calc(0.5em - 2px);
+            transform: scale(1.4);
+            place-self: center;
         }
     }
 
     .ctx-submenu-item {
         display: grid;
-        grid-template-columns: 1fr min-content;
+        padding: var(--padding);
+        grid-template-columns: var(--left-padding) 1fr min-content;
         border: none;
 
         align-items: center;
-
-        & iconify-icon {
-            width: min-content;
-        }
     }
 
     .ctx-separator {
@@ -218,7 +225,7 @@
         & .ctx-separator-hr {
             border: 1px solid var(--light-shadow);
             border-top: none;
-            margin: 0.4em;
+            margin: 0.3em;
 
             &:not(:only-child) {
                 margin-top: 0.2em;
@@ -227,16 +234,14 @@
 
         & .ctx-separator-caption {
             color: var(--weak-fg);
-            font-size: 1.2em;
+            font-size: 0.9em;
+            font-style: italic;
             margin: 0.4em;
-            margin-bottom: 0.2em;
         }
     }
 
     .submenu {
         position: fixed;
-        top: 0;
-        left: 0;
 
         display: flex;
         flex-direction: column;

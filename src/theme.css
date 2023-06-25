@@ -7,8 +7,6 @@
     --weak-fg: #b2b2b0;
     --tabs-bg: #08080c;
     --tabs-fg: var(--main-fg);
-    --ctx-bg: var(--weak-bg);
-    --ctx-fg: var(--main-fg);
 
     /* Buttons */
     --btn-primary-bg: #2f2f32;
@@ -30,6 +28,13 @@
     --btn-secondary-bg-disabled: #566a86;
     --btn-secondary-fg-disabled: var(--weak-fg);
     --btn-secondary-border-disabled: #72829c;
+
+    /* Context Menu */
+    --ctx-bg: var(--weak-bg);
+    --ctx-fg: var(--main-fg);
+    --ctx-hover-outline: #696969;
+    --ctx-hover-bg: var(--main-bg);
+    --ctx-hover-fg: var(--accent-fg);
 
     /* Inputs */
     --input-bg: #1f1f22;
