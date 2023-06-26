@@ -165,6 +165,7 @@ export class ValueChange extends Change {
                 changes.stack.pop();
                 changes.top--;
                 changes.updateChanges();
+                this.apply(data);
             }
         }
 
