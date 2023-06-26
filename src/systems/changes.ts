@@ -37,7 +37,7 @@ export class EditorChanges {
             return this.queue.push(change);
 
         // Calculate the change's previous value
-        const noUpdate = change.updatePrev(this.data);
+        const noUpdate = change.updatePrev(this);
         // If the change is invalid, return
         if (noUpdate) return;
         // Remove all changes after the top
@@ -90,15 +90,15 @@ export class EditorChanges {
         this.queue.forEach(change => this.push(change));
         this.queue = [];
     }
-    
+
     /** Returns the current change */
-    private current() {
+    public current() {
         if (this.top === 0) return null;
         return this.stack.at(this.top - 1);
     }
 
     /** Updates the unsaved icon */
-    private updateChanges() {
+    public updateChanges() {
         this.unsaved.set(this.current() !== this.lastSaved);
     }
 
@@ -130,7 +130,7 @@ export abstract class Change {
      * returns true if the change is invalid
      * and should not be added to the stack
      */
-    public abstract updatePrev(data: Data): boolean;
+    public abstract updatePrev(changes: EditorChanges): boolean;
 
     public abstract revert(data: Data): Promise<void>;
     public abstract apply(data: Data): Promise<void>;
@@ -145,8 +145,29 @@ export class ValueChange extends Change {
         super(edits);
     }
 
-    public updatePrev(data: Data): boolean {
+    public updatePrev(changes: EditorChanges): boolean {
+        const data = changes.data;
+        const lastChange = changes.current();
+
         this.prevValue = r.getStore(data, this.edits);
+
+        // Check to see if the last change was a value change
+        if (lastChange instanceof ValueChange) {
+            if (
+                // Check if the change edits the same field
+                lastChange.edits.join(".") === this.edits.join(".") &&
+                // Check if the last change was made with the last 5 seconds
+                this.timestamp - lastChange.timestamp < 5000 &&
+                changes.stack.length > 1) {
+                this.prevValue = lastChange.prevValue;
+
+                // Remove the last change
+                changes.stack.pop();
+                changes.top--;
+                changes.updateChanges();
+            }
+        }
+
         return this.prevValue === this.nextValue;
     }
 

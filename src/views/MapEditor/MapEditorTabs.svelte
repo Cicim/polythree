@@ -128,7 +128,6 @@
         Set to Pallet Town
     </Button>
 
-
     {#each $data.tilemap as row, y}
         <div>
             {#each row as tile, x}
