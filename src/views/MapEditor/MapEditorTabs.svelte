@@ -1,6 +1,8 @@
 <script lang="ts">
     import Button from "src/components/Button.svelte";
     import Input from "src/components/Input.svelte";
+    import Option from "src/components/Option.svelte";
+    import Select from "src/components/Select.svelte";
     import { ValueChange } from "src/systems/changes";
     import {
         Menu,
@@ -17,17 +19,42 @@
 </script>
 
 <div class="grid">
-    <Button
+    <!-- <Button
         on:click={(e) => {
             console.log("Button 1");
             // @ts-ignore
             e.target.setAttribute("disabled", true);
         }}>1</Button
-    >
+    > -->
+    <select on:change={() => console.log("Change")}>
+        <option value="">HELLO</option>
+        <option value="">WORLD</option>
+    </select>
     <Input />
     <Button on:click={() => console.log("Button 3")} disabled>3</Button>
-    <Button color="secondary" on:click={() => console.log("Button 1")}>1</Button
-    >
+    <Select
+        options={[
+            ["on", "Turns the thing On"],
+            ["off", "Turns the thing Off"],
+            ["1", "Option 1"],
+            ["2", "Option 2"],
+            ["3", "Option 3"],
+            ["4", "Option 4"],
+            ["5", "Option 5"],
+            ["6", "Option 6"],
+            ["7", "Option 7"],
+            ["8", "Option 8"],
+            ["9", "Option 9"],
+            ["10", "Option 10"],
+            ["11", "Option 11"],
+            ["12", "Option 12"],
+            ["13", "Option 13"],
+            ["14", "Option 14"],
+            ["15", "Option 15"],
+            ["16", "Option 16"],
+        ]}
+        value="on"
+    />
     <Button color="secondary" on:click={() => console.log("Button 2")}>
         2
     </Button>

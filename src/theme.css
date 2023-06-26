@@ -29,12 +29,23 @@
     --btn-secondary-fg-disabled: var(--weak-fg);
     --btn-secondary-border-disabled: #72829c;
 
+    /* Select */
+    --sel-bg: #1f1f22;
+    --sel-fg: var(--main-fg);
+    --sel-border: #39393d;
+
+    /* Option */
+    --opt-bg: #1f1f22;
+    --opt-fg: var(--main-fg);
+    --opt-bg-hover: var(--main-bg);
+    --opt-fg-hover: var(--accent-fg);
+
     /* Context Menu */
     --ctx-bg: var(--weak-bg);
     --ctx-fg: var(--main-fg);
-    --ctx-hover-outline: #696969;
-    --ctx-hover-bg: var(--main-bg);
-    --ctx-hover-fg: var(--accent-fg);
+    --ctx-outline-hover: #696969;
+    --ctx-bg-hover: var(--main-bg);
+    --ctx-fg-hover: var(--accent-fg);
 
     /* Inputs */
     --input-bg: #1f1f22;

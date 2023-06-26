@@ -34,7 +34,7 @@
 <svelte:window on:keydown|stopPropagation={closeOnEscape} on:mouseup={closeOnClickOutside} />
 
 <!-- The dialog -->
-<dialog class="dialog" bind:this={dialogElement}>
+<dialog class="dialog modal" bind:this={dialogElement}>
     <!-- The dialog content container -->
     <svelte:component this={dialogComponent} {close} {...$$restProps} />
 </dialog>

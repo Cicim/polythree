@@ -171,9 +171,9 @@
             color: var(--ctx-fg);
 
             &:hover {
-                background: var(--ctx-hover-bg);
-                color: var(--ctx-hover-fg);
-                outline: 1px dashed var(--ctx-hover-outline) !important;
+                background: var(--ctx-bg-hover);
+                color: var(--ctx-fg-hover);
+                box-shadow: inset 0 0 0 1px var(--ctx-outline-hover) !important;
             }
             &:focus {
                 outline: none;

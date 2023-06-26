@@ -4,10 +4,6 @@ import { openViews } from "./views";
 
 import Dialog from "src/components/dialog/Dialog.svelte";
 
-export function isDialogOpen() {
-    return !!document.querySelector(".dialog");
-}
-
 export async function spawnDialog(dialogType: typeof SvelteComponent, options: {} = {}) {
     const parent = document.body;
 

@@ -1,5 +1,3 @@
-import { isDialogOpen } from "./dialogs";
-
 /** A hashed keyboard combination */
 type KeyHash = string;
 /** The name of an action */
@@ -12,6 +10,10 @@ type ActionMap = Record<ActionName, Action>;
 type KeypressMap = Record<KeyHash, Action>;
 /** A map of action names to their key hashes */
 type BindingMap = Record<ActionName, KeyHash>;
+
+function isModalOpen() {
+    return !!document.querySelector(".modal[open]");
+}
 
 export class Bindings {
     static active: KeypressMap = {};
@@ -68,7 +70,7 @@ export class Bindings {
 
     /** Handles a keypress event */
     static handleKeypress(event: KeyboardEvent) {
-        if (isDialogOpen()) return;
+        if (isModalOpen()) return;
         // Get the key hash
         const keyHash = Bindings.getKeyHash(event);
         // Check if the key hash is in activeBindings
