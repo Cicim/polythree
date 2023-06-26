@@ -147,6 +147,16 @@
     {/each}
 </div>
 
+<Select
+    style="position: absolute; right: 0; top: 0;"
+    options={[
+        ["a", "Attack!"],
+        ["b", "Protec!"],
+        ["c", "But most importantly..."],
+        ["d", "Have fun!"],
+    ]}
+/>
+
 <style lang="scss">
     .grid {
         width: 100%;

@@ -1,14 +1,14 @@
 <script lang="ts">
     import "iconify-icon";
     import Option from "./Option.svelte";
-    import { getContext, onDestroy, setContext } from "svelte";
+    import { getContext, onDestroy, onMount, setContext } from "svelte";
     import type { NavigatePath } from "src/systems/navigate";
     import type { EditorContext } from "src/systems/editors";
     import type { Unsubscriber, Writable } from "svelte/store";
     import r from "src/systems/navigate";
 
     /** The options list as a record of `(value => text)` */
-    export let options: [string, string][] = [];
+    export let options: [string, string][];
     /** The currently selected value */
     export let value: string = options[0][0];
     /** The path to the object this select updates */
@@ -47,8 +47,6 @@
         // If the value is unchanged, don't trigger a change
         if (previousValue === value) return;
 
-        console.log("Passed", previousValue, "=>", value);
-
         // If this select edits some property, update it
         if (edits !== null) {
             context.changes.setValue(edits, value);
@@ -83,14 +81,41 @@
 
         // Set the width of the options list to the width of the select element
         optionsEl.style.width = `${width}px`;
-
+        // Get the height of an option element
         const optionsHeight = Math.min(O.length, MAX_OPTIONS_HEIGHT);
-
+        // Set the height of the options list to a minumum between
+        // the number of options and the max options height
         optionsEl.style.height = `${buttonHeight * optionsHeight + 2}px`;
 
-        // Place the options list below the select element
-        optionsEl.style.top = `${selectEl.getBoundingClientRect().bottom}px`;
-        optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
+        // Place the options list below the select element if there is enough space
+        // Otherwise, place it above the select element
+        if (
+            selectEl.getBoundingClientRect().bottom +
+                optionsEl.getBoundingClientRect().height >
+            window.innerHeight
+        )
+            optionsEl.style.top = `${
+                selectEl.getBoundingClientRect().top -
+                optionsEl.getBoundingClientRect().height
+            }px`;
+        else
+            optionsEl.style.top = `${
+                selectEl.getBoundingClientRect().bottom
+            }px`;
+
+        // Place the options list to the left of the select element if there is enough space
+        // Otherwise, place it to the right of the select element
+        if (
+            selectEl.getBoundingClientRect().right +
+                optionsEl.getBoundingClientRect().width >
+            window.innerWidth
+        )
+            optionsEl.style.left = `${
+                selectEl.getBoundingClientRect().right -
+                optionsEl.getBoundingClientRect().width
+            }px`;
+        else
+            optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
 
         stopSearch();
 
@@ -314,6 +339,27 @@
         stopSearch();
         if (unsub) unsub();
     });
+
+    let loading = true;
+    function getMaxOption() {
+        let maxString = "";
+        for (const option of O)
+            if (option.text.length > maxString.length) maxString = option.text;
+        return maxString;
+    }
+
+    onMount(() => {
+        // Get if the element is part of a grid
+        const isGrid =
+            // @ts-ignore
+            selectEl.parentElement.computedStyleMap().get("display").value ===
+            "grid";
+
+        if (isGrid) return (loading = false);
+        // Set the width of the selectEl to its current width
+        selectEl.style.width = `${selectEl.getBoundingClientRect().width}px`;
+        loading = false;
+    });
 </script>
 
 <svelte:window
@@ -324,13 +370,16 @@
 />
 
 <button
+    {...$$restProps}
     bind:this={selectEl}
     class="select"
     class:open
     on:click|stopPropagation={openOptions}
 >
     <span class="selected-option">
-        {#if O.find((o) => value === o.value)}
+        {#if loading}
+            {getMaxOption()}
+        {:else if O.find((o) => value === o.value)}
             {O.find((o) => value === o.value).text}
         {:else}
             <span
@@ -431,6 +480,11 @@
 
         box-sizing: border-box;
         border: 1px solid var(--sel-border);
+        border-radius: 4px;
+
+        &::backdrop {
+            background: transparent;
+        }
 
         &:focus {
             outline: none;
