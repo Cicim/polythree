@@ -1,7 +1,7 @@
 <script lang="ts">
     import "iconify-icon";
     import Option from "./Option.svelte";
-    import { getContext, onDestroy, onMount, setContext } from "svelte";
+    import { getContext, onDestroy, onMount, setContext, tick } from "svelte";
     import type { NavigatePath } from "src/systems/navigate";
     import type { EditorContext } from "src/systems/editors";
     import type { Unsubscriber, Writable } from "svelte/store";
@@ -348,16 +348,23 @@
         return maxString;
     }
 
-    onMount(() => {
-        // Get if the element is part of a grid
-        const isGrid =
-            // @ts-ignore
-            selectEl.parentElement.computedStyleMap().get("display").value ===
-            "grid";
+    function onPageShow() {
+        // if (!loading) return;
+        // // Check if the browser supports computed style maps
+        // if (selectEl.parentElement.computedStyleMap !== undefined) {
+        //     // Get if the element is part of a grid
+        //     const isGrid =
+        //         // @ts-ignore
+        //         selectEl.parentElement.computedStyleMap().get("display")
+        //             .value === "grid";
+        //     if (isGrid) return (loading = false);
+        // }
+        // // Set the width of the selectEl to its current width
+        // selectEl.style.width = `${selectEl.getBoundingClientRect().width}px`;
+        // loading = false;
+    }
 
-        if (isGrid) return (loading = false);
-        // Set the width of the selectEl to its current width
-        selectEl.style.width = `${selectEl.getBoundingClientRect().width}px`;
+    onMount(() => {
         loading = false;
     });
 </script>
@@ -478,6 +485,7 @@
         border: 0;
         padding: 0;
 
+        background: var(--sel-bg);
         box-sizing: border-box;
         border: 1px solid var(--sel-border);
         border-radius: 4px;

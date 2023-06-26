@@ -64,16 +64,6 @@
         padding: 4px 6px;
         margin: 2px;
 
-        &[type="number"] {
-            &::-webkit-inner-spin-button,
-            &::-webkit-outer-spin-button {
-                position: absolute;
-                top: 0;
-                right: 1px;
-                height: 100%;
-            }
-        }
-
         &::-webkit-input-placeholder {
             color: var(--input-placeholder);
         }
