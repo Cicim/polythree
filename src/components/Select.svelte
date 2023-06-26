@@ -461,6 +461,8 @@
 
         .icon-dropdown {
             cursor: pointer;
+            align-self: center;
+            transition: transform 0.1s ease-in-out;
         }
     }
 
