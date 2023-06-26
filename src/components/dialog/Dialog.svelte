@@ -49,7 +49,7 @@
         box-shadow: 5px 5px 10px var(--dialog-shadow);
 
         &::backdrop {
-            background: var(--dialog-backdrop);
+            background: #0008;
             backdrop-filter: blur(5px);
         }
 
