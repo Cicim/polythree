@@ -12,6 +12,8 @@
     export let spellcheck: boolean = false;
     /** The path to the object this input updates */
     export let edits: string = null;
+    export let min: number = Number.MIN_SAFE_INTEGER;
+    export let max: number = Number.MAX_SAFE_INTEGER;
 
     let data: Writable<any>, context: EditorContext;
 
@@ -28,9 +30,12 @@
         if (edits === null) return;
 
         const value = event.currentTarget.value;
-
+        
         if (type === "number") {
-            let number = parseFloat(value);
+            let number = parseInt(value);
+
+            if (number < min) number = min;
+            if (number > max) number = max;
 
             if (isNaN(number)) number = 0;
 
@@ -39,13 +44,27 @@
             context.changes.setValue(edits, value);
         }
     }
+
+    function onKeyDown(event) {
+        // Is a Dot
+        if (
+            event.code === "Period" ||
+            event.code === "KeyE" ||
+            event.code === "Comma"
+        ) {
+            event.preventDefault();
+        }
+    }
 </script>
 
 <!-- svelte-ignore a11y-autocomplete-valid -->
 <input
     {type}
     {value}
+    {min}
+    {max}
     on:change={(e) => update(e)}
+    on:keydown={onKeyDown}
     {spellcheck}
     {...$$restProps}
     autocomplete="no"
@@ -57,10 +76,9 @@
         color: var(--input-fg);
         border: 1px solid var(--input-border);
 
-        
         cursor: text;
         user-select: none;
-        
+
         min-width: 0;
         max-width: 100%;
         overflow: hidden;
