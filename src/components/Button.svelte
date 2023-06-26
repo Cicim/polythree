@@ -6,12 +6,7 @@
     let element: HTMLButtonElement;
 </script>
 
-<button
-    bind:this={element}
-    on:click
-    class="button {color}"
-    {...$$restProps}
->
+<button bind:this={element} on:click class="button {color}" {...$$restProps}>
     <slot />
 </button>
 
@@ -49,9 +44,16 @@
         cursor: pointer;
         user-select: none;
 
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
         border-radius: 4px;
         padding: 4px 12px;
         margin: 2px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
 
         transition: background 50ms ease-in-out, transform 0.1s ease-out,
             box-shadow 0.1s ease-out, outline 0.2s ease-out;

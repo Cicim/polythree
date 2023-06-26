@@ -1,9 +1,7 @@
 <script lang="ts">
     import Button from "src/components/Button.svelte";
     import Input from "src/components/Input.svelte";
-    import Option from "src/components/Option.svelte";
     import Select from "src/components/Select.svelte";
-    import { ValueChange } from "src/systems/changes";
     import {
         Menu,
         SubMenuButton,
@@ -19,22 +17,22 @@
 </script>
 
 <div class="grid">
-    <!-- <Button
+    <Button
         on:click={(e) => {
             console.log("Button 1");
             // @ts-ignore
             e.target.setAttribute("disabled", true);
         }}>1</Button
-    > -->
+    >
     <Button on:click={() => context.changes.setValue("name", "Viridian City")}>
-        Set to Pallet Town
+        Viridian
     </Button>
     <Input />
     <Button on:click={() => console.log("Button 3")} disabled>3</Button>
     <Select
         edits="tileset"
         options={[
-            ["on", "Turns the thing On"],
+            ["on", "Turns the thing On And Off again"],
             ["off", "Turns the thing Off"],
             ["1", "Option 1"],
             ["2", "Option 2"],
@@ -61,6 +59,12 @@
     <Button color="secondary" on:click={() => console.log("Button 3")} disabled
         >3</Button
     >
+    <Button>Button 1</Button>
+    <Button>Button 2</Button>
+    <Button>Button 3</Button>
+    <Button>Button 4</Button>
+    <Button>Button 5</Button>
+    <Button>Button 6</Button>
 </div>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -113,7 +117,6 @@
 >
     {$data.width}
     {$data.height}
-    {$data.tilemap}
 
     <br />
 
@@ -125,7 +128,6 @@
         Set to Pallet Town
     </Button>
 
-    {JSON.stringify($data)}
 
     {#each $data.tilemap as row, y}
         <div>
@@ -158,10 +160,13 @@
 />
 
 <style lang="scss">
+    div {
+        overflow: hidden;
+    }
     .grid {
-        width: 100%;
+        // Creat a grid without bloating
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        place-items: stretch;
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 </style>

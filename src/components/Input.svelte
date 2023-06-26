@@ -57,9 +57,13 @@
         color: var(--input-fg);
         border: 1px solid var(--input-border);
 
+        
         cursor: text;
         user-select: none;
-
+        
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
         border-radius: 4px;
         padding: 4px 6px;
         margin: 2px;

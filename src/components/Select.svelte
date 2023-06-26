@@ -80,7 +80,7 @@
             optionsEl.children[0].children[0].getBoundingClientRect().height;
 
         // Set the width of the options list to the width of the select element
-        optionsEl.style.width = `${width}px`;
+        optionsEl.style.minWidth = `${width}px`;
         // Get the height of an option element
         const optionsHeight = Math.min(O.length, MAX_OPTIONS_HEIGHT);
         // Set the height of the options list to a minumum between
@@ -89,33 +89,62 @@
 
         // Place the options list below the select element if there is enough space
         // Otherwise, place it above the select element
-        if (
-            selectEl.getBoundingClientRect().bottom +
-                optionsEl.getBoundingClientRect().height >
-            window.innerHeight
-        )
+
+        // Get the direction that has the most space
+        const topSpace = selectEl.getBoundingClientRect().top;
+        const bottomSpace =
+            window.innerHeight - selectEl.getBoundingClientRect().bottom;
+
+        // Place the options in the largest of the two
+        if (topSpace > bottomSpace) {
+            const buttonsThatFit = Math.min(
+                MAX_OPTIONS_HEIGHT,
+                O.length,
+                Math.floor(topSpace / buttonHeight)
+            );
+            optionsEl.style.height = `${buttonHeight * buttonsThatFit + 2}px`;
+
             optionsEl.style.top = `${
                 selectEl.getBoundingClientRect().top -
                 optionsEl.getBoundingClientRect().height
             }px`;
-        else
+        } else {
             optionsEl.style.top = `${
                 selectEl.getBoundingClientRect().bottom
             }px`;
+            const buttonsThatFit = Math.min(
+                MAX_OPTIONS_HEIGHT,
+                O.length,
+                Math.floor(bottomSpace / buttonHeight)
+            );
+            optionsEl.style.height = `${buttonHeight * buttonsThatFit + 2}px`;
+        }
 
-        // Place the options list to the left of the select element if there is enough space
-        // Otherwise, place it to the right of the select element
+        // See if there is enough space to place the options to the right
+        // of the select element
         if (
             selectEl.getBoundingClientRect().right +
-                optionsEl.getBoundingClientRect().width >
+                optionsEl.getBoundingClientRect().width <
             window.innerWidth
-        )
+        ) {
+            optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
+        }
+        // The select couldn't fit in any place
+        else if (
+            optionsEl.getBoundingClientRect().width +
+                selectEl.getBoundingClientRect().width >
+            window.innerWidth
+        ) {
+            optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
+            optionsEl.style.width = `${
+                window.innerWidth - 2 * selectEl.getBoundingClientRect().left
+            }px`;
+        } else {
             optionsEl.style.left = `${
                 selectEl.getBoundingClientRect().right -
                 optionsEl.getBoundingClientRect().width
             }px`;
-        else
-            optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
+        }
 
         stopSearch();
 
@@ -348,22 +377,6 @@
         return maxString;
     }
 
-    function onPageShow() {
-        // if (!loading) return;
-        // // Check if the browser supports computed style maps
-        // if (selectEl.parentElement.computedStyleMap !== undefined) {
-        //     // Get if the element is part of a grid
-        //     const isGrid =
-        //         // @ts-ignore
-        //         selectEl.parentElement.computedStyleMap().get("display")
-        //             .value === "grid";
-        //     if (isGrid) return (loading = false);
-        // }
-        // // Set the width of the selectEl to its current width
-        // selectEl.style.width = `${selectEl.getBoundingClientRect().width}px`;
-        // loading = false;
-    }
-
     onMount(() => {
         loading = false;
     });
@@ -419,7 +432,9 @@
 
 <style lang="scss">
     .select {
-        position: relative;
+        min-width: 30px;
+        max-width: 100%;
+        overflow: hidden;
         border-radius: 4px;
         padding: 4px;
         padding-left: 12px;
