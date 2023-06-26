@@ -14,7 +14,7 @@
     export let edits: string = null;
 
     let data: Writable<any>, context: EditorContext;
-        
+
     if (edits !== null) {
         data = getContext("data");
         context = getContext("context");
@@ -41,12 +41,14 @@
     }
 </script>
 
+<!-- svelte-ignore a11y-autocomplete-valid -->
 <input
     {type}
     {value}
     on:change={(e) => update(e)}
     {spellcheck}
     {...$$restProps}
+    autocomplete="no"
 />
 
 <style lang="scss">

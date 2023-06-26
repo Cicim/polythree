@@ -1,15 +1,21 @@
 <script lang="ts">
     import "iconify-icon";
     import Option from "./Option.svelte";
-    import { setContext } from "svelte";
-
-    type OptionText = string;
-    type OptionValue = string;
+    import { getContext, onDestroy, setContext } from "svelte";
+    import type { NavigatePath } from "src/systems/navigate";
+    import type { EditorContext } from "src/systems/editors";
+    import type { Unsubscriber, Writable } from "svelte/store";
+    import r from "src/systems/navigate";
 
     /** The options list as a record of `(value => text)` */
     export let options: [string, string][] = [];
     /** The currently selected value */
     export let value: string = options[0][0];
+    /** The path to the object this select updates */
+    export let edits: NavigatePath | null = null;
+
+    let context: EditorContext = getContext("context");
+    let data: Writable<any> = getContext("data");
 
     export const MAX_OPTIONS_HEIGHT = 10;
 
@@ -31,20 +37,35 @@
 
     /** The last value recorded before opening the options */
     let lastValue = value;
+    /** The current search string */
+    let searchString = "";
+    /** The current search timeout */
+    let searchTimeout: NodeJS.Timeout = null;
 
     /** To trigger the custom change event */
     function triggerChange(previousValue: string) {
+        // If the value is unchanged, don't trigger a change
         if (previousValue === value) return;
-        lastValue = value;
-        console.log("Passed");
+
+        console.log("Passed", previousValue, "=>", value);
+
+        // If this select edits some property, update it
+        if (edits !== null) {
+            context.changes.setValue(edits, value);
+        }
+
+        // Dispatch the change event
         selectEl.dispatchEvent(new Event("change"));
+        // Update the previous value
+        lastValue = value;
     }
 
+    /** Scrolls the seledcted option into view */
     function scrollToSelected() {
         // Move the selected button into view
         optionsEl.children[0].children[
             O.findIndex((option) => option.selected)
-        ].scrollIntoView();
+        ]?.scrollIntoView();
     }
 
     /** For opening the modal options */
@@ -71,8 +92,12 @@
         optionsEl.style.top = `${selectEl.getBoundingClientRect().bottom}px`;
         optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
 
+        stopSearch();
+
+        selectValue(value);
         // Move the selected button into view
         scrollToSelected();
+        lastValue = value;
     }
 
     /** For closing the modal options */
@@ -99,6 +124,51 @@
             // Trigger a change if the value was changed
             triggerChange(lastValue);
         }
+    }
+
+    /** Handles search */
+    function handleSearch(key: string) {
+        if (key.length !== 1 && key !== "Backspace") return;
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchString = "";
+            searchTimeout = null;
+        }, 1000);
+
+        // Handle backspace
+        if (key === "Backspace") searchString = searchString.slice(0, -1);
+        // Add the key
+        else searchString += key.toLowerCase();
+
+        if (searchString === " ") {
+            if (!open) return openOptions();
+        }
+
+        if (searchString === "") return;
+
+        // Look for the search string in the options
+        const index = O.findIndex((option) =>
+            option.text.toLowerCase().startsWith(searchString)
+        );
+
+        if (index === -1) return;
+
+        // Select the option
+        selectValue(O[index].value);
+        scrollToSelected();
+
+        let previousValue = value;
+        value = O[index].value;
+
+        if (document.activeElement === selectEl) triggerChange(previousValue);
+    }
+
+    /** Stops the search timeout */
+    function stopSearch() {
+        searchString = "";
+        searchTimeout = null;
+        clearTimeout(searchTimeout);
     }
 
     /** Handles keydown */
@@ -172,19 +242,27 @@
                 break;
             }
             case "Enter": {
+                if (!optionsEl.contains(document.activeElement)) return;
+                closeWithValue(value);
+                break;
+            }
+            default: {
+                if (
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey ||
+                    event.code === "Tab"
+                )
+                    return;
+
                 if (
                     document.activeElement !== selectEl &&
                     !optionsEl.contains(document.activeElement)
                 )
                     return;
 
-                // Close the options list
-                optionsEl.close();
-                open = false;
-
-                // Set the value of the select element
-                value = O.find((option) => option.selected).value;
-                break;
+                event.preventDefault();
+                handleSearch(event.key);
             }
         }
     }
@@ -199,9 +277,18 @@
         open = false;
 
         // Set the value of the select element
-        let previousValue = value;
         value = v;
-        triggerChange(previousValue);
+        triggerChange(lastValue);
+    }
+
+    function closeWithoutValue() {
+        if (!open) return;
+
+        // Close the options list
+        optionsEl.close();
+        open = false;
+
+        value = lastValue;
     }
 
     /** Sets the option with the given value as selected */
@@ -214,9 +301,27 @@
     }
     setContext("close", closeWithValue);
     setContext("select", selectValue);
+
+    let unsub: Unsubscriber;
+    if (edits !== null) {
+        // Subscribe to changes
+        unsub = data.subscribe((d) => {
+            value = r.get(d, edits) as string;
+        });
+    }
+
+    onDestroy(() => {
+        stopSearch();
+        if (unsub) unsub();
+    });
 </script>
 
-<svelte:body on:click={onClickOutside} on:keydown={onKeyDown} />
+<svelte:window
+    on:click={onClickOutside}
+    on:resize={closeWithoutValue}
+    on:blur|stopPropagation={closeWithoutValue}
+    on:keydown={onKeyDown}
+/>
 
 <button
     bind:this={selectEl}
@@ -224,8 +329,26 @@
     class:open
     on:click|stopPropagation={openOptions}
 >
-    <span class="selected-option">{O.find((o) => value === o.value).text}</span>
-    <iconify-icon icon="mdi:chevron-down" />
+    <span class="selected-option">
+        {#if O.find((o) => value === o.value)}
+            {O.find((o) => value === o.value).text}
+        {:else}
+            <span
+                class="invalid"
+                title="This is not a valid value for this Select">{value}</span
+            >
+        {/if}
+    </span>
+    {#if searchTimeout === null}
+        <iconify-icon class="icon-dropdown" icon="mdi:chevron-down" />
+    {:else}
+        <span class="search-string"
+            ><iconify-icon
+                class="icon-search"
+                icon="mdi-search"
+            />{searchString}</span
+        >
+    {/if}
 </button>
 
 <dialog bind:this={optionsEl} class="options-list modal">
@@ -240,6 +363,7 @@
 
 <style lang="scss">
     .select {
+        position: relative;
         border-radius: 4px;
         padding: 4px;
         padding-left: 12px;
@@ -254,6 +378,8 @@
         color: var(--sel-fg);
         border: 1px solid var(--sel-border);
 
+        transition: outline 0.1s ease-in-out;
+
         &:focus {
             outline: 1px solid var(--accent-fg);
             outline-offset: 1px;
@@ -261,12 +387,23 @@
         &.open {
             outline: none;
 
-            iconify-icon {
+            .icon-dropdown {
                 transform: rotate(180deg);
             }
         }
 
-        iconify-icon {
+        .search-string {
+            display: grid;
+            grid-template-columns: auto 1fr;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: right;
+            max-width: 11em;
+        }
+
+        .icon-dropdown {
             cursor: pointer;
         }
     }
@@ -276,6 +413,11 @@
         overflow: hidden;
         text-overflow: ellipsis;
         text-align: left;
+
+        .invalid {
+            color: var(--error-fg);
+            text-decoration: underline;
+        }
     }
 
     .options-list {

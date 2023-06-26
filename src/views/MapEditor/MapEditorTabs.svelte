@@ -26,13 +26,13 @@
             e.target.setAttribute("disabled", true);
         }}>1</Button
     > -->
-    <select on:change={() => console.log("Change")}>
-        <option value="">HELLO</option>
-        <option value="">WORLD</option>
-    </select>
+    <Button on:click={() => context.changes.setValue("name", "Viridian City")}>
+        Set to Pallet Town
+    </Button>
     <Input />
     <Button on:click={() => console.log("Button 3")} disabled>3</Button>
     <Select
+        edits="tileset"
         options={[
             ["on", "Turns the thing On"],
             ["off", "Turns the thing Off"],

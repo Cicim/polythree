@@ -52,7 +52,7 @@ async function invokeMapData(msg: string, props: Object) {
         name: "Test Map",
         width: 100,
         height: 100,
-        tileset: 0,
+        tileset: "of",
         tilemap: [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 1, 0, 1, 0, 0, 0, 0, 0, 0],

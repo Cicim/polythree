@@ -7,6 +7,7 @@
     --weak-fg: #b2b2b0;
     --tabs-bg: #08080c;
     --tabs-fg: var(--main-fg);
+    --error-fg: #ff511c;
 
     /* Buttons */
     --btn-primary-bg: #2f2f32;
