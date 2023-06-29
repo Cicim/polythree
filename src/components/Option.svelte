@@ -1,5 +1,6 @@
 <script lang="ts">
     import { getContext } from "svelte";
+    import type { Writable } from "svelte/store";
 
     export let value: string;
     export let selected: boolean;
@@ -7,9 +8,16 @@
     // Get the select context
     let close = getContext("close") as Function;
     let select = getContext("select") as Function;
+    let scrollingMode = getContext("scrollingMode") as Writable<boolean>;
 
     function onMouseEnter() {
+        if (!$scrollingMode) return;
         select(value);
+    }
+
+    function onMouseMove() {
+        if (!$scrollingMode) select(value);
+        scrollingMode.set(true);
     }
 
     function onClick() {
@@ -22,7 +30,8 @@
     class="option"
     class:selected
     on:click={onClick}
-    on:mousemove={onMouseEnter}
+    on:mousemove|preventDefault={onMouseMove}
+    on:mouseenter|preventDefault={onMouseEnter}
     on:keydown|preventDefault={() => {}}
 >
     <span>

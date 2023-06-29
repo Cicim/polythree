@@ -4,7 +4,7 @@
     import { getContext, onDestroy, onMount, setContext, tick } from "svelte";
     import type { NavigatePath } from "src/systems/navigate";
     import type { EditorContext } from "src/systems/editors";
-    import type { Unsubscriber, Writable } from "svelte/store";
+    import { writable, type Unsubscriber, type Writable } from "svelte/store";
     import r from "src/systems/navigate";
 
     /** The options list as a record of `(value => text)` */
@@ -34,6 +34,9 @@
     let selectEl: HTMLButtonElement;
     /** The options container */
     let optionsEl: HTMLDialogElement;
+
+    /** True if scrolling with the mouse */
+    let scrollingMode = writable(true);
 
     /** The last value recorded before opening the options */
     let lastValue = value;
@@ -245,6 +248,9 @@
                 )
                     return;
 
+                // Set the scrolling mode to keyboard
+                scrollingMode.set(false);
+
                 // Select the next option
                 const nextOption = O.findIndex((option) => option.selected) + 1;
                 if (nextOption >= O.length) return;
@@ -272,6 +278,9 @@
                     !optionsEl.contains(document.activeElement)
                 )
                     return;
+
+                // Set the scrolling mode to keyboard
+                scrollingMode.set(false);
                 // Select the previous option
                 const prevOption = O.findIndex((option) => option.selected) - 1;
                 if (prevOption < 0) return;
@@ -353,8 +362,10 @@
             selected: option.value === v,
         }));
     }
+
     setContext("close", closeWithValue);
     setContext("select", selectValue);
+    setContext("scrollingMode", scrollingMode);
 
     let unsub: Unsubscriber;
     if (edits !== null) {

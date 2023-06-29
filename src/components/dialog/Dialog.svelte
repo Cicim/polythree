@@ -51,6 +51,7 @@
         &::backdrop {
             background: #0008;
             backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
 
         &:focus {
