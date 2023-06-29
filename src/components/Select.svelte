@@ -32,8 +32,10 @@
 
     /** The select element */
     let selectEl: HTMLButtonElement;
-    /** The options container */
+    /** The options modal element that contains the container */
     let optionsEl: HTMLDialogElement;
+    /** The options container */
+    let optionsContainer: HTMLDivElement;
 
     /** True if scrolling with the mouse */
     let scrollingMode = writable(true);
@@ -64,9 +66,18 @@
     /** Scrolls the seledcted option into view */
     function scrollToSelected() {
         // Move the selected button into view
-        optionsEl.children[0].children[
-            O.findIndex((option) => option.selected)
-        ]?.scrollIntoView();
+        const selected =
+            optionsContainer.children[O.findIndex((option) => option.selected)];
+
+        if (selected === undefined) return;
+
+        // Place the scrolling position so that the selected
+        // option is in the middle of the options list
+        optionsEl.scrollTop =
+            selected.getBoundingClientRect().top -
+            optionsContainer.getBoundingClientRect().top -
+            optionsContainer.getBoundingClientRect().height / 2 +
+            selected.getBoundingClientRect().height / 2;
     }
 
     /** For opening the modal options */
@@ -80,7 +91,7 @@
         const width = selectEl.getBoundingClientRect().width;
         // Set height of a single option
         const buttonHeight =
-            optionsEl.children[0].children[0].getBoundingClientRect().height;
+            optionsContainer.children[0].getBoundingClientRect().height;
 
         // Set the width of the options list to the width of the select element
         optionsEl.style.minWidth = `${width}px`;
@@ -305,8 +316,9 @@
                 break;
             }
             case "Enter": {
-                if (!optionsEl.contains(document.activeElement)) return;
-                closeWithValue(value);
+                let selected = O.find((option) => option.selected);
+                if (!selected) return;
+                closeWithValue(selected.value);
                 break;
             }
             default: {
@@ -344,6 +356,7 @@
         triggerChange(lastValue);
     }
 
+    /** Closes the options without changing the current value */
     function closeWithoutValue() {
         if (!open) return;
 
@@ -363,10 +376,12 @@
         }));
     }
 
+    // Set the context for the options
     setContext("close", closeWithValue);
     setContext("select", selectValue);
     setContext("scrollingMode", scrollingMode);
 
+    // Set the subscriber for outside changes to the data
     let unsub: Unsubscriber;
     if (edits !== null) {
         // Subscribe to changes
@@ -375,21 +390,10 @@
         });
     }
 
+    // Destroy the subscriber and the search timeout
     onDestroy(() => {
         stopSearch();
         if (unsub) unsub();
-    });
-
-    let loading = true;
-    function getMaxOption() {
-        let maxString = "";
-        for (const option of O)
-            if (option.text.length > maxString.length) maxString = option.text;
-        return maxString;
-    }
-
-    onMount(() => {
-        loading = false;
     });
 </script>
 
@@ -408,9 +412,7 @@
     on:click|stopPropagation={openOptions}
 >
     <span class="selected-option">
-        {#if loading}
-            {getMaxOption()}
-        {:else if O.find((o) => value === o.value)}
+        {#if O.find((o) => value === o.value)}
             {O.find((o) => value === o.value).text}
         {:else}
             <span
@@ -432,7 +434,7 @@
 </button>
 
 <dialog bind:this={optionsEl} class="options-list modal">
-    <div class="options-container">
+    <div class="options-container" bind:this={optionsContainer}>
         {#each O as option}
             <Option value={option.value} selected={option.selected}>
                 {option.text}
