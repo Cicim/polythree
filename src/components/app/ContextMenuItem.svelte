@@ -55,6 +55,16 @@
         if (submenu.offsetTop + submenu.offsetHeight > window.innerHeight) {
             submenu.style.top = `${rect.bottom - submenu.offsetHeight}px`;
         }
+
+        // If the submenu is still out of bounds from the top,
+        // move it down all you can and resize it to fit
+        if (submenu.offsetTop < 0) {
+            submenu.style.top = "20px";
+            submenu.style.height = `${window.innerHeight - 40}px`;
+        }
+
+        // Scroll to the submenu's top
+        submenu.scrollTop = 0;
     };
 
     function onButtonEnter() {
@@ -145,9 +155,11 @@
             class="submenu ctx-menu hidden"
             bind:this={submenu}
         >
-            {#each item.menu.items as subitem}
-                <svelte:self item={subitem} level={level + 1} />
-            {/each}
+            <div class="submenu-container">
+                {#each item.menu.items as subitem}
+                    <svelte:self item={subitem} level={level + 1} />
+                {/each}
+            </div>
         </div>
     </button>
 {/if}
@@ -244,6 +256,23 @@
 
         display: flex;
         flex-direction: column;
+
+        overflow: auto;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+            background: var(--sel-bg);
+        }
+        &::-webkit-scrollbar-thumb {
+            background: var(--light-shadow);
+
+            &:hover {
+                background: var(--medium-shadow);
+            }
+            &:active {
+                background: var(--accent-shadow);
+            }
+        }
 
         &.hidden {
             display: none;

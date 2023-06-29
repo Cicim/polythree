@@ -1,102 +1,27 @@
 <script lang="ts">
     import ContextMenuItem from "./ContextMenuItem.svelte";
-    import {
-        IconButton,
-        Menu,
-        Separator,
-        SubMenuButton,
-        TextButton,
-        closeContextMenu,
-        ctxMenu,
-    } from "src/systems/context_menu";
+    import { closeContextMenu, ctxMenu } from "src/systems/context_menu";
 
-    const menu = new Menu([
-        new IconButton("New File", "mingcute:file-new-line", () => {
-            console.log("New File");
-        }),
-        new IconButton("New Folder", "mingcute:new-folder-line", () => {
-            console.log("New Folder");
-        }),
-        new Separator(),
-        new IconButton("Open", "majesticons:open", () => {
-            console.log("Open");
-        }),
-        new IconButton(
-            "Open With",
-            "material-symbols:open-in-new-off-sharp",
-            () => {
-                console.log("Open With");
-            }
-        ),
-        new Separator(),
-        new IconButton("Cut", "tabler:cut", () => {
-            console.log("Cut");
-        }),
-        new IconButton(
-            "Copy",
-            "ph:copy",
-            () => {
-                console.log("Copy");
-            },
-        ),
-        new IconButton("Paste", "la:paste", () => {
-            console.log("Paste");
-        }),
-        new Separator(),
-        new SubMenuButton(
-            "More",
-            new Menu([
-                new TextButton("Rename", () => {
-                    console.log("Rename");
-                }),
-                new TextButton(
-                    "Delete This File from the Face of the Earth",
-                    () => {
-                        console.log("Delete");
-                    }
-                ),
-                new Separator(),
-                new TextButton("Properties", () => {
-                    console.log("Properties");
-                }),
-            ])
-        ),
-        new SubMenuButton(
-            "Even More",
-            new Menu([
-                new TextButton("Rename", () => {
-                    console.log("Rename");
-                }),
-                new SubMenuButton(
-                    "Rename",
-                    new Menu([
-                        new TextButton(
-                            "Rename",
-                            () => {
-                                console.log("Rename");
-                            },
-                        ),
-                        new TextButton(
-                            "Delete This File from the Face of the Earth",
-                            () => {
-                                console.log("Delete");
-                            }
-                        ),
-                        new Separator(),
-                        new TextButton("Properties", () => {
-                            console.log("Properties");
-                        }),
-                    ])
-                ),
-            ])
-        ),
-    ]);
+    function onClickOutside(event: MouseEvent) {
+        // Get the dialog element's bounding rectangle
+        const rect = (event.target as HTMLElement).getBoundingClientRect();
+
+        // Check if the click was outside the dialog
+        if (
+            event.clientX < rect.left ||
+            event.clientX > rect.right ||
+            event.clientY < rect.top ||
+            event.clientY > rect.bottom
+        ) {
+            closeContextMenu();
+        }
+    }
 </script>
 
 <svelte:window
     on:contextmenu|preventDefault={() => null}
     on:resize={() => closeContextMenu()}
-    on:mousedown={closeContextMenu}
+    on:mousedown={(e) => onClickOutside(e)}
 />
 
 <dialog id="ctx-menu" class="ctx-menu">
@@ -123,6 +48,21 @@
 
         &:focus {
             outline: none;
+        }
+
+        &::-webkit-scrollbar {
+            width: 8px;
+            background: var(--sel-bg);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--light-shadow);
+        }
+        &::-webkit-scrollbar-thumb:hover {
+            background: var(--medium-shadow);
+        }
+        &::-webkit-scrollbar-thumb:active {
+            background: var(--accent-shadow);
         }
     }
     #ctx-list {
