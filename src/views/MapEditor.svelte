@@ -20,23 +20,24 @@
     }, 1);
 </script>
 
-<br />
-{#if $isLoading}
-    <LoadingScreen />
-{:else}
-    <MapEditorTabs />
-{/if}
+<div class="view">
+    {#if $isLoading}
+        <LoadingScreen />
+    {:else}
+        <MapEditorTabs />
+    {/if}
 
-Stack: {changes.top}
-{#each changes.stack as change}
-    <div
-        style="border-top: {changes.stack.indexOf(change) === changes.top
-            ? 1
-            : 0}px solid white"
-    >
-        {change.toString()}
-    </div>
-{/each}
+    Stack: {changes.top}
+    {#each changes.stack as change}
+        <div
+            style="border-top: {changes.stack.indexOf(change) === changes.top
+                ? 1
+                : 0}px solid white"
+        >
+            {change.toString()}
+        </div>
+    {/each}
+</div>
 
 <style lang="scss">
 </style>

@@ -53,7 +53,7 @@ export abstract class ViewContext {
         const viewContainer = document.getElementById("views");
         // Create the view's container
         this.container = document.createElement("div");
-        this.container.classList.add("view", "hidden");
+        this.container.classList.add("view-container", "hidden");
         viewContainer.appendChild(this.container);
 
         // Create the svelte component

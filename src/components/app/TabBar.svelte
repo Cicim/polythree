@@ -44,7 +44,8 @@
         "tabbar/prev": () => {
             const current = $openViews.find((view) => view.selected);
             const index = $openViews.indexOf(current);
-            const prev = $openViews[index - 1] ?? $openViews[$openViews.length - 1];
+            const prev =
+                $openViews[index - 1] ?? $openViews[$openViews.length - 1];
             prev.select();
         },
     });
@@ -60,7 +61,9 @@
                     new MapEditorContext({
                         group: 0,
                         index: 0,
-                    }).create().select();
+                    })
+                        .create()
+                        .select();
                 }),
             ])
         ),
@@ -69,9 +72,6 @@
         new TextButton("Close Saved", "tabbar/close_saved"),
         new TextButton("Reopen Last", "tabbar/reopen_last"),
     ]);
-    // onMount(() => {
-    //     barMenu = ;
-    // });
 
     /**
      * Scroll event handler

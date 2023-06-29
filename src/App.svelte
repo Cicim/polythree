@@ -14,7 +14,6 @@
 </script>
 
 <svelte:body
-  on:contextmenu={() => spawnDialog(AlertDialog, { modal: true })}
   on:keydown={Bindings.handleKeypress}
 />
 
@@ -29,14 +28,17 @@
   <footer id="footbar">
     <FootBar />
   </footer>
-  <ContextMenu />
 </main>
+<ContextMenu />
 
 <style lang="scss">
   #container {
     display: grid;
     height: 100vh;
     grid-template-rows: 40px 1fr min-content;
+  }
+  #views {
+    height: 100%;
   }
   #tabs {
     height: 40px;
