@@ -1,48 +1,48 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { HomePageContext } from "./views/HomePage";
-  import TabBar from "./components/app/TopBar.svelte";
-  import FootBar from "./components/app/FootBar.svelte";
-  import ContextMenu from "./components/app/ContextMenu.svelte";
-  import { Bindings } from "./systems/bindings";
+    import { onMount } from "svelte";
+    import { HomePageContext } from "./views/HomePage";
+    import TabBar from "./components/app/TopBar.svelte";
+    import FootBar from "./components/app/FootBar.svelte";
+    import ContextMenu from "./components/app/ContextMenu.svelte";
+    import { Bindings } from "./systems/bindings";
 
-  onMount(() => {
-    new HomePageContext().create().select();
-  });
+    onMount(() => {
+        new HomePageContext().create().select();
+    });
 </script>
 
 <svelte:body on:keydown={Bindings.handleKeypress} />
 
 <!-- Page container -->
 <main id="container">
-  <!-- Tabs -->
-  <header id="tabs">
-    <TabBar />
-  </header>
-  <!-- Editors -->
-  <div id="views" />
-  <footer id="footbar">
-    <FootBar />
-  </footer>
+    <!-- Tabs -->
+    <header id="tabs">
+        <TabBar />
+    </header>
+    <!-- Editors -->
+    <div id="views" />
+    <footer id="footbar">
+        <FootBar />
+    </footer>
 </main>
 <ContextMenu />
 
 <style lang="scss">
-  #container {
-    display: grid;
-    height: 100vh;
-    grid-template-rows: 40px 1fr min-content;
-  }
-  #views {
-    height: 100%;
-  }
-  #tabs {
-    height: 40px;
-    background: var(--tabs-bg);
-    color: var(--tabs-fg);
-  }
-  #footbar {
-    height: 24px;
-    background: var(--tabs-bg);
-  }
+    #container {
+        display: grid;
+        height: 100vh;
+        grid-template-rows: 40px minmax(0, 1fr) min-content;
+    }
+    #views {
+        height: 100%;
+    }
+    #tabs {
+        height: 40px;
+        background: var(--tabs-bg);
+        color: var(--tabs-fg);
+    }
+    #footbar {
+        height: 24px;
+        background: var(--tabs-bg);
+    }
 </style>

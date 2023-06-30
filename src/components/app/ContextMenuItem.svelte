@@ -166,6 +166,9 @@
 
 <style lang="scss">
     .ctx-item {
+        font-size: 14px;
+        font-family: "Rubik";
+
         &:not(.ctx-separator) {
             --padding: 0.5em 8px;
             --left-padding: 28px;
@@ -245,7 +248,6 @@
 
         & .ctx-separator-caption {
             color: var(--weak-fg);
-            font-size: 0.9em;
             font-style: italic;
             margin: 0.4em;
         }

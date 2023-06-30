@@ -25,6 +25,25 @@ body {
   overflow: hidden;
 }
 
+* {
+  &::-webkit-scrollbar {
+    width: 8px;
+    background: var(--sel-bg);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--light-shadow);
+
+    &:hover {
+      background: var(--medium-shadow);
+    }
+
+    &:active {
+      background: var(--accent-shadow);
+    }
+  }
+}
+
 .ctx-menu {
   background: var(--ctx-bg);
   color: var(--ctx-fg);
