@@ -401,7 +401,6 @@
     on:click={onClickOutside}
     on:resize={closeWithoutValue}
     on:blur|stopPropagation={closeWithoutValue}
-    on:keydown={onKeyDown}
 />
 
 <button
@@ -410,6 +409,7 @@
     class="select"
     class:open
     on:click|stopPropagation={openOptions}
+    on:keydown={onKeyDown}
 >
     <span class="selected-option">
         {#if O.find((o) => value === o.value)}
@@ -433,7 +433,7 @@
     {/if}
 </button>
 
-<dialog bind:this={optionsEl} class="options-list modal">
+<dialog bind:this={optionsEl} class="options-list modal" on:keydown={onKeyDown}>
     <div class="options-container" bind:this={optionsContainer}>
         {#each O as option}
             <Option value={option.value} selected={option.selected}>
