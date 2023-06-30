@@ -17,6 +17,7 @@
         {/if}
         {#if $rom !== null}
             <p>Rom Base: {$rom.type}</p>
+            <p>Rom Size: {$rom.sizePretty}</p>
         {:else}
             <p class="recent-files">Recent Files</p>
         {/if}

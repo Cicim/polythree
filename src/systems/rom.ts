@@ -8,13 +8,14 @@ interface Rom {
     path: string;
     type: string;
     size: number;
+    sizePretty: string;
 }
 
 /** The curretly open ROM */
 export const rom: Writable<Rom | null> = writable(null);
 
 interface RomOpenResponse {
-    Success: { rom_type: string, rom_size: number },
+    Success: { rom_type: string, rom_size: number, rom_size_fmt: string },
     Error: { message: string },
 }
 
@@ -25,12 +26,16 @@ export async function openRom() {
     const res = await open({
         title: "Open ROM",
         multiple: false,
-        // filters: [
-        //     {
-        //         name: "ROMs",
-        //         extensions: ["gba"]
-        //     }
-        // ]
+        filters: [
+            {
+                name: "ROMs",
+                extensions: ["gba"]
+            },
+            {
+                name: "All Files",
+                extensions: ["*"]
+            }
+        ]
     }) as string;
 
     if (res === null)
@@ -46,5 +51,10 @@ export async function openRom() {
         });
 
     // Set the rom
-    rom.set({ size: Success.rom_size, type: Success.rom_type, path: res });
+    rom.set({
+        size: Success.rom_size,
+        sizePretty: Success.rom_size_fmt,
+        type: Success.rom_type,
+        path: res,
+    });
 }
