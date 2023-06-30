@@ -56,6 +56,7 @@
 
     /* Dialogs */
     --dialog-bg: #1f1f22;
+    --dialog-border: #39393d;
     --dialog-shadow: #00000080;
 
     --light-shadow: #f2f2f040;

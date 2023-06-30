@@ -17,13 +17,11 @@
 <svelte:window on:keydown={handleShortCuts} />
 
 <div class="dialog-content">
-    <div class="icon">
+    <div class="icon-title">
         <iconify-icon icon="fxemoji:warningsign" width="32px" />
+        <span>Do you want to save the changes you made to the {editorName}?</span>
     </div>
-    <div class="title">
-        Do you want to save the changes you made to the {editorName}?
-    </div>
-    <div class="subtext">Your changes will be lost if you don't save them.</div>
+    <div class="content">Your changes will be lost if you don't save them.</div>
     <div class="buttons">
         <Button on:click={() => close(true)} color="secondary"
             ><u>S</u>ave</Button
@@ -34,38 +32,4 @@
 </div>
 
 <style lang="scss">
-    .dialog-content {
-        display: grid;
-        grid-template-columns: 50px 1fr;
-        grid-column-gap: 10px;
-        grid-row-gap: 5px;
-        grid-template-areas: "icon title" "subtext subtext" "buttons buttons";
-    }
-
-    .icon {
-        grid-area: icon;
-        margin: auto;
-    }
-
-    .title {
-        grid-area: title;
-        font-size: 1.2em;
-        font-weight: 300;
-        color: var(--accent-fg);
-        max-width: 320px;
-    }
-
-    .subtext {
-        grid-area: subtext;
-        font-weight: 300;
-        color: var(--main-fg);
-        padding: 1.5em 1em;
-    }
-
-    .buttons {
-        grid-area: buttons;
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        width: 100%;
-    }
 </style>

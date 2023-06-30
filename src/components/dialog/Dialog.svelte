@@ -42,9 +42,9 @@
 <style lang="scss">
     dialog {
         background: var(--dialog-bg);
-        padding: 10px;
-        border: 0px;
-        border-radius: 10px;
+        padding: 0.25em 0.5em;
+        border: 1px solid var(--dialog-border);
+        border-radius: 4px;
 
         box-shadow: 5px 5px 10px var(--dialog-shadow);
 
