@@ -19,6 +19,7 @@
     import { MapEditorContext } from "src/views/MapEditor";
     import { HomePageContext } from "src/views/HomePage";
     import type { EditorContext } from "src/systems/editors";
+    import { MapListContext } from "src/views/MapList";
 
     // Add the actions to the global keybindings
     Bindings.register({
@@ -64,6 +65,9 @@
                     })
                         .create()
                         .select();
+                }),
+                new TextButton("Map List", () => {
+                    new MapListContext().create().select();
                 }),
             ])
         ),

@@ -38,10 +38,9 @@
 <style lang="scss">
     .loading-screen {
         display: flex;
-        width: 100%;
-        height: 100%;
         justify-content: center;
         align-items: center;
+        height: 100%;
 
         user-select: none;
     }

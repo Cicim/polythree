@@ -5,17 +5,13 @@
   import FootBar from "./components/app/FootBar.svelte";
   import ContextMenu from "./components/app/ContextMenu.svelte";
   import { Bindings } from "./systems/bindings";
-  import { spawnDialog } from "./systems/dialogs";
-  import AlertDialog from "./components/dialog/AlertDialog.svelte";
 
   onMount(() => {
     new HomePageContext().create().select();
   });
 </script>
 
-<svelte:body
-  on:keydown={Bindings.handleKeypress}
-/>
+<svelte:body on:keydown={Bindings.handleKeypress} />
 
 <!-- Page container -->
 <main id="container">

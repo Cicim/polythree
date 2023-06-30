@@ -40,6 +40,7 @@
         color: var(--btn-fg);
         border: 1px solid var(--btn-border);
         box-shadow: 0 1px 2px var(--btn-border);
+        font-family: 'Rubik';
 
         cursor: pointer;
         user-select: none;

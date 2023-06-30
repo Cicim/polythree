@@ -40,4 +40,7 @@
 </div>
 
 <style lang="scss">
+    .view {
+        height: 100%;
+    }
 </style>
