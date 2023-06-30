@@ -16,7 +16,6 @@
     }
 
     function onMouseMove() {
-        if (!$scrollingMode) select(value);
         scrollingMode.set(true);
     }
 
