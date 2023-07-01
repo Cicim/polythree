@@ -69,8 +69,10 @@ export abstract class ViewContext {
         }
 
         if (this.singularTab) {
+            // Find a tab of the same type and with the same identifiers
             // @ts-ignore
-            let preexisting = get(openViews).find((view) => view instanceof this.__proto__.constructor);
+            let preexisting = get(openViews).find((view) => view instanceof this.__proto__.constructor && JSON.stringify(view.identifier) === JSON.stringify(this.identifier));
+            console.log(preexisting);
 
             if (preexisting) {
                 preexisting.select();

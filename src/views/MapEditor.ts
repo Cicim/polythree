@@ -16,6 +16,7 @@ export interface MapEditorData {
 
 export class MapEditorContext extends EditorContext {
     public name = "Map Editor";
+    public singularTab = true;
     declare public identifier: MapEditorProperties;
 
     public actions = {

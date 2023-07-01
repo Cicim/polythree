@@ -33,6 +33,17 @@
 </dialog>
 
 <style lang="scss">
+    :global(.ctx-menu) {
+        background: var(--ctx-bg);
+        color: var(--ctx-fg);
+
+        margin: 0;
+        padding: var(--chonkiness) var(--chonkiness);
+        border-radius: var(--chonkiness);
+        border: 1px solid var(--light-shadow);
+        box-shadow: 2px 2px 0 var(--light-shadow);
+        user-select: none;
+    }
     #ctx-menu {
         --chonkiness: 4px;
 

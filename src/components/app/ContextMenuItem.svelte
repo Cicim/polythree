@@ -98,7 +98,11 @@
 
 <!-- Separator -->
 {#if item instanceof Separator}
-    <span class="ctx-item ctx-separator" bind:this={element}>
+    <span
+        class="ctx-item ctx-separator"
+        class:with-caption={item.text}
+        bind:this={element}
+    >
         {#if item.text}
             <span class="ctx-separator-caption">{item.text}</span>
         {/if}
@@ -236,14 +240,14 @@
         width: 100%;
         min-width: 100px;
 
+        &.with-caption {
+            margin-top: var(--chonkiness);
+        }
+
         & .ctx-separator-hr {
             border: 1px solid var(--light-shadow);
             border-top: none;
             margin: 0.3em;
-
-            &:not(:only-child) {
-                margin-top: 0.2em;
-            }
         }
 
         & .ctx-separator-caption {

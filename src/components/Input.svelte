@@ -1,6 +1,6 @@
 <!-- A library input element -->
 <script lang="ts">
-    import { getContext, onDestroy } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy } from "svelte";
     import r from "src/systems/navigate";
     import { get, type Unsubscriber, type Writable } from "svelte/store";
     import type { EditorContext } from "src/systems/editors";
@@ -19,6 +19,8 @@
     export let max: number = Number.MAX_SAFE_INTEGER;
 
     let data: Writable<any>, context: EditorContext, unsub: Unsubscriber;
+
+    const dispatch = createEventDispatcher();
 
     // Initalize the data and context variables
     // for the data editing
@@ -42,7 +44,7 @@
             ? r.get($data, edits as string)
             : get(edits as Writable<string>);
 
-    function update(
+    function onChange(
         event: Event & { currentTarget: EventTarget & HTMLInputElement }
     ) {
         if (edits === null) return;
@@ -66,7 +68,7 @@
         }
     }
 
-    function onKeyDown(event) {
+    function onKeyDown(event: KeyboardEvent) {
         // Is a Dot
         if (
             type === "number" &&
@@ -75,6 +77,14 @@
                 event.code === "Comma")
         ) {
             event.preventDefault();
+        }
+    }
+
+    function onKeyUp(event: KeyboardEvent) {
+        if (event.code === "Enter") {
+            dispatch("submit", {
+                value: (event.currentTarget as HTMLInputElement).value,
+            });
         }
     }
 
@@ -89,8 +99,9 @@
     {value}
     {min}
     {max}
-    on:change={(e) => update(e)}
     on:keydown={onKeyDown}
+    on:change={onChange}
+    on:keyup={onKeyUp}
     {spellcheck}
     {...$$restProps}
     autocomplete="no"

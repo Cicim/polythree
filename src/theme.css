@@ -30,6 +30,12 @@
     --btn-secondary-fg-disabled: var(--weak-fg);
     --btn-secondary-border-disabled: #72829c;
 
+    /* Card */
+    --card-bg: #1f1f22;
+    --card-border: #39393d;
+    --card-hover-bg: #2f2f32;
+    --card-hover-border: #555558;
+
     /* Select */
     --sel-bg: #1f1f22;
     --sel-fg: var(--main-fg);

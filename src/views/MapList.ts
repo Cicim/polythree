@@ -12,7 +12,6 @@ export class MapListContext extends EditorContext {
     public async load(): Promise<void> {
         this.isLoading.set(true);
         // wait a random amount of time to simulate loading
-        await new Promise((resolve) => setTimeout(resolve, Math.random() * 1000));
         // Get the maps list from the server
         let data: any = { search: "" };
         this.data.set(data);
