@@ -2,11 +2,20 @@
     type ButtonColor = "primary" | "secondary";
 
     export let color: ButtonColor = "primary";
+    export let disabled: boolean = false;
+    export let pressed: boolean = false;
 
     let element: HTMLButtonElement;
 </script>
 
-<button bind:this={element} on:click class="button {color}" {...$$restProps}>
+<button
+    {disabled}
+    bind:this={element}
+    on:click
+    class:pressed
+    class="button {color}"
+    {...$$restProps}
+>
     <slot />
 </button>
 
@@ -40,7 +49,7 @@
         color: var(--btn-fg);
         border: 1px solid var(--btn-border);
         box-shadow: 0 1px 2px var(--btn-border);
-        font-family: 'Rubik';
+        font-family: "Rubik";
 
         cursor: pointer;
         user-select: none;
@@ -81,10 +90,17 @@
                 outline: 1px solid var(--accent-fg);
                 outline-offset: 1px;
             }
-            &:active {
-                outline: none !important;
+            &:active,
+            &.pressed {
+                background: var(--btn-bg-hover);
+                color: var(--btn-fg-hover);
+                border-color: var(--btn-border-hover);
+                box-shadow: 0 1px 2px var(--btn-border-hover);
                 box-shadow: none;
                 transform: translateY(2px);
+            }
+            &:active {
+                outline: none !important;
             }
         }
     }

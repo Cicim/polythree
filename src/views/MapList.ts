@@ -8,7 +8,59 @@ export interface MapCardProps {
     group: number;
     index: number;
     offset: number;
+    tileset1?: number;
+    tileset2?: number;
+    mapsec: number;
     name?: string;
+    layout: number;
+}
+
+export enum GroupCriteria {
+    Group,
+    Name,
+    Tilesets,
+    Layout,
+};
+
+export type GroupCriteriaMethods = {
+    name: string;
+    predicate: (card: MapCardProps) => string,
+    nameTransform: (name: string) => string,
+}
+
+export const groupCriteriaTable: Record<GroupCriteria, GroupCriteriaMethods> = {
+    [GroupCriteria.Group]: {
+        name: "Group",
+        predicate: (card: MapCardProps) => card.group.toString(),
+        nameTransform: (name: string) => `Group #${name}`,
+    },
+    [GroupCriteria.Name]: {
+        name: "Name",
+        predicate: (card: MapCardProps) => card.name ?? "",
+        nameTransform: (name: string) => name,
+    },
+    [GroupCriteria.Tilesets]: {
+        name: "Tilesets",
+        predicate: (card: MapCardProps) => {
+            return `${card.tileset1}+${card.tileset2}`;
+        },
+        nameTransform: (name: string) => {
+            let [t1, t2] = name.split("+");
+
+            t1 = t1 === "null" ? "???" : "$" + parseInt(t1).toString(16).padStart(7, '0').toUpperCase();
+            t2 = t2 === "null" ? "???" : "$" + parseInt(t2).toString(16).padStart(7, '0').toUpperCase();
+
+            return `Primary: ${t1}, Secondary: ${t2}`;
+        },
+    },
+    [GroupCriteria.Layout]: {
+        name: "Layout",
+        predicate: (card: MapCardProps) => card.layout.toString(),
+        nameTransform: (name: string) => {
+            if (name === "0") return "No Layout";
+            return `Layout #${name}`;
+        },
+    },
 }
 
 interface MapSectionDump {
@@ -21,6 +73,8 @@ interface MapHeaderDump {
     group: number,
     index: number,
     offset: number,
+    tileset1: number,
+    tileset2: number,
     header: MapHeader,
 }
 
@@ -82,6 +136,10 @@ export class MapListContext extends EditorContext {
                     group: map.group,
                     index: map.index,
                     offset: map.offset,
+                    tileset1: map.tileset1,
+                    tileset2: map.tileset2,
+                    layout: map.header.map_layout_id,
+                    mapsec: map.header.region_map_section_id,
                     name: names[map.header.region_map_section_id],
                 });
             }

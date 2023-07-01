@@ -1,7 +1,11 @@
 <script lang="ts">
     import "iconify-icon";
     import { onMount, setContext } from "svelte";
-    import type { MapListContext } from "./MapList";
+    import {
+        GroupCriteria,
+        groupCriteriaTable,
+        type MapListContext,
+    } from "./MapList";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
     import Input from "src/components/Input.svelte";
     import Button from "src/components/Button.svelte";
@@ -17,11 +21,13 @@
 
     /** The content of the searchbar */
     let searchString = writable("");
-    /** The container element for the map cards */
-    let container: MapsContainer;
+    /** The current grouping criteria */
+    let criteria: GroupCriteria = GroupCriteria.Group;
+    /** The current filter string */
+    let filter: string = "";
     /** The submit method for applying a search */
     function submitSearch() {
-        container.setFilter($searchString);
+        filter = $searchString;
     }
 
     onMount(async () => {
@@ -33,16 +39,32 @@
     <LoadingScreen />
 {:else}
     <div class="view">
-        <div class="searchbar">
-            <Input
-                on:submit={submitSearch}
-                edits={searchString}
-                placeholder="Search"
-            />
-            <Button on:click={submitSearch}>Search</Button>
+        <div class="topbar">
+            <div class="searchbar">
+                <Input
+                    on:submit={submitSearch}
+                    edits={searchString}
+                    placeholder="Search"
+                />
+                <Button color="secondary" on:click={submitSearch}>Search</Button
+                >
+            </div>
+            <div class="filters">
+                {#each Object.values(groupCriteriaTable) as groupCriteria, i}
+                    <Button
+                        pressed={criteria === i}
+                        on:click={() => {
+                            criteria = i;
+                        }}
+                    >
+                        {groupCriteria.name}
+                    </Button>
+                {/each}
+                <!-- <Button><iconify-icon icon="mingcute:down-line" /></Button> -->
+            </div>
         </div>
         <div class="list">
-            <MapsContainer bind:this={container} filter="" />
+            <MapsContainer bind:criteria bind:filter />
         </div>
     </div>
 {/if}
@@ -57,25 +79,35 @@
         align-self: center;
 
         grid-template-areas:
-            "search"
+            "top"
             "list";
     }
 
-    .searchbar {
-        grid-area: search;
+    .topbar {
         display: grid;
-        flex-direction: column;
-        grid-template-columns: 1fr minmax(0, min-content);
+        grid-area: top;
 
-        z-index: 10;
         padding: 0.5em 1em;
+        z-index: 10;
+        box-shadow: 0 2px 2px 0 var(--light-shadow);
 
-        :global(> *) {
-            padding: 0.5em 1em;
-            font-size: inherit;
+        .searchbar {
+            display: grid;
+            flex-direction: column;
+            grid-template-columns: 1fr minmax(0, min-content);
+
+            :global(> *) {
+                padding: 0.5em 1em;
+                font-size: inherit;
+            }
         }
 
-        box-shadow: 0 2px 2px 0 var(--light-shadow);
+        .filters {
+            place-self: center;
+            padding: 0.5em;
+            padding-bottom: 0;
+            display: flex;
+        }
     }
 
     .list {

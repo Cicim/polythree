@@ -2,13 +2,19 @@
     import { getContext, onMount } from "svelte";
     import type { Writable } from "svelte/store";
 
-    import type { MapCardProps } from "../MapList";
+    import {
+        groupCriteriaTable,
+        type GroupCriteria,
+        type MapCardProps,
+    } from "../MapList";
     import MapCard from "./MapCard.svelte";
 
     /** The data from which this component gets the info about the cards */
     const allCards: Writable<MapCardProps[]> = getContext("data");
     /** Maps separated by group from the output of a search or filter operation */
     let groups: MapGroup[] = [];
+    /** The cards as were filtered since the last search */
+    let filteredCards = $allCards;
 
     interface MapGroup {
         name: string;
@@ -16,10 +22,19 @@
     }
 
     export let filter: string;
+    export let criteria: GroupCriteria;
 
-    export function setFilter(value: string) {
-        filter = value;
-        updateCards();
+    $: filterCards(), updateCards(), filter;
+    $: updateCards(), criteria;
+
+    function filterCards() {
+        filteredCards = $allCards.filter((card) => {
+            if (filter === "") return true;
+            if (card.name) {
+                return card.name.toLowerCase().includes(filter.toLowerCase());
+            }
+            return false;
+        });
     }
 
     // Groups the cards into MapGroups depending on the predicate
@@ -55,16 +70,11 @@
     }
 
     function updateCards() {
-        groups = groupTogether(
-            $allCards,
-            (card) => card.group.toString(),
-            (group) => `Group #${group}`
-        );
+        let { predicate, nameTransform } = groupCriteriaTable[criteria];
+        groups = groupTogether(filteredCards, predicate, nameTransform);
     }
 
-    onMount(() => {
-        updateCards();
-    });
+    onMount(() => {});
 </script>
 
 <div class="maps-container">

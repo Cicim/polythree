@@ -49,7 +49,7 @@
     <div class="left">
         <span class="group">{group}</span>.<span class="index">{index}</span>
     </div>
-    <div class="right">
+    <div class="right" {...$$restProps}>
         {#if name !== null}
             <div class="pair">
                 <span class="title">Name: </span>
