@@ -49,21 +49,6 @@
         &:focus {
             outline: none;
         }
-
-        &::-webkit-scrollbar {
-            width: 8px;
-            background: var(--sel-bg);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--light-shadow);
-        }
-        &::-webkit-scrollbar-thumb:hover {
-            background: var(--medium-shadow);
-        }
-        &::-webkit-scrollbar-thumb:active {
-            background: var(--accent-shadow);
-        }
     }
     #ctx-list {
         display: flex;

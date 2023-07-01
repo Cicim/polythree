@@ -51,8 +51,8 @@ body {
   margin: 0;
   padding: var(--chonkiness) var(--chonkiness);
   border-radius: var(--chonkiness);
-  border: none;
-  box-shadow: 1px 1px 3px var(--light-shadow);
+  border: 1px solid var(--light-shadow);
+  box-shadow: 2px 2px 0 var(--light-shadow);
   user-select: none;
 }
 
