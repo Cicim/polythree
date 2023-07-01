@@ -129,7 +129,7 @@ export abstract class ViewContext {
         });
     }
     /** Function to run when the view is closed */
-    public async close(): Promise<void> {
+    public async close(): Promise<boolean> {
         // Find this view's position in the store
         let index = -1;
         openViews.update((views: ViewContext[]) => {
@@ -160,10 +160,13 @@ export abstract class ViewContext {
 
             return views;
         });
+        
+        return true;
     }
 
-    public async askClose(): Promise<void> {
-        return this.close();
+    public async askClose(): Promise<boolean> {
+        this.close()
+        return true;
     }
 
     /** Saves this editor to an object where startup information can be stored 

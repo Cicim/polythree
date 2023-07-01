@@ -61,6 +61,18 @@ body {
 
 /* Common dialog styles */
 .dialog {
+  @media screen and (min-width: 450px) {
+    max-width: 400px;
+  }
+
+  @media screen and (min-width: 1000px) {
+    max-width: 900px;
+  }
+
+  @media screen and (max-width: 450px) {
+    max-width: 80%;
+  }
+
   .dialog-content {
     color: var(--main-fg);
     display: grid;

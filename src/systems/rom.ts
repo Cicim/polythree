@@ -3,6 +3,10 @@ import { get, writable, type Writable } from "svelte/store";
 import { open } from "@tauri-apps/api/dialog";
 import { spawnDialog } from "./dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
+import { openViews } from "./views";
+import { EditorContext } from "./editors";
+import SaveDialog from "src/components/dialog/SaveDialog.svelte";
+import ConfirmDialog from "src/components/dialog/ConfirmDialog.svelte";
 
 interface Rom {
     path: string;
@@ -60,6 +64,32 @@ export async function openRom() {
 }
 
 export async function closeRom() {
+    // Close all tabs that require a rom
+    const romTabs = get(openViews).filter(v => v.needsRom);
+
+    if (romTabs.length !== 0) {
+        // Ask the user if they want to close the tabs
+        const res = await spawnDialog(ConfirmDialog, {
+            message: "Closing the ROM will close all tabs that require it. Are you sure you want to close the ROM?",
+            title: "Close ROM",
+        });
+
+        console.log(res);
+
+        if (!res) {
+            return;
+        }
+
+        const promises = [];
+        for (const tab of romTabs) {
+            promises.push(tab.close());
+        }
+        const awaited = await Promise.all(promises);
+        if (awaited.some(p => !p))
+            return;
+    }
+
+
     if (get(rom) === null)
         return console.error("No rom is open");
 

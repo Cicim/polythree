@@ -12,7 +12,8 @@
     </div>
     <div class="content">{message}</div>
     <div class="buttons">
-        <Button color="secondary" on:click={() => close(null)}>Ok</Button>
+        <Button color="secondary" on:click={() => close(true)}>Yes</Button>
+        <Button color="primary" on:click={() => close(false)}>No</Button>
     </div>
 </div>
 

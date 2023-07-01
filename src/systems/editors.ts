@@ -99,7 +99,7 @@ export abstract class EditorContext extends ViewContext {
     public async close() {
         const promptResult = await this.promptClose();
 
-        if (promptResult === null) return;
+        if (promptResult === null) return false;
 
         // If the user wants to save, save it
         if (promptResult === true)
@@ -109,15 +109,19 @@ export abstract class EditorContext extends ViewContext {
         if (get(openViews).indexOf(this) === -1) return;
         // If the save was successful, close it
         await super.close();
+        return true;
     }
 
     /** Closes the editor, but does not stick around for it to finish closing */
-    public async askClose(): Promise<void> {
+    public async askClose(): Promise<boolean> {
         const promptResult = await this.promptClose();
-        
-        if (promptResult === null) return;
-        if (promptResult === true)
+
+        if (promptResult === null) return false;
+        if (promptResult === true) {
             this.save().then(() => super.close());
+            return true;
+        }
         else super.close();
+        return false;
     }
 }
