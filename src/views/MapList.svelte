@@ -13,7 +13,6 @@
     setContext("data", context.data);
     setContext("context", context);
 
-    $: data = context.data;
     $: isLoading = context.isLoading;
 
     /** The content of the searchbar */

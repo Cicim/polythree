@@ -1,57 +1,19 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
+    import type { Writable } from "svelte/store";
+
+    import type { MapCardProps } from "../MapList";
     import MapCard from "./MapCard.svelte";
 
-    /** The arguments to pass down to a MapCard */
-    interface Card {
-        /** The map group */
-        group: number;
-        /** The map index */
-        index: number;
-        /** The map name */
-        name: string;
-        // TODO Offset or other data
-    }
-    /** The filtered list of MapCards, interlaced with titles */
-    let cards: Array<Card | string> = [
-        "Group #0",
-        { group: 0, index: 0, name: "Pallet Town" },
-        { group: 0, index: 1, name: "Viridian Forest 1F" },
-        "Group #1",
-        { group: 1, index: 0, name: "Map 4" },
-        { group: 1, index: 1, name: "Map 5" },
-        { group: 1, index: 2, name: "Map 6" },
-        "Group #2",
-        { group: 2, index: 0, name: "Map 7" },
-        { group: 2, index: 1, name: "Map 8" },
-        { group: 2, index: 2, name: "Map 9" },
-        "Group #3",
-        { group: 3, index: 0, name: "Map 10" },
-        { group: 3, index: 1, name: "Map 11" },
-        { group: 3, index: 2, name: "Map 12" },
-        "Group #4",
-        { group: 4, index: 0, name: "Map 13" },
-        { group: 4, index: 1, name: "Map 14" },
-        { group: 4, index: 2, name: "Map 15" },
-        "Group #5",
-        { group: 5, index: 0, name: "Map 16" },
-        { group: 5, index: 1, name: "Map 17" },
-        { group: 5, index: 2, name: "Map 18" },
-        "Group #6",
-        { group: 6, index: 0, name: "Map 19" },
-        { group: 6, index: 1, name: "Map 20" },
-        { group: 6, index: 2, name: "Map 21" },
-        "Group #7",
-        { group: 7, index: 0, name: "Map 22" },
-        { group: 7, index: 1, name: "Map 23" },
-        { group: 7, index: 2, name: "Map 24" },
-        "Group #8",
-        { group: 8, index: 0, name: "Map 25" },
-        { group: 8, index: 1, name: "Map 26" },
-    ];
-
     /** The data from which this component gets the info about the cards */
-    const data = getContext("data");
+    const allCards: Writable<MapCardProps[]> = getContext("data");
+    /** Maps separated by group from the output of a search or filter operation */
+    let groups: MapGroup[] = [];
+
+    interface MapGroup {
+        name: string;
+        maps: MapCardProps[];
+    }
 
     export let filter: string;
 
@@ -60,13 +22,44 @@
         updateCards();
     }
 
+    // Groups the cards into MapGroups depending on the predicate
+    // which returns the group name each map belongs to
+    function groupTogether(
+        cards: MapCardProps[],
+        predicate: (card: MapCardProps) => string,
+        nameTransform?: (name: string) => string
+    ) {
+        let groups: MapGroup[] = [];
+
+        for (let card of cards) {
+            let groupName = predicate(card);
+            let group = groups.find((g) => g.name === groupName);
+
+            if (group) {
+                group.maps.push(card);
+            } else {
+                groups.push({
+                    name: groupName,
+                    maps: [card],
+                });
+            }
+        }
+
+        if (nameTransform) {
+            for (let group of groups) {
+                group.name = nameTransform(group.name);
+            }
+        }
+
+        return groups;
+    }
+
     function updateCards() {
-        console.log("Updated the research", `'${filter}'`);
-        // Update the cards
-        cards = cards.filter((card) => {
-            if (typeof card === "string") return true;
-            return card.name.toLowerCase().includes(filter.toLowerCase());
-        });
+        groups = groupTogether(
+            $allCards,
+            (card) => card.group.toString(),
+            (group) => `Group #${group}`
+        );
     }
 
     onMount(() => {
@@ -75,12 +68,11 @@
 </script>
 
 <div class="maps-container">
-    {#each cards as card}
-        {#if typeof card === "string"}
-            <h2 class="separator">{card}</h2>
-        {:else}
+    {#each groups as group (group.name)}
+        <h2 class="separator">{group.name}</h2>
+        {#each group.maps as card}
             <MapCard {...card} />
-        {/if}
+        {/each}
     {:else}
         <div class="empty">No maps found</div>
     {/each}

@@ -9,7 +9,8 @@
 
     export let group: number;
     export let index: number;
-    export let name: string;
+    export let name: string = null;
+    export let offset: number;
 
     let ctxMenu = new Menu([
         new Separator("Edit"),
@@ -24,7 +25,11 @@
             "fluent-mdl2:select-all",
             () => {}
         ),
-        new IconButton("Select All", "material-symbols:select-all-sharp", () => {}),
+        new IconButton(
+            "Select All",
+            "material-symbols:select-all-sharp",
+            () => {}
+        ),
         new Separator("Preview"),
         new IconButton("Map", "material-symbols:visibility-outline", () => {}),
         new IconButton(
@@ -45,13 +50,17 @@
         <span class="group">{group}</span>.<span class="index">{index}</span>
     </div>
     <div class="right">
-        <div class="pair">
-            <span class="title">Name: </span>
-            <span class="value">{name}</span>
-        </div>
+        {#if name !== null}
+            <div class="pair">
+                <span class="title">Name: </span>
+                <span class="value">{name}</span>
+            </div>
+        {/if}
         <div class="pair">
             <span class="title">Offset: </span>
-            <span class="value">0x0000000</span>
+            <span class="value"
+                >${offset.toString(16).padStart(8, "0").toUpperCase()}</span
+            >
         </div>
     </div>
 </div>
