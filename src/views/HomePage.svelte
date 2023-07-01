@@ -1,7 +1,9 @@
 <script lang="ts">
     import Button from "src/components/Button.svelte";
     import type { HomePageContext } from "./HomePage";
-    import { openRom, rom } from "src/systems/rom";
+
+    import { openRom, closeRom, rom } from "src/systems/rom";
+    import { MapEditorContext } from "./MapEditor";
     import { MapListContext } from "./MapList";
 
     export let context: HomePageContext;
@@ -13,7 +15,7 @@
             {#if $rom === null}
                 <Button on:click={openRom} color="secondary">Open Rom</Button>
             {:else}
-                <Button on:click={() => rom.set(null)}>Close Rom</Button>
+                <Button on:click={closeRom}>Close Rom</Button>
             {/if}
         </div>
         <div class="rom-container">

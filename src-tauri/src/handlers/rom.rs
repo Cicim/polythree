@@ -1,38 +1,36 @@
 use poly3lib::rom::Rom;
 use serde::Serialize;
 
+use crate::state::{AppResult, AppState, AppStateFunctions};
+
 #[derive(Serialize)]
-pub enum RomOpenResponse {
-    Success {
-        rom_type: String,
-        rom_size: usize,
-        rom_size_fmt: String,
-    },
-    Error {
-        message: String,
-    },
+pub struct OpenRom {
+    rom_type: String,
+    rom_size: usize,
+    rom_size_fmt: String,
 }
 
 #[tauri::command]
-pub fn init_rom(path: String) -> RomOpenResponse {
+pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
+    println!("Loading ROM: {}", path);
+
     match Rom::load(&path) {
         Ok(mut rom) => {
             // Initialize the ROM's references so that
             // later operations will be faster
             if let Err(err) = rom.init_map() {
-                return RomOpenResponse::Error {
-                    message: format!("Failed to initialize references: {}", err),
-                };
+                return Err(format!("Failed to initialize references: {}", err));
             }
 
             // Save the references
             if let Err(err) = rom.save_refs(&path) {
-                return RomOpenResponse::Error {
-                    message: format!("Failed to save references: {}", err),
-                };
+                return Err(format!("Failed to save references: {}", err));
             }
 
-            RomOpenResponse::Success {
+            // Update the rom_path in the AppState
+            state.set_rom_path(Some(path.clone()));
+
+            Ok(OpenRom {
                 rom_type: rom.rom_type.to_string(),
                 rom_size: rom.data.len(),
                 rom_size_fmt: {
@@ -41,10 +39,13 @@ pub fn init_rom(path: String) -> RomOpenResponse {
                     let bytes = bytes.get_appropriate_unit(true);
                     format!("{}", bytes)
                 },
-            }
+            })
         }
-        Err(err) => RomOpenResponse::Error {
-            message: err.to_string(),
-        },
+        Err(err) => Err(err.to_string()),
     }
+}
+
+#[tauri::command]
+pub fn close_rom(state: AppState) {
+    state.set_rom_path(None);
 }

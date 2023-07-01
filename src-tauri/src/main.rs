@@ -2,12 +2,23 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod handlers;
+mod state;
 
-use handlers::rom::init_rom;
+use state::PolythreeState;
+
+use handlers::map_list::get_map_list;
+use handlers::rom::{close_rom, init_rom};
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![init_rom])
+        .manage(PolythreeState::new())
+        .invoke_handler(tauri::generate_handler![
+            // ROM
+            init_rom,
+            close_rom,
+            // Map list
+            get_map_list,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

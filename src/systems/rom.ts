@@ -14,16 +14,17 @@ interface Rom {
 /** The curretly open ROM */
 export const rom: Writable<Rom | null> = writable(null);
 
-interface RomOpenResponse {
-    Success: { rom_type: string, rom_size: number, rom_size_fmt: string },
-    Error: { message: string },
-}
+type RomOpenResponse = {
+    rom_type: string,
+    rom_size: number,
+    rom_size_fmt: string,
+};
 
 export async function openRom() {
     if (get(rom) !== null)
         return console.error("A rom is already open");
 
-    const res = await open({
+    const filePath = await open({
         title: "Open ROM",
         multiple: false,
         filters: [
@@ -38,23 +39,33 @@ export async function openRom() {
         ]
     }) as string;
 
-    if (res === null)
+    if (filePath === null)
         return rom.set(null);
 
-    // Initalize the rom
-    let { Success, Error } = await invoke("init_rom", { path: res }) as RomOpenResponse;
-
-    if (Error)
-        return await spawnDialog(AlertDialog, {
-            message: Error.message,
+    try {
+        // Initialize the ROM
+        let res = await invoke("init_rom", { path: filePath }) as RomOpenResponse;
+        rom.set({
+            size: res.rom_size,
+            sizePretty: res.rom_size_fmt,
+            type: res.rom_type,
+            path: filePath,
+        });
+    } catch (err) {
+        await spawnDialog(AlertDialog, {
+            message: err,
             title: "Error while loading ROM"
         });
+    }
+}
+
+export async function closeRom() {
+    if (get(rom) === null)
+        return console.error("No rom is open");
+
+    // Close the rom
+    await invoke("close_rom");
 
     // Set the rom
-    rom.set({
-        size: Success.rom_size,
-        sizePretty: Success.rom_size_fmt,
-        type: Success.rom_type,
-        path: res,
-    });
+    rom.set(null);
 }
