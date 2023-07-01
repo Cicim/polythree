@@ -144,15 +144,17 @@
 <!-- svelte-ignore missing-declaration -->
 <div
     class="tabs-view"
-    class:dropzone={activeDropzone}
     on:wheel|preventDefault={onWheel}
-    on:dragover={onDragOver}
-    on:dragleave={onDragLeave}
-    on:drop={onDrop}
     on:contextmenu={(e) => showContextMenu(e, barMenu)}
 >
     <!-- Tabs container -->
-    <div class="tabs-container">
+    <div
+        class="tabs-container"
+        class:dropzone={activeDropzone}
+        on:dragover={onDragOver}
+        on:dragleave={onDragLeave}
+        on:drop={onDrop}
+    >
         {#each $openViews as view}
             <Tab {view} />
         {/each}
@@ -176,10 +178,6 @@
                 background: transparent;
             }
         }
-
-        &.dropzone {
-            background: var(--accent-shadow);
-        }
     }
 
     .tabs-container {
@@ -193,6 +191,14 @@
 
         box-shadow: inset 0 calc(var(--tab-border-width) * -1)
             var(--tab-selected-border);
+
+        &.dropzone {
+            background: var(--accent-shadow);
+
+            :global(.tab:not(.selected)) {
+                background: var(--tabs-bg);
+            }
+        }
 
         &::-webkit-scrollbar {
             height: 5px;

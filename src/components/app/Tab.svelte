@@ -157,8 +157,7 @@
     .tab {
         display: flex;
         place-items: center;
-        padding: 0 4px;
-        min-width: 100px;
+        padding: 0 8px;
         height: 40px;
         cursor: pointer;
 
