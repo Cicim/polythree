@@ -1,5 +1,5 @@
 import type { SvelteComponent } from "svelte";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { Bindings } from "./bindings";
 
 /** All of the currently open views */
@@ -22,6 +22,8 @@ export let draggingId = writable<number | null>(null);
 export abstract class ViewContext {
     /** The name of the view */
     public abstract name: string;
+    /** Whether you can open more than one tab of this type */
+    public singularTab = false;
     /** The class of the view's component */
     protected componentClass: typeof SvelteComponent;
     /** The data that identifies this editor */
@@ -49,6 +51,16 @@ export abstract class ViewContext {
 
     /** Creates the svelte component */
     public create(position: number = null): this {
+        if (this.singularTab) {
+            // @ts-ignore
+            let preexisting = get(openViews).find((view) => view instanceof this.__proto__.constructor);
+
+            if (preexisting) {
+                preexisting.select();
+                return preexisting as this;
+            }
+        }
+
         // Get the view element
         const viewContainer = document.getElementById("views");
         // Create the view's container
