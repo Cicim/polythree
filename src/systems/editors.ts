@@ -18,6 +18,9 @@ export abstract class EditorContext extends ViewContext {
     /** Whether or not the editor is currently loading */
     public isLoading: Writable<boolean>;
 
+    /** A promise that resolves once the editor is done saving */
+    public savePromise: Promise<boolean>;
+
     /** If this value is true, the editor will close 
      * as soon as it is done saving */
     protected slatedForClose: boolean = false;
@@ -118,7 +121,10 @@ export abstract class EditorContext extends ViewContext {
 
         if (promptResult === null) return false;
         if (promptResult === true) {
-            this.save().then(() => super.close());
+            this.savePromise = this.save()
+            this.savePromise.then(() => {
+                super.close()
+            });
             return true;
         }
         else super.close();

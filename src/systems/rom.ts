@@ -74,15 +74,16 @@ export async function closeRom() {
             title: "Close ROM",
         });
 
-        console.log(res);
-
         if (!res) {
             return;
         }
 
         const promises = [];
         for (const tab of romTabs) {
-            promises.push(tab.close());
+            if (!(tab instanceof EditorContext)) continue;
+            await tab.askClose()
+            if (tab.savePromise)
+                promises.push(tab.savePromise);
         }
         const awaited = await Promise.all(promises);
         if (awaited.some(p => !p))

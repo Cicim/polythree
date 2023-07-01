@@ -165,8 +165,7 @@ export abstract class ViewContext {
     }
 
     public async askClose(): Promise<boolean> {
-        this.close()
-        return true;
+        return this.close()
     }
 
     /** Saves this editor to an object where startup information can be stored 
