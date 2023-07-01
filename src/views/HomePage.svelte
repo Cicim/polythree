@@ -2,7 +2,7 @@
     import Button from "src/components/Button.svelte";
     import type { HomePageContext } from "./HomePage";
     import { openRom, rom } from "src/systems/rom";
-    import { MapEditorContext } from "./MapEditor";
+    import { MapListContext } from "./MapList";
 
     export let context: HomePageContext;
 </script>
@@ -62,13 +62,8 @@
     </div>
     <div class="editors">
         {#if $rom !== null}
-            <Button
-                on:click={() =>
-                    new MapEditorContext({ group: 3, index: 0 })
-                        .create()
-                        .select()}
-            >
-                Map Editor
+            <Button on:click={() => new MapListContext().create().select()}>
+                Map List
             </Button>
         {/if}
     </div>

@@ -1,3 +1,5 @@
+import { getMenu } from "./context_menu";
+
 /** A hashed keyboard combination */
 type KeyHash = string;
 /** The name of an action */
@@ -79,6 +81,8 @@ export class Bindings {
             event.preventDefault();
             // Run the action
             Bindings.active[keyHash]();
+            // Close the context menu
+            getMenu()?.close();
         }
     }
 

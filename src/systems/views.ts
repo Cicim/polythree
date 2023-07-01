@@ -1,6 +1,9 @@
 import type { SvelteComponent } from "svelte";
 import { get, writable } from "svelte/store";
 import { Bindings } from "./bindings";
+import { rom } from "./rom";
+import { spawnDialog } from "./dialogs";
+import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 
 /** All of the currently open views */
 export let openViews = writable<ViewContext[]>([]);
@@ -24,6 +27,8 @@ export abstract class ViewContext {
     public abstract name: string;
     /** Whether you can open more than one tab of this type */
     public singularTab = false;
+    /** Whether or not this view needs the ROM to be loaded */
+    public needsRom = true;
     /** The class of the view's component */
     protected componentClass: typeof SvelteComponent;
     /** The data that identifies this editor */
@@ -51,6 +56,18 @@ export abstract class ViewContext {
 
     /** Creates the svelte component */
     public create(position: number = null): this {
+        if (this.needsRom) {
+            // Check if the ROM is loaded
+            if (get(rom) === null) {
+                // Send an alert message that the ROM is not loaded
+                spawnDialog(AlertDialog, {
+                    title: "No ROM Loaded",
+                    message: "You must load a ROM before you can open this tab.",
+                });
+                return { select: () => { } } as this;
+            }
+        }
+
         if (this.singularTab) {
             // @ts-ignore
             let preexisting = get(openViews).find((view) => view instanceof this.__proto__.constructor);

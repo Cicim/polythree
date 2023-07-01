@@ -1,9 +1,9 @@
 import { EditorContext } from "src/systems/editors";
 import MapList from "src/views/MapList.svelte";
-import { writable } from "svelte/store";
 
 export class MapListContext extends EditorContext {
     public name: string = "Map List";
+    public singularTab = true;
 
     public save(): Promise<boolean> {
         throw new Error("Method not implemented.");
