@@ -168,25 +168,6 @@
         scroll-behavior: auto;
         user-select: none;
 
-        &::-webkit-scrollbar {
-            height: 5px;
-            background: transparent;
-        }
-
-        &::-webkit-scrollbar-track-piece {
-            display: none;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--light-shadow);
-        }
-        &::-webkit-scrollbar-thumb:hover {
-            background: var(--medium-shadow);
-        }
-        &::-webkit-scrollbar-thumb:active {
-            background: var(--accent-shadow);
-        }
-
         &:not(:hover) {
             &::-webkit-scrollbar {
                 display: none;
@@ -202,12 +183,30 @@
     }
 
     .tabs-container {
-        width: max-content;
+        width: 100%;
         display: flex;
         height: 40px;
         overflow-x: auto;
         overflow-y: hidden;
         background: var(--tabs-bg);
         color: var(--tabs-fg);
+
+        box-shadow: inset 0 calc(var(--tab-border-width) * -1)
+            var(--tab-selected-border);
+
+        &::-webkit-scrollbar {
+            height: 5px;
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--light-shadow);
+        }
+        &::-webkit-scrollbar-thumb:hover {
+            background: var(--medium-shadow);
+        }
+        &::-webkit-scrollbar-thumb:active {
+            background: var(--accent-shadow);
+        }
     }
 </style>

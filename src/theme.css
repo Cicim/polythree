@@ -5,8 +5,6 @@
     --strong-fg: #ffffff;
     --weak-bg: #1f1f22;
     --weak-fg: #b2b2b0;
-    --tabs-bg: #08080c;
-    --tabs-fg: var(--main-fg);
     --error-fg: #ff511c;
 
     /* Buttons */
@@ -29,6 +27,13 @@
     --btn-secondary-bg-disabled: #566a86;
     --btn-secondary-fg-disabled: var(--weak-fg);
     --btn-secondary-border-disabled: #72829c;
+
+    /* Tabs */
+    --tabs-bg: #2c3e50;
+    --tab-selected-bg: var(--main-bg);
+    --tab-selected-border: #536476;
+    --tab-border-width: 2px;
+    --tabs-fg: var(--main-fg);
 
     /* Card */
     --card-bg: #1f1f22;

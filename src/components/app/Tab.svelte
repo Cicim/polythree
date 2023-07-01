@@ -161,7 +161,6 @@
         min-width: 100px;
         height: 40px;
         cursor: pointer;
-        background-color: var(--tabs-bg);
 
         &.dropzone {
             background: var(--accent-shadow);
@@ -213,7 +212,13 @@
             }
         }
         &.selected {
-            box-shadow: inset 0 2px var(--accent-shadow);
+            background: var(--tab-selected-bg);
+            box-shadow: inset 0 var(--tab-border-width)
+                    var(--tab-selected-border),
+                calc(var(--tab-border-width) * -1) 0 var(--tab-border-width) 0
+                    var(--tab-selected-border),
+                var(--tab-border-width) 0 var(--tab-border-width) 0
+                    var(--tab-selected-border);
         }
     }
 </style>
