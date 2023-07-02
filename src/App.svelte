@@ -5,6 +5,7 @@
     import FootBar from "./components/app/FootBar.svelte";
     import ContextMenu from "./components/app/ContextMenu.svelte";
     import { Bindings } from "./systems/bindings";
+    import Tooltip from "./components/app/Tooltip.svelte";
 
     onMount(() => {
         new HomePageContext().create().select();
@@ -26,6 +27,7 @@
     </footer>
 </main>
 <ContextMenu />
+<Tooltip />
 
 <style lang="scss">
     #container {

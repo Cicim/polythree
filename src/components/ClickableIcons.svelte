@@ -2,7 +2,7 @@
     interface Icon {
         icon: string;
         text: string;
-        onclick?: () => void;
+        onclick?: (event: MouseEvent) => void;
     }
 
     export let icons: Icon[];

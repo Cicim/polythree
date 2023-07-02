@@ -70,6 +70,9 @@
     --dialog-border: #39393d;
     --dialog-shadow: #00000080;
 
+    /* Tooltip */
+    --tooltip-bg: #1f1f22;
+
     --light-shadow: #f2f2f040;
     --medium-shadow: #f2f2f080;
     --hard-shadow: #f2f2f0c0;

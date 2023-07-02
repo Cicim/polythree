@@ -7,11 +7,15 @@
     } from "src/systems/context_menu";
     import { MapEditorContext } from "../MapEditor";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
+    import type { M } from "@tauri-apps/api/dialog-20ff401c";
+    import { showTooltip } from "src/systems/tooltip";
 
     export let group: number;
     export let index: number;
     export let name: string = null;
     export let offset: number;
+
+    let cardEl: HTMLDivElement;
 
     let ctxMenu = new Menu([
         new Separator("Edit"),
@@ -32,17 +36,28 @@
             () => {}
         ),
         new Separator("Preview"),
-        new IconOption("Map", "material-symbols:visibility-outline", () => {}),
+        new IconOption("Map", "material-symbols:visibility-outline", () => {
+            openTooltip();
+        }),
         new IconOption(
             "Tilesets",
             "material-symbols:visibility-outline",
             () => {}
         ),
     ]);
+
+    function openTooltip(target: HTMLElement | EventTarget = cardEl) {
+        showTooltip({
+            target: target,
+            width: 400,
+            height: 400,
+        });
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
+    bind:this={cardEl}
     class="card"
     on:click={() => new MapEditorContext({ group, index }).create().select()}
     on:contextmenu={(e) => showContextMenu(e, ctxMenu)}
@@ -69,7 +84,11 @@
         vertical_alignment="bottom"
         icons={[
             { text: "Delete", icon: "mdi:delete" },
-            { text: "Preview", icon: "mdi:eye" },
+            {
+                text: "Preview",
+                icon: "mdi:eye",
+                onclick: (e) => openTooltip(e.target),
+            },
             { text: "Copy", icon: "mdi:content-copy" },
         ]}
     />
