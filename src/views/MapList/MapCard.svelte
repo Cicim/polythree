@@ -76,9 +76,7 @@
     on:contextmenu={(e) => showContextMenu(e, ctxMenu)}
     use:intersection
     on:enterViewport={async () => {
-        await new Promise((resolve) =>
-            setTimeout(resolve, 100)
-        );
+        await new Promise((resolve) => setTimeout(resolve, 100));
         loaded = true;
     }}
     on:exitViewport={() => {
