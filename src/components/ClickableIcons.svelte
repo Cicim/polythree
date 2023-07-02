@@ -16,10 +16,10 @@
 >
     {#each icons as { icon, text, onclick }}
         <button class="icon-button" on:click|stopPropagation={onclick}>
+            <span class="text">{text}</span>
             <span class="icon">
                 <iconify-icon {icon} />
             </span>
-            <span class="text">{text}</span>
         </button>
     {/each}
 </div>
@@ -35,15 +35,16 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        height: 20px;
 
         border: none;
         background: transparent;
         color: var(--main-fg);
 
-        padding: 0.25em 0.3em;
+        padding: 0.25em 0.25em;
         border-radius: 8px;
 
-        pointer-events: all;
+        pointer-events: none;
         cursor: pointer;
 
         .text {
@@ -51,22 +52,19 @@
         }
 
         .icon {
-            display: flex;
-
-            iconify-icon {
-                place-self: center;
-            }
+            display: grid;
+            pointer-events: all;
         }
 
         &:hover {
             background: var(--btn-secondary-bg);
             outline: 1px solid var(--btn-secondary-border);
-            padding: 0.25em 0.5em;
+            padding: 0.25em 0.5em !important;
 
             .text {
                 display: flex;
                 place-self: center;
-                margin-left: 0.5em;
+                margin-right: 0.5em;
             }
         }
 
