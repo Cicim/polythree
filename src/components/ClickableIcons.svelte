@@ -29,6 +29,8 @@
         display: flex;
         position: absolute;
         z-index: 10;
+
+        transition: ease-in-out 1s;
     }
 
     .icon-button {
@@ -39,11 +41,10 @@
 
         border: none;
         background: transparent;
-        color: var(--main-fg);
-
-        padding: 0.25em 0.25em;
+        padding: 0.25em 0.5em !important;
         border-radius: 8px;
 
+        color: var(--main-fg);
         pointer-events: none;
         cursor: pointer;
 
@@ -54,17 +55,31 @@
         .icon {
             display: grid;
             pointer-events: all;
+            align-items: center;
+            position: relative;
+
+            ::after {
+                content: "";
+                display: block;
+                position: absolute;
+                bottom: -3px;
+                right: 0;
+                width: 33px;
+                height: 20px;
+                background: transparent;
+            }
         }
 
         &:hover {
             background: var(--btn-secondary-bg);
             outline: 1px solid var(--btn-secondary-border);
-            padding: 0.25em 0.5em !important;
 
             .text {
                 display: flex;
                 place-self: center;
                 margin-right: 0.5em;
+                padding-left: 0.25em;
+                pointer-events: none;
             }
         }
 
