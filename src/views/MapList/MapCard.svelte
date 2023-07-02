@@ -6,9 +6,10 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import { MapEditorContext } from "../MapEditor";
-    import ClickableIcons from "src/components/ClickableIcons.svelte";
-    import type { M } from "@tauri-apps/api/dialog-20ff401c";
     import { showTooltip } from "src/systems/tooltip";
+
+    import ClickableIcons from "src/components/ClickableIcons.svelte";
+    import MapPreview from "./MapPreview.svelte";
 
     export let group: number;
     export let index: number;
@@ -46,11 +47,19 @@
         ),
     ]);
 
-    function openTooltip(target: HTMLElement | EventTarget = cardEl) {
+    function openTooltip() {
         showTooltip({
-            target: target,
+            target: cardEl,
             width: 400,
             height: 400,
+            slot: {
+                component: MapPreview,
+                props: {
+                    group,
+                    index,
+                    name,
+                },
+            },
         });
     }
 </script>
@@ -87,9 +96,8 @@
             {
                 text: "Preview",
                 icon: "mdi:eye",
-                onclick: (e) => openTooltip(e.target),
+                onclick: openTooltip,
             },
-            { text: "Copy", icon: "mdi:content-copy" },
         ]}
     />
 </div>

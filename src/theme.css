@@ -72,6 +72,8 @@
 
     /* Tooltip */
     --tooltip-bg: #1f1f22;
+    --tooltip-fg: var(--main-fg);
+    --tooltip-border: #39393d;
 
     --light-shadow: #f2f2f040;
     --medium-shadow: #f2f2f080;

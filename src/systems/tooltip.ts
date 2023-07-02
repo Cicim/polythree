@@ -1,4 +1,4 @@
-import { tick } from "svelte";
+import { SvelteComponent, tick } from "svelte";
 
 export interface TooltipOptions {
     target: EventTarget,
@@ -6,15 +6,20 @@ export interface TooltipOptions {
     height?: number;
     maxWidth?: number;
     maxHeight?: number;
+    slot?: {
+        component?: typeof SvelteComponent;
+        props?: any;
+        innerHTML?: string;
+    }
 }
 
 export function getTooltip() {
     return document.getElementById('tooltip') as HTMLDialogElement;
 }
 
-let divs = [];
+let component: SvelteComponent = null;
 
-async function placeTooltip(target: HTMLElement, options: { width?: number, height?: number }) {
+async function setTooltipPosition(target: HTMLElement, options: { width?: number, height?: number }) {
     const tooltip = getTooltip!();
     tooltip.style.top = '0px';
     tooltip.style.left = '0px';
@@ -61,25 +66,6 @@ async function placeTooltip(target: HTMLElement, options: { width?: number, heig
         }
     ];
 
-    // DEBUG Create each reactangle as a differenly colored div
-    // const colors = ['red', 'lime', 'blue', 'yellow'];
-    // for (let i = 0; i < rects.length; i++) {
-    //     const rect = rects[i];
-    //     const color = colors[i];
-
-    //     const div = document.createElement('div');
-    //     div.style.position = 'absolute';
-    //     div.style.left = `${rect.x}px`;
-    //     div.style.top = `${rect.y}px`;
-    //     div.style.width = `${rect.width}px`;
-    //     div.style.height = `${rect.height}px`;
-    //     div.style.backgroundColor = color;
-    //     div.style.opacity = '0.5';
-    //     div.style.setProperty('border-' + rect.dir, '1px solid white');
-    //     document.body.appendChild(div);
-    //     divs.push(div);
-    // }
-
     // Get the best rectangle with the biggest area
     let newRects = [...rects].sort((r1, r2) => {
         return Math.min(r2.width, tooltipWidth) *
@@ -90,7 +76,6 @@ async function placeTooltip(target: HTMLElement, options: { width?: number, heig
 
     // Place the tooltip in the first rectangle
     const rect = newRects[0];
-    console.log(rect.dir);
 
     let startX = rect.x;
     let startY = rect.y;
@@ -134,6 +119,22 @@ async function placeTooltip(target: HTMLElement, options: { width?: number, heig
     tooltip.style.top = `${startY}px`;
 }
 
+async function setTooltipSlot(options: TooltipOptions) {
+    if (options.slot) {
+        if (options.slot.innerHTML) {
+            const content = getTooltip!();
+            content.innerHTML = options.slot.innerHTML;
+        }
+        else if (options.slot.component && options.slot.props) {
+            const container = getTooltip!();
+            component = new options.slot.component({
+                target: container,
+                props: options.slot.props
+            });
+        }
+    }
+}
+
 export function showTooltip(options: TooltipOptions = {
     target: document.body
 }) {
@@ -164,13 +165,16 @@ export function showTooltip(options: TooltipOptions = {
 
     tooltip.showModal();
     // Place the tooltip
-    placeTooltip(target, options);
+    setTooltipPosition(target, options);
+    // Set the content
+    setTooltipSlot(options);
 }
 
 export function closeTooltip() {
     const tooltip = getTooltip!();
-    for (const div of divs) {
-        div.remove();
-    }
     tooltip.close();
+    if (component) {
+        component.$destroy();
+        component = null;
+    }
 }

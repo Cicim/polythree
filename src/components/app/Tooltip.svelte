@@ -10,40 +10,27 @@
     }
 </script>
 
+<svelte:window on:resize={closeTooltip} on:blur={closeTooltip} />
+
 <dialog
     id="tooltip"
     class="modal"
     on:click={closeTooltip}
     on:keydown={onKeyDown}
->
-    <div class="tooltip-content">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos
-        voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos voluptatibus.
-        Quisquam, quos voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos
-        voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos voluptatibus.
-        Quisquam, quos voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos
-        voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos voluptatibus.
-        Quisquam, quos voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos
-        voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos voluptatibus.
-        Quisquam, quos voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos
-        voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos voluptatibus.
-        Quisquam, quos voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos
-        voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos voluptatibus.
-        Quisquam, quos voluptatibus. Quisquam, quos voluptatibus. Quisquam, quos
-    </div>
-</dialog>
+/>
 
 <style lang="scss">
     #tooltip {
         position: fixed;
-        padding: 0;
+        padding: 5px;
         margin: 0;
-        border: none;
         border-radius: 8px;
 
-        border: 1px solid white;
         background: var(--tooltip-bg);
+        color: var(--tooltip-fg);
+        border: 1px solid var(--tooltip-border);
+        box-shadow: 0 0 5px var(--tooltip-border);
+
         overflow: auto;
         grid-template-columns: 1fr;
         grid-template-rows: 1fr;
@@ -51,10 +38,9 @@
         &[open] {
             display: grid;
         }
-    }
-    .tooltip-content {
-        width: 100%;
-        background: black;
-        color: white;
+
+        &:focus {
+            outline: none;
+        }
     }
 </style>
