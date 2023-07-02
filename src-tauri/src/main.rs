@@ -7,7 +7,7 @@ mod state;
 use state::PolythreeState;
 
 use crate::handlers::{
-    map_list::{get_map_list, get_map_names},
+    map_list::{get_map_list, get_map_names, get_map_preview},
     rom::{close_rom, init_rom},
 };
 
@@ -21,6 +21,7 @@ fn main() {
             // Map list
             get_map_list,
             get_map_names,
+            get_map_preview,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
