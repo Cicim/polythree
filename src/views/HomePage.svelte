@@ -89,18 +89,6 @@
                 </div>
             {:else}
                 <p class="recent-files">Recent Files</p>
-
-                <button
-                    style="position: absolute; bottom: 100px; left: 0px;"
-                    on:click={(e) =>
-                        showTooltip({
-                            target: e.target,
-                            height: 400,
-                            width: 400,
-                        })}
-                >
-                    Open a Tooltip
-                </button>
             {/if}
         </div>
     </div>
