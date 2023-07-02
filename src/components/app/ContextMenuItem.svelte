@@ -3,9 +3,9 @@
     import {
         type MenuItem,
         Separator,
-        IconButton,
-        SubMenuButton,
-        TextButton,
+        IconOption,
+        SubMenuOption,
+        TextOption,
         ctxMenu,
         closeContextMenu,
     } from "src/systems/context_menu";
@@ -29,7 +29,7 @@
         onButtonEnter();
 
         // Show the submenu
-        (<SubMenuButton>item).isVisible = true;
+        (<SubMenuOption>item).isVisible = true;
         submenu.style.top = "0px";
         submenu.style.left = "0px";
         await tick();
@@ -109,7 +109,7 @@
         <hr class="ctx-separator-hr" bind:this={element} />
     </span>
     <!-- Text Button -->
-{:else if item instanceof TextButton}
+{:else if item instanceof TextOption}
     <button
         bind:this={element}
         on:keydown={keyboardHandler}
@@ -127,7 +127,7 @@
             >{/if}
     </button>
     <!-- Icon Button -->
-{:else if item instanceof IconButton}
+{:else if item instanceof IconOption}
     <button
         bind:this={element}
         on:keydown={keyboardHandler}
@@ -143,7 +143,7 @@
             >{/if}
     </button>
     <!-- Sub Menu Button -->
-{:else if item instanceof SubMenuButton}
+{:else if item instanceof SubMenuOption}
     <button
         bind:this={element}
         on:keydown={keyboardHandler}

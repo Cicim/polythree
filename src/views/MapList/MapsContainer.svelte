@@ -119,7 +119,7 @@
             grid-template-columns: 1fr 1fr 1fr;
         }
         @media (min-width: 1600px) {
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
         }
     }
 </style>

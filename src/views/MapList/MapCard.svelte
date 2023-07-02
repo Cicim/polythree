@@ -1,11 +1,12 @@
 <script lang="ts">
     import {
-        IconButton,
+        IconOption,
         Menu,
         Separator,
         showContextMenu,
     } from "src/systems/context_menu";
     import { MapEditorContext } from "../MapEditor";
+    import ClickableIcons from "src/components/ClickableIcons.svelte";
 
     export let group: number;
     export let index: number;
@@ -14,25 +15,25 @@
 
     let ctxMenu = new Menu([
         new Separator("Edit"),
-        new IconButton("Map", "material-symbols:edit-outline", () => {
+        new IconOption("Map", "material-symbols:edit-outline", () => {
             new MapEditorContext({ group, index }).create().select();
         }),
-        new IconButton("Tilesets", "material-symbols:edit-outline", () => {}),
+        new IconOption("Tilesets", "material-symbols:edit-outline", () => {}),
         new Separator("Selection"),
-        new IconButton("Select", "material-symbols:select-sharp", () => {}),
-        new IconButton(
+        new IconOption("Select", "material-symbols:select-sharp", () => {}),
+        new IconOption(
             "Select All in Group",
             "fluent-mdl2:select-all",
             () => {}
         ),
-        new IconButton(
+        new IconOption(
             "Select All",
             "material-symbols:select-all-sharp",
             () => {}
         ),
         new Separator("Preview"),
-        new IconButton("Map", "material-symbols:visibility-outline", () => {}),
-        new IconButton(
+        new IconOption("Map", "material-symbols:visibility-outline", () => {}),
+        new IconOption(
             "Tilesets",
             "material-symbols:visibility-outline",
             () => {}
@@ -63,6 +64,15 @@
             >
         </div>
     </div>
+    <!-- Copy iconify icon -->
+    <ClickableIcons
+        vertical_alignment="bottom"
+        icons={[
+            { text: "Delete", icon: "mdi:delete" },
+            { text: "Preview", icon: "mdi:eye" },
+            { text: "Copy", icon: "mdi:content-copy" },
+        ]}
+    />
 </div>
 
 <style lang="scss">
@@ -76,12 +86,20 @@
         background: var(--card-bg);
         border: 1px solid var(--card-border);
 
+        position: relative;
         cursor: pointer;
         user-select: none;
 
         &:hover {
             background: var(--card-hover-bg);
             border-color: var(--card-hover-border);
+
+            :global(.container) {
+                display: flex;
+            }
+        }
+        :global(.container) {
+            display: none;
         }
     }
 

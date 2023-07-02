@@ -3,10 +3,10 @@
     import type { EditorContext } from "src/systems/editors";
     import { ViewContext, draggingId, openViews } from "src/systems/views";
     import {
-        IconButton,
+        IconOption,
         Menu,
         Separator,
-        TextButton,
+        TextOption,
         showContextMenu,
     } from "src/systems/context_menu";
     import { writable } from "svelte/store";
@@ -48,14 +48,14 @@
 
     const tabMenu = new Menu([
         new Separator("This tab"),
-        new IconButton("Close", "ic:round-close", () => view.close()),
-        new TextButton("Close Others", closeOthers),
-        new TextButton("Close To Left", closeToLeft),
-        new TextButton("Close To Right", closeToRight),
+        new IconOption("Close", "ic:round-close", () => view.close()),
+        new TextOption("Close Others", closeOthers),
+        new TextOption("Close To Left", closeToLeft),
+        new TextOption("Close To Right", closeToRight),
         new Separator("Other tabs"),
-        new TextButton("Close All", "tabbar/close_all"),
-        new TextButton("Reopen Last", "tabbar/reopen_last"),
-        new TextButton("Close Saved", "tabbar/close_saved"),
+        new TextOption("Close All", "tabbar/close_all"),
+        new TextOption("Reopen Last", "tabbar/reopen_last"),
+        new TextOption("Close Saved", "tabbar/close_saved"),
     ]);
 
     // ANCHOR Drag and drop functionality

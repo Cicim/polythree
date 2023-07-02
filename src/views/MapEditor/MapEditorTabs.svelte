@@ -4,8 +4,8 @@
     import Select from "src/components/Select.svelte";
     import {
         Menu,
-        SubMenuButton,
-        TextButton,
+        SubMenuOption,
+        TextOption,
         showContextMenu,
     } from "src/systems/context_menu";
     import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
@@ -73,18 +73,18 @@
         showContextMenu(
             e,
             new Menu([
-                new TextButton("Clear All", () => {
+                new TextOption("Clear All", () => {
                     $data.tilemap = $data.tilemap.map((row) =>
                         row.map(() => 0)
                     );
                 }),
-                new SubMenuButton(
+                new SubMenuOption(
                     "Clear Row",
                     (() => {
                         let rowButtons = [];
                         for (let i = 0; i < $data.tilemap.length; i++) {
                             rowButtons.push(
-                                new TextButton(`Row ${i}`, () => {
+                                new TextOption(`Row ${i}`, () => {
                                     $data.tilemap[i] = $data.tilemap[i].map(
                                         () => 0
                                     );
@@ -94,13 +94,13 @@
                         return new Menu(rowButtons);
                     })()
                 ),
-                new SubMenuButton(
+                new SubMenuOption(
                     "Clear Column",
                     (() => {
                         let colButtons = [];
                         for (let i = 0; i < $data.tilemap[0].length; i++) {
                             colButtons.push(
-                                new TextButton(`Column ${i}`, () => {
+                                new TextOption(`Column ${i}`, () => {
                                     $data.tilemap = $data.tilemap.map((row) =>
                                         row.map((_, j) =>
                                             j === i ? 0 : row[j]

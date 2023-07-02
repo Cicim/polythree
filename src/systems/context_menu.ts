@@ -24,7 +24,7 @@ export class Menu {
     /** Shakes the menu, removing open submenus */
     public shake(level: number = 0, currentLevel: number = 1): Menu {
         for (const item of this.items) {
-            if (item instanceof SubMenuButton) {
+            if (item instanceof SubMenuOption) {
                 if (currentLevel > level)
                     item.isVisible = false;
 
@@ -47,7 +47,7 @@ export class Separator extends MenuItem {
 }
 
 /** A context menu text only button */
-export class TextButton extends MenuItem {
+export class TextOption extends MenuItem {
     /** The button's text */
     public text: string;
     /** The buttons's action */
@@ -70,7 +70,7 @@ export class TextButton extends MenuItem {
 }
 
 /** A context menu icon and text button */
-export class IconButton extends MenuItem {
+export class IconOption extends MenuItem {
     /** The button's text */
     public text: string;
     /** The button's icon */
@@ -96,7 +96,7 @@ export class IconButton extends MenuItem {
 }
 
 /** A context menu button with a submenu */
-export class SubMenuButton extends MenuItem {
+export class SubMenuOption extends MenuItem {
     /** The button's text */
     public text: string;
     /** The button's submenu */
@@ -128,6 +128,8 @@ function isBody(e: MouseEvent) {
 async function setContextMenuPosition(target: HTMLElement, x: number, y: number) {
     target.style.left = "0px";
     target.style.top = "0px";
+    target.style.removeProperty("width");
+    target.style.removeProperty("height");
     await tick();
     // Get the width and height of the target
     const width = target.offsetWidth;
@@ -135,6 +137,7 @@ async function setContextMenuPosition(target: HTMLElement, x: number, y: number)
     // Get the width and height of the screen
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
+
     // If the target is too far to the right, move it to the left
     if (x + width > screenWidth) {
         x -= width;
@@ -146,6 +149,17 @@ async function setContextMenuPosition(target: HTMLElement, x: number, y: number)
     // Set the position of the target
     target.style.left = x + "px";
     target.style.top = y + "px";
+
+    // If the target clips out of bounds on the top, resize it
+    if (y < 0) {
+        target.style.top = "20px";
+        target.style.height = (height + y - 20) + "px";
+    }
+    // If the target clips out of bounds on the left, resize it
+    if (x < 0) {
+        target.style.left = "20px";
+        target.style.width = (width + x - 20) + "px";
+    }
 }
 
 export function showContextMenu(e: MouseEvent, menu: Menu) {

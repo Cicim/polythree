@@ -3,8 +3,8 @@
     import type { HomePageContext } from "./HomePage";
 
     import { openRom, closeRom, rom } from "src/systems/rom";
-    import { MapEditorContext } from "./MapEditor";
     import { MapListContext } from "./MapList";
+    import ClickableIcons from "src/components/ClickableIcons.svelte";
 
     export let context: HomePageContext;
 </script>
@@ -26,10 +26,17 @@
                         {$rom.path}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <iconify-icon
-                            on:click={() =>
-                                navigator.clipboard.writeText($rom.path)}
-                            icon="mdi:clipboard-outline"
+                        <ClickableIcons
+                            icons={[
+                                {
+                                    text: "Copy Path",
+                                    icon: "mdi:clipboard-outline",
+                                    onclick: () =>
+                                        navigator.clipboard.writeText(
+                                            $rom.path
+                                        ),
+                                },
+                            ]}
                         />
                     </fieldset>
 
@@ -38,10 +45,17 @@
                         {$rom.type}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <iconify-icon
-                            on:click={() =>
-                                navigator.clipboard.writeText($rom.type)}
-                            icon="mdi:clipboard-outline"
+                        <ClickableIcons
+                            icons={[
+                                {
+                                    text: "Copy",
+                                    icon: "mdi:clipboard-outline",
+                                    onclick: () =>
+                                        navigator.clipboard.writeText(
+                                            $rom.type
+                                        ),
+                                },
+                            ]}
                         />
                     </fieldset>
 
@@ -50,10 +64,25 @@
                         {$rom.sizePretty}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <iconify-icon
-                            on:click={() =>
-                                navigator.clipboard.writeText($rom.sizePretty)}
-                            icon="mdi:clipboard-outline"
+                        <ClickableIcons
+                            icons={[
+                                {
+                                    text: "Copy Bytes",
+                                    icon: "mdi:clipboard-edit-outline",
+                                    onclick: () =>
+                                        navigator.clipboard.writeText(
+                                            $rom.size.toString()
+                                        ),
+                                },
+                                {
+                                    text: "Copy",
+                                    icon: "mdi:clipboard-outline",
+                                    onclick: () =>
+                                        navigator.clipboard.writeText(
+                                            $rom.sizePretty
+                                        ),
+                                },
+                            ]}
                         />
                     </fieldset>
                 </div>
@@ -111,19 +140,13 @@
                         text-transform: uppercase;
                         color: var(--weak-fg);
                     }
-                    iconify-icon {
-                        display: none;
 
-                        &:hover {
-                            color: var(--accent-fg);
-                        }
+                    :global(.container) {
+                        display: none;
                     }
 
-                    &:hover iconify-icon {
-                        display: initial;
-                        position: absolute;
-                        right: 4px;
-                        bottom: calc(1em - 4px);
+                    &:hover :global(.container) {
+                        display: flex;
                     }
                 }
             }
