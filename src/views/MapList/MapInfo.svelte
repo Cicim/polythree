@@ -47,7 +47,6 @@
                   p.group === selectedMap.group && p.index === selectedMap.index
           )
         : null;
-    $: console.log(selectedProps);
 </script>
 
 <div class="info-container">

@@ -62,7 +62,7 @@
         if (!selectedCards[group]) selectedCards[group] = {};
         selectedCards[group][index] = false;
         selectedMaps = selectedMaps.filter(
-            (m) => m.group !== group && m.index !== index
+            (m) => m.group !== group || m.index !== index
         );
         selectedCount--;
     }
@@ -125,6 +125,7 @@
             if (selected) removeMapFromSelection(group, index);
             else addMapToSelection(group, index);
             lastSelected = { group, index };
+            console.log(selectedMaps);
             selectedMaps = [...selectedMaps];
         } else if (shiftKey) {
             clearMapSelection();
