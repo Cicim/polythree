@@ -1,11 +1,14 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api";
+    import { dialog, invoke } from "@tauri-apps/api";
+    import { writeBinaryFile } from "@tauri-apps/api/fs";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
+    import AlertDialog from "src/components/dialog/AlertDialog.svelte";
     import {
         Menu,
         TextOption,
         showContextMenu,
     } from "src/systems/context_menu";
+    import { spawnDialog } from "src/systems/dialogs";
     import { onMount } from "svelte";
 
     export let group: number;
@@ -25,9 +28,39 @@
     let centerVertical = false;
     let centerHorizontal = false;
 
+    /** Saves the preview image as a file */
+    async function saveAs() {
+        // Get the file name with a dialog
+        const path = await dialog.save({
+            title: "Save Map Preview",
+            defaultPath: `map_preview_${group}_${index}.png`,
+            filters: [{ name: "PNG", extensions: ["png"] }],
+        });
+
+        if (path === null) return;
+
+        // Get the image binary and write it to the file
+        try {
+            const response = await fetch(preview);
+            const buffer = await response.arrayBuffer();
+
+            await writeBinaryFile({
+                path,
+                contents: buffer,
+            });
+        } catch (e) {
+            await spawnDialog(AlertDialog, {
+                title: "Failed to save map preview",
+                message: e,
+            });
+        }
+    }
+
     function scrollTransform(x: number): number {
-        // return Math.exp((x) ** 2);
-        return 1 / (-0.5 - x / 2) + 2;
+        let y = 1 / (-0.5 - x / 2) + 2;
+        if (y < 0) y = 0;
+        if (y > 1) y = 1;
+        return y;
     }
 
     /** Moves the preview scroll based on the mouse's position over it */
@@ -99,7 +132,7 @@
             on:contextmenu={(e) =>
                 showContextMenu(
                     e,
-                    new Menu([new TextOption("Save as...", () => {})])
+                    new Menu([new TextOption("Save as...", saveAs)])
                 )}
         >
             <img
