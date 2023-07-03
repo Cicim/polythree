@@ -42,6 +42,8 @@
     let cardEl: HTMLDivElement;
 
     let ctxMenu = new Menu([
+        new IconOption("Duplicate", "mdi:content-copy", () => {}),
+        new IconOption("Delete", "mdi:delete", () => {}),
         new Separator("Edit"),
         new IconOption("Map", "material-symbols:edit-outline", () => {
             new MapEditorContext({ group, index }).create().select();
@@ -86,7 +88,7 @@
         if (e.ctrlKey || e.shiftKey) return;
         new MapEditorContext({ group, index }).create().select();
     }}
-    on:contextmenu={(e) => showContextMenu(e, ctxMenu)}
+    on:contextmenu={(e) => {showContextMenu(e, ctxMenu)}}
     use:intersection
     on:enterViewport={async () => {
         await new Promise((resolve) =>
