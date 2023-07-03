@@ -76,11 +76,11 @@
                     new MapEditorContext(selectedMap).create().select();
                 }}
             >
-                <iconify-icon icon="fluent-mdl2:edit" />
+                <iconify-icon icon="typcn:export" />
                 Go to Map Editor
             </Button>
             <Button>
-                <iconify-icon icon="fluent-mdl2:edit" />
+                <iconify-icon icon="typcn:export" />
                 Go to Tileset Editor
             </Button>
         {/if}
@@ -176,6 +176,10 @@
 
         .actions {
             display: grid;
+
+            iconify-icon {
+                transform: scale(1.5);
+            }
 
             :global(button) {
                 display: grid;

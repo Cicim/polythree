@@ -24,6 +24,7 @@
     export let lastSelected: { group: number; index: number };
     export let selectedCount: number;
     export let clearSelection: () => void;
+    export let removeFromSelection: (group: number, index: number) => void;
 
     $: filterCards(), updateCards(), filter;
     $: updateCards(), criteria;
@@ -94,8 +95,7 @@
         for (let group in selectedCards) {
             for (let index in selectedCards[group]) {
                 if (!inGroup({ group: +group, index: +index })) {
-                    selectedCards[group][index] = false;
-                    selectedCount--;
+                    removeFromSelection(+group, +index);
                 }
             }
         }
@@ -106,12 +106,7 @@
     let containerEl: HTMLDivElement;
     function onClickOutsideCard(event: MouseEvent) {
         const target = event.target as HTMLElement;
-        if (
-            target !== containerEl ||
-            event.ctrlKey ||
-            event.shiftKey
-        )
-            return;
+        if (target !== containerEl || event.ctrlKey || event.shiftKey) return;
         clearSelection();
     }
 </script>

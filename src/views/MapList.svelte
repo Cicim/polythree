@@ -125,7 +125,6 @@
             if (selected) removeMapFromSelection(group, index);
             else addMapToSelection(group, index);
             lastSelected = { group, index };
-            console.log(selectedMaps);
             selectedMaps = [...selectedMaps];
         } else if (shiftKey) {
             clearMapSelection();
@@ -202,6 +201,7 @@
                 <MapsContainer
                     on:select={selectMap}
                     clearSelection={clearMapSelection}
+                    removeFromSelection={removeMapFromSelection}
                     bind:groups
                     bind:criteria
                     bind:filter
