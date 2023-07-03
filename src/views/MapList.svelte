@@ -11,8 +11,14 @@
     import Button from "src/components/Button.svelte";
     import { writable } from "svelte/store";
     import MapsContainer from "./MapList/MapsContainer.svelte";
+    import {
+        IconOption,
+        Menu,
+        showContextMenu,
+    } from "src/systems/context_menu";
 
     export let context: MapListContext;
+    let data = context.data;
 
     setContext("data", context.data);
     setContext("context", context);
@@ -30,44 +36,56 @@
         filter = $searchString;
     }
 
+    let contextMenu: Menu;
+
     onMount(async () => {
         await context.load();
+
+        contextMenu = new Menu([
+            new IconOption("Refresh View", "mdi:refresh", "maplist/refresh"),
+        ]);
     });
 </script>
 
-{#if $isLoading}
-    <LoadingScreen />
-{:else}
-    <div class="view">
-        <div class="topbar">
-            <div class="searchbar">
-                <Input
-                    on:submit={submitSearch}
-                    edits={searchString}
-                    placeholder="Search"
-                />
-                <Button color="secondary" on:click={submitSearch}>Search</Button
-                >
-            </div>
-            <div class="filters">
-                {#each Object.values(groupCriteriaTable) as groupCriteria, i}
-                    <Button
-                        pressed={criteria === i}
-                        on:click={() => {
-                            criteria = i;
-                        }}
+{#key $data}
+    {#if $isLoading}
+        <LoadingScreen />
+    {:else}
+        <div
+            class="view"
+            on:contextmenu={(e) => showContextMenu(e, contextMenu)}
+        >
+            <div class="topbar">
+                <div class="searchbar">
+                    <Input
+                        on:submit={submitSearch}
+                        edits={searchString}
+                        placeholder="Search"
+                    />
+                    <Button color="secondary" on:click={submitSearch}
+                        >Search</Button
                     >
-                        {groupCriteria.name}
-                    </Button>
-                {/each}
-                <!-- <Button><iconify-icon icon="mingcute:down-line" /></Button> -->
+                </div>
+                <div class="filters">
+                    {#each Object.values(groupCriteriaTable) as groupCriteria, i}
+                        <Button
+                            pressed={criteria === i}
+                            on:click={() => {
+                                criteria = i;
+                            }}
+                        >
+                            {groupCriteria.name}
+                        </Button>
+                    {/each}
+                    <!-- <Button><iconify-icon icon="mingcute:down-line" /></Button> -->
+                </div>
+            </div>
+            <div class="list">
+                <MapsContainer bind:criteria bind:filter />
             </div>
         </div>
-        <div class="list">
-            <MapsContainer bind:criteria bind:filter />
-        </div>
-    </div>
-{/if}
+    {/if}
+{/key}
 
 <style lang="scss">
     .view {

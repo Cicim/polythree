@@ -103,6 +103,9 @@ interface MapHeader {
 export class MapListContext extends EditorContext {
     public name: string = "Map List";
     public singularTab = true;
+    public actions = {
+        "maplist/refresh": () => this.load(),
+    }
 
     public save(): Promise<boolean> {
         throw new Error("Method not implemented.");

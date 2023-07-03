@@ -27,6 +27,8 @@ export class Bindings {
         "tabbar/next": "Ctrl+Tab",
         "tabbar/prev": "Ctrl+Shift+Tab",
 
+        "maplist/refresh": "F5",
+        
         "editor/save": "Ctrl+S",
         "editor/undo": "Ctrl+Z",
         "editor/redo": "Ctrl+Y",
