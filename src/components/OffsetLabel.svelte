@@ -4,7 +4,7 @@
     $: offsetNumber = typeof offset === "string" ? parseInt(offset) : offset;
 </script>
 
-<span class="offset" class:monospace={offsetNumber !== null}>
+<span class="offset">
     {#if offsetNumber === null}
         ???
     {:else}
@@ -13,7 +13,7 @@
 </span>
 
 <style lang="scss">
-    .offset.monospace {
+    .offset {
         font-family: monospace;
     }
 </style>

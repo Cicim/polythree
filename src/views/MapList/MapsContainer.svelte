@@ -31,12 +31,39 @@
 
     /** Filters the cards based on the current filter string */
     function filterCards() {
+        let match = filter.match(/#(\d+)(\.(\d+))?/);
+        
         filteredCards = $allCards.filter((card) => {
+            // If the filter is empty, return all cards
             if (filter === "") return true;
-            if (card.name) {
-                return card.name.toLowerCase().includes(filter.toLowerCase());
+
+            let valid = false;
+
+            // If the text is an hashtag
+            if (filter.startsWith("#")) {
+                if (!match) return false;
+
+                const group = +match[1];
+                const index = +match[3];
+
+                valid ||=
+                    card.group === group &&
+                    (isNaN(index) || card.index === index);
             }
-            return false;
+
+            // If the card has a name, check if it matches the filter
+            if (!valid && card.name) {
+                valid ||= card.name
+                    .toLowerCase()
+                    .includes(filter.toLowerCase());
+            }
+
+            // If the text is a number, match the card's group
+            if (!valid && !isNaN(parseInt(filter))) {
+                valid ||= card.group === +filter;
+            }
+
+            return valid;
         });
     }
 

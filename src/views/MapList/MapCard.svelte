@@ -47,18 +47,6 @@
             new MapEditorContext({ group, index }).create().select();
         }),
         new IconOption("Tilesets", "material-symbols:edit-outline", () => {}),
-        new Separator("Selection"),
-        new IconOption("Select", "material-symbols:select-sharp", () => {}),
-        new IconOption(
-            "Select All in Group",
-            "fluent-mdl2:select-all",
-            () => {}
-        ),
-        new IconOption(
-            "Select All",
-            "material-symbols:select-all-sharp",
-            () => {}
-        ),
         new Separator("Preview"),
         new IconOption("Map", "material-symbols:visibility-outline", () => {
             openTooltip();

@@ -228,6 +228,8 @@
         grid-template-rows: min-content 1fr;
         align-self: center;
 
+        user-select: none;
+
         grid-template-areas:
             "top"
             "list";
