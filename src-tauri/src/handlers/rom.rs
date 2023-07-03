@@ -27,10 +27,8 @@ pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
                 return Err(format!("Failed to save references: {}", err));
             }
 
-            // Update the rom_path in the AppState
-            state.set_rom_path(Some(path.clone()));
-
-            Ok(OpenRom {
+            // Prepare the response
+            let res = OpenRom {
                 rom_type: rom.rom_type.to_string(),
                 rom_size: rom.data.len(),
                 rom_size_fmt: {
@@ -39,7 +37,13 @@ pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
                     let bytes = bytes.get_appropriate_unit(true);
                     format!("{}", bytes)
                 },
-            })
+            };
+
+            // Store the opened ROM in the state
+            // Update the rom_path in the AppState
+            state.set_rom(path, rom);
+
+            Ok(res)
         }
         Err(err) => Err(err.to_string()),
     }
@@ -47,5 +51,5 @@ pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
 
 #[tauri::command]
 pub fn close_rom(state: AppState) {
-    state.set_rom_path(None);
+    state.clear_rom();
 }

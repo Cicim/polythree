@@ -4,20 +4,20 @@ use crate::state::{AppResult, AppState, AppStateFunctions, PolythreeState};
 
 #[tauri::command]
 pub fn get_map_list(state: AppState) -> AppResult<Vec<MapHeaderDump>> {
-    let mut rom = state.get_rom()?;
-
-    // Dump all the map headers
-    rom.map_headers()
-        .dump_headers()
-        .map_err(|err| err.to_string())
+    state.with_rom(|rom| {
+        // Dump all the map headers
+        rom.map_headers()
+            .dump_headers()
+            .map_err(|err| err.to_string())
+    })
 }
 
 #[tauri::command]
 pub fn get_map_names(state: AppState) -> AppResult<MapSectionDump> {
-    let mut rom = state.get_rom()?;
-
-    // Dump all the map headers
-    rom.mapsec().dump_names().map_err(|err| err.to_string())
+    state.with_rom(|rom| {
+        // Dump all the map headers
+        rom.mapsec().dump_names().map_err(|err| err.to_string())
+    })
 }
 
 #[tauri::command]
@@ -26,26 +26,26 @@ pub async fn get_map_preview<'r>(
     group: u8,
     index: u8,
 ) -> AppResult<String> {
-    let mut rom = state.get_rom()?;
+    state.with_rom(|rom| {
+        // Read the header
+        let header = rom
+            .map_headers()
+            .read_header(group, index)
+            .map_err(|err| err.to_string())?;
 
-    // Read the header
-    let header = rom
-        .map_headers()
-        .read_header(group, index)
-        .map_err(|err| err.to_string())?;
+        // Read the layout
+        let layout = rom
+            .map_layouts()
+            .read_data(header.map_layout_id)
+            .map_err(|err| err.to_string())?;
 
-    // Read the layout
-    let layout = rom
-        .map_layouts()
-        .read_data(header.map_layout_id)
-        .map_err(|err| err.to_string())?;
+        // Render the tileset
+        let tilesets = layout
+            .read_tilesets(&rom)
+            .map_err(|_| "Error while reading the tileset")?;
+        let rendered = tilesets.render();
 
-    // Render the tileset
-    let tilesets = layout
-        .read_tilesets(&rom)
-        .map_err(|_| "Error while reading the tileset")?;
-    let rendered = tilesets.render();
-
-    // Render the map
-    Ok(layout.render_to_base64(&rendered))
+        // Render the map
+        Ok(layout.render_to_base64(&rendered))
+    })
 }
