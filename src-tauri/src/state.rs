@@ -3,20 +3,46 @@ use std::sync::Mutex;
 use poly3lib::rom::Rom;
 
 pub trait AppStateFunctions {
-    /// Update the rom path in the [`AppState`].
-    fn set_rom_path(&self, path: Option<String>);
-    /// Returns the currently loaded [`Rom`], if any.
-    fn get_rom(&self) -> AppResult<Rom>;
+    /// Set the ROM and path when opened.
+    fn set_rom(&self, path: String, rom: Rom);
+    /// Clear the ROM and path when closed.
+    fn clear_rom(&self);
+    /// Runs the function if a ROM is open, otherwise returns an error.
+    ///
+    /// The function is passed a mutable reference to the ROM.
+    /// **The mutability should only be used to the extent of loading
+    /// new references** or making non-breaking changes.
+    ///
+    /// If you want to make potentially breaking changes, you should
+    /// use [`AppStateFunctions::save_rom`] instead.
+    fn with_rom<T>(&self, callback: impl FnOnce(&mut Rom) -> AppResult<T>) -> AppResult<T>;
+
+    /// Runs the function if a ROM is open, otherwise returns an error.
+    ///
+    /// After the function is run, the ROM is saved to disk to the
+    /// same path it was opened from.
+    ///
+    /// If an error occurs while running the function, the ROM is
+    /// reverted to its original state.
+    fn update_rom<T>(&self, callback: impl FnOnce(&mut Rom) -> AppResult<T>) -> AppResult<T>;
+}
+
+pub struct RomData {
+    /// The path to the ROM.
+    path: String,
+    /// The rom object itself
+    rom: Rom,
 }
 
 pub struct PolythreeState {
-    rom_path: Mutex<Option<String>>,
+    /// Info about the open ROM, if any.
+    rom: Mutex<Option<RomData>>,
 }
 
 impl PolythreeState {
     pub fn new() -> Self {
         Self {
-            rom_path: Mutex::new(None),
+            rom: Mutex::new(None),
         }
     }
 }
@@ -26,29 +52,56 @@ pub type AppState<'a> = tauri::State<'a, PolythreeState>;
 pub type AppResult<T> = Result<T, String>;
 
 impl AppStateFunctions for AppState<'_> {
-    fn set_rom_path(&self, path: Option<String>) {
-        let mut rom_path = self.rom_path.lock().unwrap();
-        *rom_path = path;
+    fn set_rom(&self, path: String, rom: Rom) {
+        let mut rom_data = self.rom.lock().unwrap();
+        *rom_data = Some(RomData { path, rom })
     }
 
-    fn get_rom(&self) -> AppResult<Rom> {
-        // Get the rom_path through the mutex
-        let rom_path = match self.rom_path.lock() {
-            Ok(rom_path) => rom_path,
-            Err(_) => {
-                return Err("Unable to obtain the lock to the rom_path".to_string());
-            }
-        };
+    fn clear_rom(&self) {
+        let mut rom_data = self.rom.lock().unwrap();
+        *rom_data = None;
+    }
 
-        // Extract the path from the Option
-        let rom_path = match rom_path.as_ref() {
-            Some(rom_path) => rom_path,
-            None => {
-                return Err("No ROM is currently loaded".to_string());
-            }
-        };
+    fn with_rom<T>(&self, callback: impl FnOnce(&mut Rom) -> AppResult<T>) -> AppResult<T> {
+        // Unlock the ROM data
+        let mut rom_data = self
+            .rom
+            .lock()
+            .map_err(|_| "Failed to unlock the map data")?;
 
-        // Load the ROM
-        Rom::load(rom_path).map_err(|err| err.to_string())
+        // Get a mutable reference to the ROM data
+        let rom_data = rom_data.as_mut().ok_or("No ROM is open")?;
+
+        // Call the callback with the ROM
+        callback(&mut rom_data.rom)
+    }
+
+    fn update_rom<T>(&self, callback: impl FnOnce(&mut Rom) -> AppResult<T>) -> AppResult<T> {
+        // Unlock the ROM data
+        let mut rom_data = self
+            .rom
+            .lock()
+            .map_err(|_| "Failed to unlock the map data")?;
+
+        let rom_data = rom_data.as_mut().ok_or("No ROM is open")?;
+
+        // Clone the ROM so that we can revert it if an error occurs
+        let mut rom = rom_data.rom.clone();
+
+        // Call the callback with the ROM and save the result
+        let res = callback(&mut rom);
+        // If there was no error, update the ROM
+        if let Ok(_) = res {
+            // Save the ROM
+            rom_data
+                .rom
+                .save(&rom_data.path)
+                .map_err(|err| format!("Failed to save ROM: {}", err))?;
+            // Then update the one in the state
+            rom_data.rom = rom;
+        }
+
+        // Return the callback's result
+        res
     }
 }
