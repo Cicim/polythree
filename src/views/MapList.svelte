@@ -4,7 +4,11 @@
     import {
         GroupCriteria,
         groupCriteriaTable,
+        type MapCardProps,
+        type MapGroup,
+        type MapId,
         type MapListContext,
+        type MapSelectionEvent,
     } from "./MapList";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
     import Input from "src/components/Input.svelte";
@@ -16,6 +20,8 @@
         Menu,
         showContextMenu,
     } from "src/systems/context_menu";
+    import MapInfo from "./MapList/MapInfo.svelte";
+    import ClickableIcons from "src/components/ClickableIcons.svelte";
 
     export let context: MapListContext;
     let data = context.data;
@@ -24,6 +30,7 @@
     setContext("context", context);
 
     $: isLoading = context.isLoading;
+    $: mapInfoOpen = true;
 
     /** The content of the searchbar */
     let searchString = writable("");
@@ -31,12 +38,107 @@
     let criteria: GroupCriteria = GroupCriteria.Group;
     /** The current filter string */
     let filter: string = "";
+    /** The list of selected cards */
+    let selectedCards: { [group: number]: { [index: number]: boolean } } = {};
+    let selectedMaps: MapId[] = [];
+    let selectedCount: number = 0;
+    let lastSelected: MapId = null;
+    let groups: MapGroup[] = [];
+
     /** The submit method for applying a search */
     function submitSearch() {
         filter = $searchString;
     }
 
     let contextMenu: Menu;
+
+    function addMapToSelection(group: number, index: number) {
+        if (!selectedCards[group]) selectedCards[group] = {};
+        selectedCards[group][index] = true;
+        selectedMaps.push({ group, index });
+        selectedCount++;
+    }
+    function removeMapFromSelection(group: number, index: number) {
+        if (!selectedCards[group]) selectedCards[group] = {};
+        selectedCards[group][index] = false;
+        selectedMaps = selectedMaps.filter(
+            (m) => m.group !== group && m.index !== index
+        );
+        selectedCount--;
+    }
+    function clearMapSelection() {
+        selectedCards = {};
+        selectedCount = 0;
+        selectedMaps = [];
+    }
+    function selectInStraightLine(group: number, index: number) {
+        if (lastSelected === null) return;
+
+        const [from, to] = [lastSelected, { group, index }].sort(
+            (a, b) => a.group - b.group || a.index - b.index
+        );
+
+        // Find the `from` maps from the from group and index
+        const fromGroup = groups.find((g) =>
+            g.maps.find((m) => m.group === from.group && m.index === from.index)
+        );
+        const fromGroupIndex = groups.findIndex((g) =>
+            g.maps.find((m) => m.group === from.group && m.index === from.index)
+        );
+        const fromMapIndex = fromGroup.maps.findIndex(
+            (m) => m.group === from.group && m.index === from.index
+        );
+        // Find the `to` maps from the to group and index
+        const toGroup = groups.find((g) =>
+            g.maps.find((m) => m.group === to.group && m.index === to.index)
+        );
+        const toGroupIndex = groups.findIndex((g) =>
+            g.maps.find((m) => m.group === to.group && m.index === to.index)
+        );
+        const toMapIndex = toGroup.maps.findIndex(
+            (m) => m.group === to.group && m.index === to.index
+        );
+
+        // Select all the maps in between
+        for (let i = fromGroupIndex; i <= toGroupIndex; i++) {
+            const group = groups[i];
+            const start = i === fromGroupIndex ? fromMapIndex : 0;
+            const end = i === toGroupIndex ? toMapIndex : group.maps.length - 1;
+
+            for (let j = start; j <= end; j++) {
+                addMapToSelection(group.maps[j].group, group.maps[j].index);
+            }
+        }
+    }
+
+    function selectMap({
+        detail: { group, index, ctrlKey, shiftKey },
+    }: {
+        detail: MapSelectionEvent;
+    }) {
+        /** True if the clicked card is currently selected */
+        let selected = selectedCards[group]?.[index] ?? false;
+        let inMultiselection = selectedCount > 1;
+
+        // If no extra key is pressed
+        if (ctrlKey) {
+            if (selected) removeMapFromSelection(group, index);
+            else addMapToSelection(group, index);
+            lastSelected = { group, index };
+            selectedMaps = [...selectedMaps];
+        } else if (shiftKey) {
+            clearMapSelection();
+            selectInStraightLine(group, index);
+        } else {
+            if (!selected || (selected && inMultiselection)) {
+                clearMapSelection();
+                addMapToSelection(group, index);
+            } else {
+                removeMapFromSelection(group, index);
+            }
+            lastSelected = { group, index };
+        }
+    }
 
     onMount(async () => {
         await context.load();
@@ -53,9 +155,24 @@
     {:else}
         <div
             class="view"
+            class:show-info={mapInfoOpen}
             on:contextmenu={(e) => showContextMenu(e, contextMenu)}
         >
             <div class="topbar">
+                <ClickableIcons
+                    size="1em"
+                    vertical_alignment="bottom"
+                    icons={[
+                        {
+                            text: "Toggle Map Info",
+                            onclick: () => {
+                                mapInfoOpen = !mapInfoOpen;
+                            },
+                            icon: "material-symbols:visibility-off",
+                        },
+                    ]}
+                />
+
                 <div class="searchbar">
                     <Input
                         on:submit={submitSearch}
@@ -81,8 +198,22 @@
                 </div>
             </div>
             <div class="list">
-                <MapsContainer bind:criteria bind:filter />
+                <MapsContainer
+                    on:select={selectMap}
+                    clearSelection={clearMapSelection}
+                    bind:groups
+                    bind:criteria
+                    bind:filter
+                    bind:selectedCards
+                    bind:selectedCount
+                    bind:lastSelected
+                />
             </div>
+            {#if mapInfoOpen}
+                <div class="sidebar">
+                    <MapInfo bind:selectedMaps />
+                </div>
+            {/if}
         </div>
     {/if}
 {/key}
@@ -99,11 +230,32 @@
         grid-template-areas:
             "top"
             "list";
+
+        &.show-info {
+            @media (min-width: 720px) {
+                grid-template-columns: minmax(420px, 1fr) minmax(0, 400px);
+                grid-template-rows: min-content 1fr;
+
+                grid-template-areas:
+                    "top top"
+                    "list sidebar";
+
+                .sidebar {
+                    display: block;
+                    box-shadow: -2px 0 2px 0 var(--light-shadow);
+                }
+
+                .list {
+                    margin: 0 0 0 1em;
+                }
+            }
+        }
     }
 
     .topbar {
         display: grid;
         grid-area: top;
+        position: relative;
 
         padding: 0.5em 1em;
         z-index: 10;
@@ -132,6 +284,20 @@
         grid-area: list;
         overflow-y: auto;
         margin: 0 1em;
+        container-type: inline-size;
+
+        &::-webkit-scrollbar {
+            background: transparent;
+            width: 10px;
+        }
+    }
+
+    .sidebar {
+        display: none;
+        grid-area: sidebar;
+        overflow-y: auto;
+        overflow-x: hidden;
+
         &::-webkit-scrollbar {
             background: transparent;
             width: 10px;

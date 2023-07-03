@@ -5,6 +5,7 @@
         onclick?: (event: MouseEvent) => void;
     }
 
+    export let size: string = "11pt";
     export let icons: Icon[];
     export let horizontal_alignment: "left" | "right" = "right";
     export let vertical_alignment: "top" | "bottom" = "top";
@@ -12,10 +13,18 @@
 
 <div
     class="container"
-    style={`${horizontal_alignment}: 0.5rem; ${vertical_alignment}: 0.5rem;`}
+    style={`
+        font-size: ${size}; 
+        ${horizontal_alignment}: 0.5rem; 
+        ${vertical_alignment}: 0.5rem;
+    `}
 >
     {#each icons as { icon, text, onclick }}
-        <button class="icon-button" on:click|stopPropagation={onclick}>
+        <button
+            class="icon-button"
+            on:click|stopPropagation={onclick}
+            style={`font-size: ${size}`}
+        >
             <span class="text">{text}</span>
             <span class="icon">
                 <iconify-icon {icon} />

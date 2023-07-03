@@ -10,7 +10,7 @@
     }
 </script>
 
-<svelte:window on:resize={closeTooltip} on:blur={closeTooltip} />
+<svelte:window on:resize={closeTooltip}  />
 
 <dialog
     id="tooltip"

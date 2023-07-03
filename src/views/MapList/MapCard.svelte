@@ -12,11 +12,30 @@
 
     import ClickableIcons from "src/components/ClickableIcons.svelte";
     import MapPreview from "./MapPreview.svelte";
+    import { createEventDispatcher } from "svelte";
+    import type { MapSelectionEvent } from "../MapList";
+    import OffsetLabel from "src/components/OffsetLabel.svelte";
 
     export let group: number;
     export let index: number;
     export let name: string = null;
     export let offset: number;
+    export let selected = false;
+    export let lastSelected = false;
+
+    const dispatch = createEventDispatcher();
+
+    function selectCard(e: MouseEvent) {
+        if (e.ctrlKey || e.shiftKey) e.preventDefault();
+
+        // Get if the control button is pressed
+        dispatch("select", {
+            group,
+            index,
+            ctrlKey: e.ctrlKey,
+            shiftKey: e.shiftKey,
+        } as MapSelectionEvent);
+    }
 
     let loaded = false;
 
@@ -71,8 +90,14 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
     bind:this={cardEl}
+    class:selected
+    class:last-selected={lastSelected}
     class="card"
-    on:click={() => new MapEditorContext({ group, index }).create().select()}
+    on:click={selectCard}
+    on:dblclick={(e) => {
+        if (e.ctrlKey || e.shiftKey) return;
+        new MapEditorContext({ group, index }).create().select();
+    }}
     on:contextmenu={(e) => showContextMenu(e, ctxMenu)}
     use:intersection
     on:enterViewport={async () => {
@@ -99,9 +124,9 @@
             {/if}
             <div class="pair">
                 <span class="title">Offset: </span>
-                <span class="value"
-                    >${offset.toString(16).padStart(8, "0").toUpperCase()}</span
-                >
+                <span class="value">
+                    <OffsetLabel {offset} />
+                </span>
             </div>
         </div>
         <!-- Copy iconify icon -->
@@ -123,6 +148,8 @@
     .card {
         display: flex;
         gap: 0.25em;
+
+        min-width: 360px;
         height: 50px;
 
         padding: 0.5em;
@@ -132,8 +159,21 @@
         border: 1px solid var(--card-border);
 
         position: relative;
-        cursor: pointer;
         user-select: none;
+
+        &.last-selected {
+            border-style: dashed;
+            border-color: var(--card-selected-border);
+        }
+        &.selected {
+            background: var(--card-selected-bg);
+            border-color: var(--card-selected-border);
+
+            &:hover {
+                background: var(--card-selected-bg-hover);
+                border-color: var(--card-selected-border-hover);
+            }
+        }
 
         &:hover {
             background: var(--card-hover-bg);

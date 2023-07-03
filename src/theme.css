@@ -41,6 +41,11 @@
     --card-hover-bg: #2f2f32;
     --card-hover-border: #555558;
 
+    --card-selected-bg: #132b4e;
+    --card-selected-border: #1f3b6e;
+    --card-selected-bg-hover: #1f3b6e;
+    --card-selected-border-hover: #1f3b6e;
+
     /* Select */
     --sel-bg: #1f1f22;
     --sel-fg: var(--main-fg);

@@ -1,32 +1,34 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
 
     import {
         groupCriteriaTable,
         type GroupCriteria,
         type MapCardProps,
+        type MapGroup,
+        type SelectedCards,
     } from "../MapList";
     import MapCard from "./MapCard.svelte";
 
     /** The data from which this component gets the info about the cards */
     const allCards: Writable<MapCardProps[]> = getContext("data");
     /** Maps separated by group from the output of a search or filter operation */
-    let groups: MapGroup[] = [];
+    export let groups: MapGroup[];
     /** The cards as were filtered since the last search */
     let filteredCards = $allCards;
 
-    interface MapGroup {
-        name: string;
-        maps: MapCardProps[];
-    }
-
     export let filter: string;
     export let criteria: GroupCriteria;
+    export let selectedCards: SelectedCards;
+    export let lastSelected: { group: number; index: number };
+    export let selectedCount: number;
+    export let clearSelection: () => void;
 
     $: filterCards(), updateCards(), filter;
     $: updateCards(), criteria;
 
+    /** Filters the cards based on the current filter string */
     function filterCards() {
         filteredCards = $allCards.filter((card) => {
             if (filter === "") return true;
@@ -37,8 +39,8 @@
         });
     }
 
-    // Groups the cards into MapGroups depending on the predicate
-    // which returns the group name each map belongs to
+    /** Groups the cards into MapGroups depending on the predicate
+        which returns the group name each map belongs to */
     function groupTogether(
         cards: MapCardProps[],
         predicate: (card: MapCardProps) => string,
@@ -69,19 +71,69 @@
         return groups;
     }
 
+    /** Returns true if the given (group, index) pair can be found
+     * anywhere within the `groups`
+     */
+    function inGroup(card: { group: number; index: number }) {
+        if (!card) return false;
+        return groups.some((group) =>
+            group.maps.some(
+                (c) => c.group === card.group && c.index === card.index
+            )
+        );
+    }
+
+    /** Updates the groups based on the current grouping criteria
+     * and updates the selection to match the new groups
+     */
     function updateCards() {
         let { predicate, nameTransform } = groupCriteriaTable[criteria];
         groups = groupTogether(filteredCards, predicate, nameTransform);
+
+        // Keep only the cards in the selection that are in the results
+        for (let group in selectedCards) {
+            for (let index in selectedCards[group]) {
+                if (!inGroup({ group: +group, index: +index })) {
+                    selectedCards[group][index] = false;
+                    selectedCount--;
+                }
+            }
+        }
+        // If the last selected card is not in the results, reset it
+        if (!inGroup(lastSelected)) lastSelected = null;
     }
 
-    onMount(() => {});
+    let containerEl: HTMLDivElement;
+    function onClickOutsideCard(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (
+            target !== containerEl ||
+            event.ctrlKey ||
+            event.shiftKey
+        )
+            return;
+        clearSelection();
+    }
 </script>
 
-<div class="maps-container">
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<div
+    bind:this={containerEl}
+    class="maps-container"
+    on:click|capture={onClickOutsideCard}
+>
     {#each groups as group (group.name)}
         <h2 class="separator">{group.name}</h2>
         {#each group.maps as card}
-            <MapCard {...card} />
+            <MapCard
+                on:select
+                {...card}
+                lastSelected={lastSelected !== null
+                    ? lastSelected.group === card.group &&
+                      lastSelected.index === card.index
+                    : false}
+                selected={selectedCards[card.group]?.[card.index] ?? false}
+            />
         {/each}
     {:else}
         <div class="empty">No maps found</div>
@@ -93,7 +145,6 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: 1em;
-        margin-right: 1em;
         margin-bottom: 2em;
 
         .empty {
@@ -112,13 +163,15 @@
             grid-column: 1 / -1;
         }
 
-        @media (min-width: 800px) {
+        @container (min-width: 800px) {
             grid-template-columns: 1fr 1fr;
         }
-        @media (min-width: 1200px) {
+
+        @container (min-width: 1200px) {
             grid-template-columns: 1fr 1fr 1fr;
         }
-        @media (min-width: 1600px) {
+
+        @container (min-width: 1600px) {
             grid-template-columns: 1fr 1fr 1fr 1fr;
         }
     }

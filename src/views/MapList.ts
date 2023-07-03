@@ -13,6 +13,37 @@ export interface MapCardProps {
     mapsec: number;
     name?: string;
     layout: number;
+
+    music: number;
+    mapLayoutId: number;
+    cave: number;
+    weather: number;
+    mapType: number;
+    bikingAllowed: number;
+    allowEscaping: number;
+    allowRunning: number;
+    showMapName: number;
+    floorNum: number;
+    battleType: number;
+}
+
+export interface MapId {
+    group: number;
+    index: number;
+}
+
+export type SelectedCards = { [group: number]: { [index: number]: boolean } };
+
+export interface MapSelectionEvent {
+    group: number;
+    index: number;
+    ctrlKey: boolean;
+    shiftKey: boolean;
+}
+
+export interface MapGroup {
+    name: string;
+    maps: MapCardProps[];
 }
 
 export enum GroupCriteria {
@@ -144,6 +175,18 @@ export class MapListContext extends EditorContext {
                     layout: map.header.map_layout_id,
                     mapsec: map.header.region_map_section_id,
                     name: names[map.header.region_map_section_id],
+
+                    music: map.header.music,
+                    mapLayoutId: map.header.map_layout_id,
+                    cave: map.header.cave,
+                    weather: map.header.weather,
+                    mapType: map.header.map_type,
+                    bikingAllowed: map.header.biking_allowed,
+                    allowEscaping: map.header.allow_escaping,
+                    allowRunning: map.header.allow_running,
+                    showMapName: map.header.show_map_name,
+                    floorNum: map.header.floor_num,
+                    battleType: map.header.battle_type,
                 });
             }
 

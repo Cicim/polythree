@@ -9,11 +9,15 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import { spawnDialog } from "src/systems/dialogs";
+    import viewport from "src/systems/intersection";
     import { onMount } from "svelte";
 
     export let group: number;
     export let index: number;
     export let name: string = null;
+
+    /** If the maps should scroll even when moving around the window */
+    export let windowScroll = true;
 
     /** True until the map is loaded or an error occurs */
     let isLoading = true;
@@ -113,9 +117,19 @@
             isLoading = false;
         }
     });
+
+    function onWindowMouseMove(event: MouseEvent) {
+        if (!windowScroll) return;
+        onMouseMove(event);
+    }
+
+    function onContainerMouseMove(event: MouseEvent) {
+        if (windowScroll) return;
+        onMouseMove(event);
+    }
 </script>
 
-<svelte:window on:mousemove={onMouseMove} />
+<svelte:window on:mousemove={onWindowMouseMove} />
 
 <div class="container" bind:this={containerEl}>
     {#if isLoading}
@@ -137,10 +151,13 @@
         >
             <img
                 on:load={applyCentering}
+                on:mousemove={onContainerMouseMove}
                 bind:this={imageEl}
                 class="image"
                 src={preview}
                 alt={name}
+                use:viewport
+                on:enterViewport={applyCentering}
             />
         </div>
     {/if}
