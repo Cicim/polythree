@@ -17,21 +17,24 @@
 
     function closeOnClickOutside(event: MouseEvent) {
         const { x, y, width, height } = (<HTMLDialogElement>(
-            event.target
+            dialogElement.children[0]
         )).getBoundingClientRect();
 
         if (
-            event.clientX < x ||
-            event.clientX > x + width ||
-            event.clientY < y ||
-            event.clientY > y + height
+            event.clientX < x - 8 ||
+            event.clientX > x + width + 8 ||
+            event.clientY < y - 4 ||
+            event.clientY > y + height + 4
         ) {
             close(null);
         }
     }
 </script>
 
-<svelte:window on:keydown|stopPropagation={closeOnEscape} on:mouseup={closeOnClickOutside} />
+<svelte:window
+    on:keydown|stopPropagation={closeOnEscape}
+    on:mouseup={closeOnClickOutside}
+/>
 
 <!-- The dialog -->
 <dialog class="dialog modal" bind:this={dialogElement}>
