@@ -33,6 +33,30 @@
     --btn-secondary-fg-disabled: var(--weak-fg);
     --btn-secondary-border-disabled: #72829c;
 
+    --btn-warning-bg: #2f2f32;
+    --btn-warning-fg: #ffc107;
+    --btn-warning-border: #ffc107;
+    --btn-warning-bg-hover: #ffc107;
+    --btn-warning-fg-hover: #8b4108;
+    --btn-warning-border-hover: #8b4108;
+    --btn-warning-bg-disabled: #8a753d;
+    --btn-warning-fg-disabled: var(--weak-fg);
+    --btn-warning-border-disabled: #8a753d;
+
+    --btn-warning-bg: #2f2f32;
+    --btn-warning-fg: #ffc107;
+    --btn-warning-border: #ffc107;
+
+    /* --btn-warning-bg: #ffc107;
+    --btn-warning-fg: var(--warn-fg);
+    --btn-warning-border: #ecae03;
+    --btn-warning-bg-hover: #ffd65a;
+    --btn-warning-fg-hover: #8b4108;
+    --btn-warning-border-hover: #ffecb4;
+    --btn-warning-bg-disabled: #ffc822;
+    --btn-warning-fg-disabled: var(--warn-fg);
+    --btn-warning-border-disabled: #c45500; */
+
     /* Tabs */
     --tabs-bg: #2c3e50;
     --tab-selected-bg: var(--main-bg);

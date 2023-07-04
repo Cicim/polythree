@@ -12,7 +12,7 @@
 </script>
 
 <div
-    class="container"
+    class="icons-container"
     style={`
         font-size: ${size}; 
         ${horizontal_alignment}: 0.5rem; 
@@ -36,7 +36,7 @@
 </div>
 
 <style lang="scss">
-    .container {
+    .icons-container {
         display: flex;
         position: absolute;
         z-index: 10;

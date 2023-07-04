@@ -64,7 +64,7 @@
             <div class="no-preview">
                 {selectedMaps.length === 0
                     ? "No map Selected"
-                    : "Preview not available for multiple maps"}
+                    : `Preview not available for multiple maps (${selectedMaps.length})`}
             </div>
         {/if}
     </div>

@@ -1,16 +1,13 @@
 <script lang="ts">
-    type ButtonColor = "primary" | "secondary";
+    type ButtonColor = "primary" | "secondary" | "warning";
 
     export let color: ButtonColor = "primary";
     export let disabled: boolean = false;
     export let pressed: boolean = false;
-
-    let element: HTMLButtonElement;
 </script>
 
 <button
     {disabled}
-    bind:this={element}
     on:click
     class:pressed
     class="button {color}"
@@ -20,6 +17,18 @@
 </button>
 
 <style lang="scss">
+    .button.warning {
+        --btn-bg: var(--btn-warning-bg);
+        --btn-bg-hover: var(--btn-warning-bg-hover);
+        --btn-border: var(--btn-warning-border);
+        --btn-border-hover: var(--btn-warning-border-hover);
+        --btn-fg: var(--btn-warning-fg);
+        --btn-fg-hover: var(--btn-warning-fg-hover);
+        --btn-bg-disabled: var(--btn-warning-bg-disabled);
+        --btn-fg-disabled: var(--btn-warning-fg-disabled);
+        --btn-border-disabled: var(--btn-warning-border-disabled);
+    }
+
     .button.secondary {
         --btn-bg: var(--btn-secondary-bg);
         --btn-bg-hover: var(--btn-secondary-bg-hover);
@@ -65,8 +74,8 @@
         overflow: hidden;
         text-overflow: ellipsis;
 
-        transition: background 50ms ease-in-out, transform 0.1s ease-out,
-            box-shadow 0.1s ease-out, outline 0.2s ease-out;
+        transition: background 100ms ease-in-out, transform 0.1s ease-out,
+            box-shadow 0.1s ease-out, outline 0.2s ease-out, color 100ms ease-in-out;
 
         &[disabled] {
             --btn-bg: var(--btn-bg-disabled);

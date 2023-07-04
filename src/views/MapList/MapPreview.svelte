@@ -6,7 +6,6 @@
     import {
         IconOption,
         Menu,
-        TextOption,
         showContextMenu,
     } from "src/systems/context_menu";
     import { spawnDialog } from "src/systems/dialogs";

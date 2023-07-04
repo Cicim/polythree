@@ -6,28 +6,80 @@
     import Select from "src/components/Select.svelte";
     import MapPreview from "./MapPreview.svelte";
 
-    type Action = "nothing" | "clear" | "delete" | "yolo";
-
+    // Dialog options
     export const noOutsideClose = true;
     export let close: (value: any) => void;
-    export let toDelete: { group: number; index: number; layout?: number }[];
-    export let all: MapCardProps[];
-    let actionableLayoutToMap: Record<
-        number,
-        { action: Action; maps: MapCardProps[] }
-    >;
 
+    /** The list of map {group, index} to be deleted */
+    export let toDelete: { group: number; index: number; layout?: number }[];
+    /** The reference to the MapList $data */
+    export let all: MapCardProps[];
+
+    /** Valid actions to be done to the layout (an passed to the backend on deletion) */
+    type Action = "nothing" | "clear" | "delete" | "change";
+    /** List for showing the action cards */
+    let actionableLayoutToMap: Record<
+        string,
+        {
+            action: Action;
+            maps: MapCardProps[];
+            changeTo?: string;
+            invalid?: boolean;
+        }
+    >;
+    // Update the valid layouts each time the user the value of an option
+    $: actionableLayoutToMap, updateValidLayouts();
+    // Updates the Delete button each time the user changes a value in the selects
+    $: actionableLayoutToMap, checkIfAllValid();
+    /** All map layouts at the moment of creation */
+    let allLayouts: number[];
+    /** if true, all selected actions are valid and you can proceed with the deletion */
+    let anyInvalid: boolean;
+    /** Lists of layouts that can be chosen through the Select when the option is "change" */
+    let validLayouts: number[] = [];
     /** List of duplicate layouts that are not all being deleted */
-    let duplicateLayouts = [];
+    let duplicateLayouts: number;
+
+    /** Updates the valid layouts from all the layouts minus the layouts
+     *  that are scheduled for deletion (i.e. action !== "nothing") */
+    function updateValidLayouts() {
+        if (!actionableLayoutToMap) return;
+
+        // Count the number of layouts that are not being deleted
+        const invalidLayouts = [];
+
+        for (const index of Object.keys(actionableLayoutToMap)) {
+            const layout = +index;
+            const more = actionableLayoutToMap[layout];
+            if (more.action !== "nothing") invalidLayouts.push(layout);
+        }
+
+        validLayouts = [...allLayouts].filter(
+            (layout) => !invalidLayouts.includes(layout)
+        );
+    }
+
+    /** Checks if all Selected contain valid options */
+    function checkIfAllValid() {
+        if (!actionableLayoutToMap) return;
+        anyInvalid = false;
+
+        for (const index of Object.keys(actionableLayoutToMap)) {
+            const more = actionableLayoutToMap[index];
+            if (more.action === "change" && more.invalid) {
+                anyInvalid = true;
+                break;
+            }
+        }
+    }
 
     // Check if there are maps that share the same layout
     // If so, warn the user
     onMount(() => {
+        if (toDelete.length === 0) close(null);
+
         /** Map of layouts => map that share a layout with with a toDelete map */
-        const layoutToMap = new Map<
-            number,
-            Set<MapCardProps>
-        >();
+        const layoutToMap = new Map<number, Set<MapCardProps>>();
 
         const layouts = new Set<number>();
 
@@ -75,22 +127,22 @@
         }
 
         if (layouts.size > 0) {
-            duplicateLayouts = [...layouts];
+            duplicateLayouts = layoutToMap.size;
             actionableLayoutToMap = {};
             layoutToMap.forEach((maps, layout) => {
                 actionableLayoutToMap[layout] = {
                     action: "nothing",
                     maps: [...maps],
+                    changeTo: "1",
                 };
             });
         }
-    });
 
-    onMount(() => {
-        if (toDelete.length === 0) close(null);
+        // Get all layouts
+        allLayouts = [...new Set(all.map((m) => m.layout))]
+            .filter((l) => l !== 0)
+            .sort((a, b) => a - b);
     });
-
-    $: console.log(actionableLayoutToMap);
 </script>
 
 <div class="dialog-content expanding">
@@ -105,11 +157,17 @@
     <div class="content">
         <WarningDiv>
             Once deleted, you <b>cannot</b> recover the maps. If unsure
-            <b>make a backup</b>. first.
+            <b>make a backup</b> first.
         </WarningDiv>
-        {#if duplicateLayouts.length > 0}
+        {#if duplicateLayouts > 0}
             <WarningDiv>
-                You are deleting maps that share the same layout.
+                {#if duplicateLayouts === 1}
+                    One layout is
+                {:else}
+                    {duplicateLayouts} layouts are
+                {/if}
+                reused by other maps. <br />
+                Please choose what to do with each layout:
             </WarningDiv>
 
             <div class="actions-container">
@@ -125,14 +183,14 @@
                         <div class="layout">
                             Layout #{layout}
                         </div>
-                        <div class="maps">
+                        <div
+                            class="maps"
+                            class:striked={actionableLayoutToMap[layout]
+                                .action === "delete"}
+                        >
                             {#each o.maps as map}
                                 {#if map?.name}
-                                    <span class="map" title={map?.name}>
-                                        {map.group}.{map.index}
-                                    </span>
-                                {:else}
-                                    <span class="map">
+                                    <span class="map" title={map?.name ?? ""}>
                                         {map.group}.{map.index}
                                     </span>
                                 {/if}
@@ -143,12 +201,30 @@
                                 bind:value={actionableLayoutToMap[layout]
                                     .action}
                                 options={[
-                                    ["nothing", "Don't Delete the Layout"],
-                                    ["clear", "Set each Map's Layout to NULL"],
-                                    ["delete", "Delete these Maps"],
-                                    ["yolo", "Delete the Layout Anyway"],
+                                    ["nothing", "Don't Delete"],
+                                    [
+                                        "change",
+                                        "Delete and change Maps Layout:",
+                                    ],
+                                    [
+                                        "clear",
+                                        "Delete and set these Map's Layout to null",
+                                    ],
+                                    ["delete", "Delete both the Layout and these Maps"],
                                 ]}
                             />
+                            {#if actionableLayoutToMap[layout].action === "change"}
+                                <Select
+                                    bind:value={actionableLayoutToMap[layout]
+                                        .changeTo}
+                                    bind:invalid={actionableLayoutToMap[layout]
+                                        .invalid}
+                                    options={validLayouts.map((e) => [
+                                        e.toString(),
+                                        e.toString(),
+                                    ])}
+                                />
+                            {/if}
                         </div>
                     </div>
                 {/each}
@@ -157,19 +233,19 @@
     </div>
     <div class="buttons">
         <Button color="secondary" on:click={() => close(null)}>Cancel</Button>
-        <Button color="primary" on:click={() => close(true)}>Delete</Button>
+        <Button
+            color="warning"
+            disabled={anyInvalid}
+            on:click={() => close(true)}>Delete</Button
+        >
     </div>
 </div>
 
 <style lang="scss">
-    .caption {
-        display: inline-block;
-        margin: 4px 0.5em 0;
-    }
-
     .content {
         display: grid;
         grid-template-rows: min-content min-content 1fr;
+        overflow-y: scroll;
     }
 
     .actions-container {
@@ -203,6 +279,10 @@
                 gap: 4px;
                 align-content: flex-start;
 
+                &.striked .map {
+                    text-decoration: line-through;
+                }
+
                 .map {
                     background: var(--card-bg);
                     border: 1px solid var(--card-border);
@@ -216,8 +296,18 @@
             .action {
                 grid-area: action;
                 display: flex;
-                flex-direction: column;
+                flex-direction: row;
+                flex-wrap: nowrap;
                 padding: 0 1em 0 0;
+
+                :global(> .select) {
+                    &:first-child {
+                        flex: 1;
+                    }
+                    &:last-child {
+                        flex: 1.5;
+                    }
+                }
             }
 
             .preview {
@@ -229,6 +319,13 @@
                 box-shadow: 0 0 2px 1px var(--light-shadow);
                 justify-self: center;
                 margin: 4px 8px;
+
+                border-radius: 1em;
+                overflow: hidden;
+
+                :global(.img-container) {
+                    border-radius: 1em;
+                }
 
                 &:hover {
                     box-shadow: 0 0 4px 2px var(--accent-shadow);

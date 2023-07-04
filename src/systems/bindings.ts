@@ -28,6 +28,8 @@ export class Bindings {
         "tabbar/prev": "Ctrl+Shift+Tab",
 
         "maplist/refresh": "F5",
+        "maplist/focus_search": "Ctrl+F",
+        "maplist/clear_and_focus_search": "Ctrl+G",
         "maplist/delete_selected": "Delete",
         
         "editor/save": "Ctrl+S",

@@ -140,6 +140,8 @@ export class MapListContext extends EditorContext {
     public actions = {
         "maplist/refresh": () => this.load(),
         "maplist/delete_selected": () => this.component.deleteSelected(),
+        "maplist/focus_search": () => this.component.focusSearch(),
+        "maplist/clear_and_focus_search": () => this.component.focusSearch(true),
     }
 
     public save(): Promise<boolean> {

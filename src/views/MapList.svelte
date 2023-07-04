@@ -157,6 +157,16 @@
         });
     }
 
+    let searchBarEl: HTMLDivElement;
+    export function focusSearch(clear: boolean = false) {
+        const input = searchBarEl.querySelector("input");
+        if (input) input.focus();
+        if (clear) {
+            searchString.set("");
+            submitSearch();
+        }
+    }
+
     export function getMultiOptions() {
         if (selectedCount < 1) return [];
         return [
@@ -167,6 +177,19 @@
                 "maplist/delete_selected"
             ),
         ];
+    }
+
+    let containerEl: HTMLDivElement;
+    function onClickOutsideCard(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (
+            event.ctrlKey ||
+            event.shiftKey ||
+            (target !== containerEl && target !== containerEl.children[0])
+        )
+            return;
+
+        clearMapSelection();
     }
 
     onMount(async () => {
@@ -204,7 +227,7 @@
                     ]}
                 />
 
-                <div class="searchbar">
+                <div class="searchbar" bind:this={searchBarEl}>
                     <Input
                         on:submit={submitSearch}
                         edits={searchString}
@@ -228,16 +251,19 @@
                     <!-- <Button><iconify-icon icon="mingcute:down-line" /></Button> -->
                 </div>
             </div>
-            <div class="list">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div
+                class="list"
+                bind:this={containerEl}
+                on:click={onClickOutsideCard}
+            >
                 <MapsContainer
                     on:select={selectMap}
-                    clearSelection={clearMapSelection}
                     removeFromSelection={removeMapFromSelection}
                     bind:groups
                     bind:criteria
                     bind:filter
                     bind:selectedCards
-                    bind:selectedCount
                     bind:lastSelected
                 />
             </div>
@@ -278,10 +304,6 @@
                     display: block;
                     box-shadow: -2px 0 2px 0 var(--light-shadow);
                 }
-
-                .list {
-                    margin: 0 0 0 1em;
-                }
             }
         }
     }
@@ -306,6 +328,11 @@
             }
         }
 
+        > :global(.icons-container) {
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
         .filters {
             place-self: center;
             padding: 0.5em;
@@ -317,7 +344,6 @@
     .list {
         grid-area: list;
         overflow-y: auto;
-        margin: 0 1em;
         container-type: inline-size;
 
         &::-webkit-scrollbar {

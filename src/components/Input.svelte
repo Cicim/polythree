@@ -78,6 +78,9 @@
         ) {
             event.preventDefault();
         }
+
+        if (event.code === "Delete")
+            event.stopPropagation();
     }
 
     function onKeyUp(event: KeyboardEvent) {

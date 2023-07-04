@@ -22,8 +22,6 @@
     export let criteria: GroupCriteria;
     export let selectedCards: SelectedCards;
     export let lastSelected: { group: number; index: number };
-    export let selectedCount: number;
-    export let clearSelection: () => void;
     export let removeFromSelection: (group: number, index: number) => void;
 
     $: filterCards(), updateCards(), filter;
@@ -32,7 +30,7 @@
     /** Filters the cards based on the current filter string */
     function filterCards() {
         let match = filter.match(/#(\d+)(\.(\d+))?/);
-        
+
         filteredCards = $allCards.filter((card) => {
             // If the filter is empty, return all cards
             if (filter === "") return true;
@@ -129,20 +127,11 @@
         // If the last selected card is not in the results, reset it
         if (!inGroup(lastSelected)) lastSelected = null;
     }
-
-    let containerEl: HTMLDivElement;
-    function onClickOutsideCard(event: MouseEvent) {
-        const target = event.target as HTMLElement;
-        if (target !== containerEl || event.ctrlKey || event.shiftKey) return;
-        clearSelection();
-    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
-    bind:this={containerEl}
     class="maps-container"
-    on:click|capture={onClickOutsideCard}
 >
     {#each groups as group (group.name)}
         <h2 class="separator">{group.name}</h2>
@@ -168,6 +157,7 @@
         grid-template-columns: 1fr;
         gap: 1em;
         margin-bottom: 2em;
+        padding: 0 1em;
 
         .empty {
             grid-column: 1 / -1;

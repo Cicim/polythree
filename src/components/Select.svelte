@@ -14,13 +14,17 @@
     /** The path to the object this select updates */
     export let edits: NavigatePath = null;
 
+    export let invalid: boolean = false;
+
+    $: invalid = O.findIndex((o) => value === o.value) === -1;
+
     let context: EditorContext = getContext("context");
     let data: Writable<any> = getContext("data");
 
     export const MAX_OPTIONS_HEIGHT = 10;
 
     // Extract the options into an object
-    let O = options.map(([key, v]) => {
+    $: O = options.map(([key, v]) => {
         return {
             value: key,
             text: v,
@@ -415,7 +419,7 @@
     on:keydown={onKeyDown}
 >
     <span class="selected-option">
-        {#if O.find((o) => value === o.value)}
+        {#if !invalid}
             {O.find((o) => value === o.value).text}
         {:else}
             <span
