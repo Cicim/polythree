@@ -4,6 +4,7 @@
     import LoadingScreen from "src/components/LoadingScreen.svelte";
     import AlertDialog from "src/components/dialog/AlertDialog.svelte";
     import {
+        IconOption,
         Menu,
         TextOption,
         showContextMenu,
@@ -146,7 +147,18 @@
             on:contextmenu={(e) =>
                 showContextMenu(
                     e,
-                    new Menu([new TextOption("Save as...", saveAs)])
+                    new Menu([
+                        new IconOption(
+                            "Export to PNG...",
+                            "mdi:export",
+                            saveAs
+                        ),
+                        new IconOption(
+                            "Export Layout...",
+                            "mdi:export",
+                            saveAs
+                        ),
+                    ])
                 )}
         >
             <img

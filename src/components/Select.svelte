@@ -247,6 +247,7 @@
                 if (!open) return;
 
                 event.preventDefault();
+                event.stopPropagation();
                 // Close the options list
                 optionsEl.close();
                 open = false;
@@ -258,6 +259,7 @@
                     !optionsEl.contains(document.activeElement)
                 )
                     return;
+                event.preventDefault();
 
                 // Set the scrolling mode to keyboard
                 scrollingMode.set(false);
@@ -289,6 +291,7 @@
                     !optionsEl.contains(document.activeElement)
                 )
                     return;
+                event.preventDefault();
 
                 // Set the scrolling mode to keyboard
                 scrollingMode.set(false);

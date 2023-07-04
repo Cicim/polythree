@@ -27,7 +27,9 @@
         >
             <span class="text">{text}</span>
             <span class="icon">
+                {#key icon}
                 <iconify-icon {icon} />
+                {/key}
             </span>
         </button>
     {/each}

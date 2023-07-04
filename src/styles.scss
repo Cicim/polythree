@@ -36,10 +36,10 @@ body {
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
-    background: var(--sel-bg);
   }
 
   &::-webkit-scrollbar-thumb {
+    border-radius: 4px;
     background: var(--light-shadow);
 
     &:hover {
@@ -70,31 +70,32 @@ body {
     max-width: 500px;
   }
 
-  .dialog-content {
+  >.dialog-content {
     color: var(--main-fg);
     display: grid;
-    grid-template-rows: max-content max-content 1fr;
+    grid-template-rows: max-content minmax(0, 1fr) max-content;
     width: 100%;
     min-width: 400px;
+    max-height: 90vh;
 
-    .title {
+    >.title {
       color: var(--weak-fg);
       padding: 12px;
       padding-bottom: 6px;
       font-size: 18pt;
     }
 
-    .icon-title {
+    >.icon-title {
       display: grid;
       grid-template-columns: max-content 1fr;
       padding: 12px;
       grid-column-gap: 1em;
 
-      iconify-icon {
+      >iconify-icon {
         place-self: center;
       }
 
-      span {
+      >span {
         color: var(--weak-fg);
         padding-bottom: 6px;
         font-size: 18pt;
@@ -102,19 +103,21 @@ body {
       }
     }
 
-    .content {
+    >.content {
+      min-height: 0;
       margin: 0 12px;
       padding: 0.66em 0.5em;
       padding-top: 1em;
       border-top: 1px solid var(--light-shadow);
     }
 
-    .buttons {
+
+    >.buttons {
       display: flex;
       padding: 16px;
       justify-content: flex-end;
 
-      button {
+      >button {
         font-size: 16px;
         flex: 1;
         flex-grow: 0.33;

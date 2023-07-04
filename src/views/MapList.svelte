@@ -197,7 +197,9 @@
                             onclick: () => {
                                 mapInfoOpen = !mapInfoOpen;
                             },
-                            icon: "material-symbols:visibility-off",
+                            icon: mapInfoOpen
+                                ? "material-symbols:visibility-off"
+                                : "material-symbols:visibility",
                         },
                     ]}
                 />
