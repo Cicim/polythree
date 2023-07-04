@@ -18,10 +18,13 @@
     import {
         IconOption,
         Menu,
+        Separator,
         showContextMenu,
     } from "src/systems/context_menu";
     import MapInfo from "./MapList/MapInfo.svelte";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
+    import { spawnDialog } from "src/systems/dialogs";
+    import DeleteMapDialog from "./MapList/DeleteMapDialog.svelte";
 
     export let context: MapListContext;
     let data = context.data;
@@ -138,6 +141,32 @@
             }
             lastSelected = { group, index };
         }
+    }
+
+    export function deleteSelected() {
+        const res = spawnDialog(DeleteMapDialog, {
+            toDelete: selectedMaps,
+            all: $data,
+        });
+    }
+
+    export async function deleteCard(group: number, index: number) {
+        const res = await spawnDialog(DeleteMapDialog, {
+            toDelete: [{ group, index }],
+            all: $data,
+        });
+    }
+
+    export function getMultiOptions() {
+        if (selectedCount < 1) return [];
+        return [
+            new Separator("All Maps"),
+            new IconOption(
+                "Delete Selected",
+                "mdi:delete",
+                "maplist/delete_selected"
+            ),
+        ];
     }
 
     onMount(async () => {

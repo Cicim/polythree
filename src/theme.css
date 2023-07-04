@@ -6,6 +6,11 @@
     --weak-bg: #1f1f22;
     --weak-fg: #b2b2b0;
     --error-fg: #ff511c;
+    /* An orangey yello */
+    --warn-bg: #ffc107;
+    --warn-fg: #602a00;
+    --warn-border: #c45500;
+    --warn-icon: var(--warn-border);
 
     /* Buttons */
     --btn-primary-bg: #2f2f32;

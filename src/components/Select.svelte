@@ -12,7 +12,7 @@
     /** The currently selected value */
     export let value: string = options[0][0];
     /** The path to the object this select updates */
-    export let edits: NavigatePath | null = null;
+    export let edits: NavigatePath = null;
 
     let context: EditorContext = getContext("context");
     let data: Writable<any> = getContext("data");
@@ -54,7 +54,7 @@
 
         // If this select edits some property, update it
         if (edits !== null) {
-            context.changes.setValue(edits, value);
+            context.changes.setValue(edits as NavigatePath, value);
         }
 
         // Dispatch the change event
@@ -386,7 +386,7 @@
     if (edits !== null) {
         // Subscribe to changes
         unsub = data.subscribe((d) => {
-            value = r.get(d, edits) as string;
+            value = r.get(d, edits as NavigatePath) as string;
         });
     }
 

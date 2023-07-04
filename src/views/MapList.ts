@@ -3,6 +3,7 @@ import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { spawnDialog } from "src/systems/dialogs";
 import { EditorContext } from "src/systems/editors";
 import MapList from "src/views/MapList.svelte";
+import type { Writable } from "svelte/store";
 
 export interface MapCardProps {
     group: number;
@@ -133,9 +134,12 @@ interface MapHeader {
 
 export class MapListContext extends EditorContext {
     public name: string = "Map List";
+    declare public component: MapList;
+    declare public data: Writable<MapCardProps[]>;
     public singularTab = true;
     public actions = {
         "maplist/refresh": () => this.load(),
+        "maplist/delete_selected": () => this.component.deleteSelected(),
     }
 
     public save(): Promise<boolean> {

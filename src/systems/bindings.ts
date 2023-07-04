@@ -28,6 +28,7 @@ export class Bindings {
         "tabbar/prev": "Ctrl+Shift+Tab",
 
         "maplist/refresh": "F5",
+        "maplist/delete_selected": "Delete",
         
         "editor/save": "Ctrl+S",
         "editor/undo": "Ctrl+Z",

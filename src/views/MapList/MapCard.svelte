@@ -3,6 +3,7 @@
         IconOption,
         Menu,
         Separator,
+        SubMenuOption,
         showContextMenu,
     } from "src/systems/context_menu";
     import { MapEditorContext } from "../MapEditor";
@@ -12,9 +13,10 @@
 
     import ClickableIcons from "src/components/ClickableIcons.svelte";
     import MapPreview from "./MapPreview.svelte";
-    import { createEventDispatcher } from "svelte";
-    import type { MapSelectionEvent } from "../MapList";
+    import { createEventDispatcher, getContext } from "svelte";
+    import type { MapListContext, MapSelectionEvent } from "../MapList";
     import OffsetLabel from "src/components/OffsetLabel.svelte";
+    import { comment } from "svelte/internal";
 
     export let group: number;
     export let index: number;
@@ -37,28 +39,47 @@
         } as MapSelectionEvent);
     }
 
+    const context: MapListContext = getContext("context");
     let loaded = false;
-
     let cardEl: HTMLDivElement;
 
-    let ctxMenu = new Menu([
+    let ctxMenu = [
+        new Separator("This Map"),
         new IconOption("Duplicate", "mdi:content-copy", () => {}),
-        new IconOption("Delete", "mdi:delete", () => {}),
-        new Separator("Edit"),
-        new IconOption("Map", "material-symbols:edit-outline", () => {
-            new MapEditorContext({ group, index }).create().select();
+        new IconOption("Delete", "mdi:delete", () => {
+            context.component.deleteCard(group, index);
         }),
-        new IconOption("Tilesets", "material-symbols:edit-outline", () => {}),
-        new Separator("Preview"),
-        new IconOption("Map", "material-symbols:visibility-outline", () => {
-            openTooltip();
-        }),
-        new IconOption(
-            "Tilesets",
-            "material-symbols:visibility-outline",
-            () => {}
+        new SubMenuOption(
+            "Map",
+            new Menu([
+                new IconOption("Edit", "material-symbols:edit-outline", () => {
+                    new MapEditorContext({ group, index }).create().select();
+                }),
+                new IconOption(
+                    "Preview",
+                    "material-symbols:visibility-outline",
+                    () => {
+                        openTooltip();
+                    }
+                ),
+            ])
         ),
-    ]);
+        new SubMenuOption(
+            "Tilesets",
+            new Menu([
+                new IconOption(
+                    "Edit",
+                    "material-symbols:edit-outline",
+                    () => {}
+                ),
+                new IconOption(
+                    "Preview",
+                    "material-symbols:visibility-outline",
+                    () => {}
+                ),
+            ])
+        ),
+    ];
 
     function openTooltip() {
         showTooltip({
@@ -88,7 +109,12 @@
         if (e.ctrlKey || e.shiftKey) return;
         new MapEditorContext({ group, index }).create().select();
     }}
-    on:contextmenu={(e) => {showContextMenu(e, ctxMenu)}}
+    on:contextmenu={(e) => {
+        showContextMenu(
+            e,
+            new Menu([...ctxMenu, ...context.component.getMultiOptions()])
+        );
+    }}
     use:intersection
     on:enterViewport={async () => {
         await new Promise((resolve) =>
@@ -123,7 +149,13 @@
         <ClickableIcons
             vertical_alignment="bottom"
             icons={[
-                { text: "Delete", icon: "mdi:delete" },
+                {
+                    text: "Delete",
+                    icon: "mdi:delete",
+                    onclick: () => {
+                        context.component.deleteCard(group, index);
+                    },
+                },
                 {
                     text: "Preview",
                     icon: "mdi:eye",

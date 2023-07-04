@@ -3,6 +3,8 @@
     import type { MapEditorContext } from "./MapEditor";
     import MapEditorTabs from "./MapEditor/MapEditorTabs.svelte";
     import LoadingScreen from "../components/LoadingScreen.svelte";
+    import Select from "src/components/Select.svelte";
+    import { writable } from "svelte/store";
 
     export let context: MapEditorContext;
     setContext("context", context);
@@ -18,9 +20,23 @@
     setInterval(() => {
         changes = context.changes;
     }, 1);
+
+    let value = "1";
 </script>
 
 <div class="view">
+    <Select
+        bind:value
+        options={[
+            ["0", "Zero"],
+            ["1", "One"],
+            ["2", "Two"],
+            ["3", "Three"],
+            ["4", "Four"],
+        ]}
+    />
+    {value}
+
     {#if $isLoading}
         <LoadingScreen />
     {:else}
