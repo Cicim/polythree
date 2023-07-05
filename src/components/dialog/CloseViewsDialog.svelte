@@ -31,7 +31,13 @@
 </script>
 
 <div class="dialog-content">
-    <div class="title">{title}</div>
+    <div class="title">
+        {#if closing}
+            Closing Tabs...
+        {:else}
+            {title}
+        {/if}
+    </div>
     <div class="content">
         <div class="message">
             {#if message}
@@ -77,12 +83,13 @@
         background: var(--main-bg);
         margin: 4px;
         padding: 0.5em;
+
         display: flex;
         flex-direction: column;
         overflow-y: auto;
         border-radius: 0.5rem;
         gap: 0.25rem;
-        height: 200px;
+        max-height: 200px;
 
         .view {
             display: flex;

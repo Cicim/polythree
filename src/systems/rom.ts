@@ -70,6 +70,7 @@ export async function closeRom() {
         // Ask the user if they want to close the tabs
         const res = await spawnDialog(CloseViewsDialog, {
             title: "Close ROM",
+            message: "Closing the ROM will close all tabs that require it. Are you sure you want to close the ROM?",
             views: romTabs,
             thisView: get(openViews).find(v => v instanceof HomePageContext)
         });
