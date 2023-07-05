@@ -44,7 +44,6 @@
     let cardEl: HTMLDivElement;
 
     let ctxMenu = [
-        new Separator("This Map"),
         new IconOption("Duplicate", "mdi:content-copy", () => {}),
         new IconOption("Delete", "mdi:delete", () => {
             context.component.deleteCard(group, index);
@@ -112,7 +111,11 @@
     on:contextmenu={(e) => {
         showContextMenu(
             e,
-            new Menu([...ctxMenu, ...context.component.getMultiOptions()])
+            new Menu([
+                new Separator(`This Map (${group}.${index})`),
+                ...ctxMenu,
+                ...context.component.getMultiOptions(),
+            ])
         );
     }}
     use:intersection

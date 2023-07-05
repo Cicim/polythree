@@ -10,7 +10,7 @@
     let dialogElement: HTMLDialogElement;
     /** The dialog content container element */
     let contentElement: SvelteComponent;
-    
+
     export function getDialog() {
         return dialogElement;
     }
@@ -21,7 +21,7 @@
      */
     function closeOnEscape(event: KeyboardEvent) {
         if (dialogElement.open && contentElement?.noEscapeClose) return;
-        
+
         if (event.code === "Escape") {
             close(null);
         }
@@ -50,8 +50,9 @@
 </script>
 
 <svelte:window
-    on:keydown|stopPropagation={closeOnEscape}
-    on:mouseup={closeOnClickOutside}
+    on:keydown|preventDefault
+    on:keyup|preventDefault={closeOnEscape}
+    on:click={closeOnClickOutside}
 />
 
 <!-- The dialog -->

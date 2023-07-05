@@ -6,11 +6,17 @@
     --weak-bg: #1f1f22;
     --weak-fg: #b2b2b0;
     --error-fg: #ff511c;
-    /* An orangey yello */
-    --warn-bg: #ffc107;
-    --warn-fg: #602a00;
-    --warn-border: #c45500;
-    --warn-icon: var(--warn-border);
+
+
+    --warn-card-bg: #ffc107;
+    --warn-card-fg: #602a00;
+    --warn-card-border: #c45500;
+    --warn-card-icon: var(--warn-border);
+    
+    --error-card-bg: #d7340b;
+    --error-card-fg: #ffd7be;
+    --error-card-border: #ff905d;
+    --error-card-icon: var(--warn-border);
 
     /* Buttons */
     --btn-primary-bg: #2f2f32;

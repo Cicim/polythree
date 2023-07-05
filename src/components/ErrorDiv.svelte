@@ -3,10 +3,10 @@
 
 <div class="card">
     <span class="icon">
-        <iconify-icon icon="mdi:alert-circle-outline" />
+        <iconify-icon icon="codicon:error" />
     </span>
     <span>
-        <b>Warning: </b>
+        <b>Error: </b>
         <slot />
     </span>
 </div>
@@ -17,9 +17,9 @@
         grid-template-columns: min-content 1fr;
         gap: 1em;
 
-        background: var(--warn-card-bg);
-        color: var(--warn-card-fg);
-        border: 1px solid var(--warn-card-border);
+        background: var(--error-card-bg);
+        color: var(--error-card-fg);
+        border: 1px solid var(--error-card-border);
 
         border-radius: 0.5rem;
         padding: 0.5rem;
@@ -28,7 +28,7 @@
         .icon {
             iconify-icon {
                 font-size: 2rem;
-                color: var(--warn-card-icon);
+                color: var(--error-card-icon);
             }
         }
     }

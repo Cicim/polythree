@@ -170,9 +170,9 @@
     export function getMultiOptions() {
         if (selectedCount < 1) return [];
         return [
-            new Separator("All Maps"),
+            new Separator("All Selected Maps"),
             new IconOption(
-                "Delete Selected",
+                "Delete",
                 "mdi:delete",
                 "maplist/delete_selected"
             ),

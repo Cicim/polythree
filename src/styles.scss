@@ -88,16 +88,17 @@ body {
     >.icon-title {
       display: grid;
       grid-template-columns: max-content 1fr;
-      padding: 12px;
       grid-column-gap: 1em;
+      padding: 12px;
+      padding-bottom: 6px;
 
       >iconify-icon {
         place-self: center;
+        font-size: 1.5em;
       }
 
       >span {
         color: var(--weak-fg);
-        padding-bottom: 6px;
         font-size: 18pt;
         max-width: 400px;
       }
