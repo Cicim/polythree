@@ -3,7 +3,7 @@
     import { createEventDispatcher, getContext, onDestroy } from "svelte";
     import r from "src/systems/navigate";
     import { get, type Unsubscriber, type Writable } from "svelte/store";
-    import type { EditorContext } from "src/systems/editors";
+    import type { EditorContext } from "src/systems/contexts";
 
     type InputType = "text" | "number";
 

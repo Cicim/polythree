@@ -112,8 +112,6 @@
   // Check if there are maps that share the same layout
   // If so, warn the user
   onMount(() => {
-    if (toDelete.length === 0) close(null);
-
     /** Map of layouts => map that share a layout with with a toDelete map */
     const layoutToMap = new Map<number, Set<MapCardProps>>();
 

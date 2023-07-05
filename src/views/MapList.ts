@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { spawnDialog } from "src/systems/dialogs";
-import { EditorContext } from "src/systems/editors";
+import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
 import type { Writable } from "svelte/store";
 
@@ -144,8 +144,8 @@ export class MapListContext extends EditorContext {
         "maplist/clear_and_focus_search": () => this.component.focusSearch(true),
     }
 
-    public save(): Promise<boolean> {
-        throw new Error("Method not implemented.");
+    public async save(): Promise<boolean> {
+        return true;
     }
 
     public async load(): Promise<void> {

@@ -52,7 +52,7 @@
 <svelte:window
     on:keydown|preventDefault
     on:keyup|preventDefault={closeOnEscape}
-    on:click={closeOnClickOutside}
+    on:mousedown={closeOnClickOutside}
 />
 
 <!-- The dialog -->

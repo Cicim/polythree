@@ -4,7 +4,6 @@
     import {
         GroupCriteria,
         groupCriteriaTable,
-        type MapCardProps,
         type MapGroup,
         type MapId,
         type MapListContext,
@@ -25,6 +24,9 @@
     import ClickableIcons from "src/components/ClickableIcons.svelte";
     import { spawnDialog } from "src/systems/dialogs";
     import DeleteMapDialog from "./MapList/DeleteMapDialog.svelte";
+    import { openViews } from "src/systems/views";
+    import { MapEditorContext } from "./MapEditor";
+    import CloseViewsDialog from "../components/dialog/CloseViewsDialog.svelte";
 
     export let context: MapListContext;
     let data = context.data;
@@ -143,18 +145,44 @@
         }
     }
 
-    export function deleteSelected() {
+    export async function deleteCards(cards: MapId[]) {
+        if (cards.length === 0) return;
+
+        // Check if any MapId is an open MapEditor
+        const viewsToClose = [];
+        for (const view of $openViews) {
+            if (view instanceof MapEditorContext) {
+                const map = view.identifier;
+                if (
+                    cards.find(
+                        (m) => m.group === map.group && m.index === map.index
+                    )
+                ) {
+                    viewsToClose.push(view);
+                }
+            }
+        }
+
+        if (viewsToClose.length > 0) {
+            const res = await spawnDialog(CloseViewsDialog, {
+                title: "Close open Map Editors",
+                views: viewsToClose,
+            });
+
+            if (!res) return;
+        }
         const res = spawnDialog(DeleteMapDialog, {
-            toDelete: selectedMaps,
+            toDelete: cards,
             all: $data,
         });
     }
 
+    export function deleteSelected() {
+        deleteCards(selectedMaps);
+    }
+
     export async function deleteCard(group: number, index: number) {
-        const res = await spawnDialog(DeleteMapDialog, {
-            toDelete: [{ group, index }],
-            all: $data,
-        });
+        deleteCards([{ group, index }]);
     }
 
     let searchBarEl: HTMLDivElement;
@@ -171,11 +199,7 @@
         if (selectedCount < 1) return [];
         return [
             new Separator("All Selected Maps"),
-            new IconOption(
-                "Delete",
-                "mdi:delete",
-                "maplist/delete_selected"
-            ),
+            new IconOption("Delete", "mdi:delete", "maplist/delete_selected"),
         ];
     }
 

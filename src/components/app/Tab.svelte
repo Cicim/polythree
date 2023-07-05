@@ -1,7 +1,8 @@
 <script lang="ts">
     import "iconify-icon";
-    import type { EditorContext } from "src/systems/editors";
-    import { ViewContext, draggingId, openViews } from "src/systems/views";
+    import type { ViewContext, EditorContext } from "src/systems/contexts";
+    import { draggingId, openViews } from "src/systems/views";
+
     import {
         IconOption,
         Menu,

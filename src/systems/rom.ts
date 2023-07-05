@@ -4,9 +4,8 @@ import { open } from "@tauri-apps/api/dialog";
 import { spawnDialog } from "./dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { openViews } from "./views";
-import { EditorContext } from "./editors";
-import SaveDialog from "src/components/dialog/SaveDialog.svelte";
-import ConfirmDialog from "src/components/dialog/ConfirmDialog.svelte";
+import CloseViewsDialog from "src/components/dialog/CloseViewsDialog.svelte";
+import { HomePageContext } from "src/views/HomePage";
 
 interface Rom {
     path: string;
@@ -69,25 +68,13 @@ export async function closeRom() {
 
     if (romTabs.length !== 0) {
         // Ask the user if they want to close the tabs
-        const res = await spawnDialog(ConfirmDialog, {
-            message: "Closing the ROM will close all tabs that require it. Are you sure you want to close the ROM?",
+        const res = await spawnDialog(CloseViewsDialog, {
             title: "Close ROM",
+            views: romTabs,
+            thisView: get(openViews).find(v => v instanceof HomePageContext)
         });
 
-        if (!res) {
-            return;
-        }
-
-        const promises = [];
-        for (const tab of romTabs) {
-            if (!(tab instanceof EditorContext)) continue;
-            await tab.askClose()
-            if (tab.savePromise)
-                promises.push(tab.savePromise);
-        }
-        const awaited = await Promise.all(promises);
-        if (awaited.some(p => !p))
-            return;
+        if (!res) return;
     }
 
 

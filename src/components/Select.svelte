@@ -3,7 +3,7 @@
     import Option from "./Option.svelte";
     import { getContext, onDestroy, onMount, setContext, tick } from "svelte";
     import type { NavigatePath } from "src/systems/navigate";
-    import type { EditorContext } from "src/systems/editors";
+    import type { EditorContext } from "src/systems/contexts";
     import { writable, type Unsubscriber, type Writable } from "svelte/store";
     import r from "src/systems/navigate";
 

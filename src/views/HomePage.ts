@@ -1,5 +1,5 @@
 import HomePage from "src/views/HomePage.svelte";
-import { ViewContext, openViews } from "src/systems/views";
+import { ViewContext } from "src/systems/contexts";
 
 export class HomePageContext extends ViewContext {
     public name = "Home Page";

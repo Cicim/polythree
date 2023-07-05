@@ -1,4 +1,4 @@
-import { EditorContext } from "../systems/editors";
+import { EditorContext } from "../systems/contexts";
 import MapEditor from "./MapEditor.svelte";
 
 export interface MapEditorProperties {

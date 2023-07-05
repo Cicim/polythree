@@ -18,7 +18,7 @@
 
     import { MapEditorContext } from "src/views/MapEditor";
     import { HomePageContext } from "src/views/HomePage";
-    import type { EditorContext } from "src/systems/editors";
+    import type { EditorContext } from "src/systems/contexts";
     import { MapListContext } from "src/views/MapList";
 
     // Add the actions to the global keybindings

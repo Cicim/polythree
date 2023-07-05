@@ -16,7 +16,6 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { MapListContext, MapSelectionEvent } from "../MapList";
     import OffsetLabel from "src/components/OffsetLabel.svelte";
-    import { comment } from "svelte/internal";
 
     export let group: number;
     export let index: number;
@@ -119,10 +118,7 @@
         );
     }}
     use:intersection
-    on:enterViewport={async () => {
-        await new Promise((resolve) =>
-            setTimeout(resolve, Math.random() * 100)
-        );
+    on:enterViewport={() => {
         loaded = true;
     }}
     on:exitViewport={() => {
