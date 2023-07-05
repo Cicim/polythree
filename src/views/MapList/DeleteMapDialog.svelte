@@ -62,8 +62,8 @@
       // Wait 1 second
       await new Promise((res, rej) =>
         setTimeout(() => {
-          if (Math.random() > 0.5) res(false)
-          else rej("Generic error message")
+          if (Math.random() > 0.5) res(false);
+          else rej("Generic error message");
         }, 1000)
       );
     } catch (err) {
@@ -144,14 +144,11 @@
             if (!layoutToMap.has(m.layout))
               layoutToMap.set(m.layout, new Set([m]));
             layoutToMap.get(m.layout).add(m);
+
+            return true;
           }
 
-          return (
-            res ||
-            (m.layout === layout &&
-              m.group !== map.group &&
-              m.index !== map.index)
-          );
+          return res;
         }, false)
       ) {
         layouts.add(layout);
