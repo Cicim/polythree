@@ -200,11 +200,11 @@
             background: var(--card-hover-bg);
             border-color: var(--card-hover-border);
 
-            :global(.container) {
+            :global(.icons-container) {
                 display: flex;
             }
         }
-        :global(.container) {
+        :global(.icons-container) {
             display: none;
         }
     }
