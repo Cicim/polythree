@@ -94,6 +94,25 @@
             },
         });
     }
+
+    // Fully load a card in only if it's been on screen for at least X milliseconds
+    // X = 50
+    let viewportTimer: NodeJS.Timeout;
+    function onEnterViewport() {
+        if (viewportTimer) return;
+
+        viewportTimer = setTimeout(() => {
+            loaded = true;
+            viewportTimer = null;
+        }, Math.random() * 50 + 50);
+    }
+    function oneExitViewport() {
+        if (viewportTimer) {
+            clearTimeout(viewportTimer);
+            viewportTimer = null;
+        }
+        loaded = false;
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -118,12 +137,8 @@
         );
     }}
     use:intersection
-    on:enterViewport={() => {
-        loaded = true;
-    }}
-    on:exitViewport={() => {
-        loaded = false;
-    }}
+    on:enterViewport={onEnterViewport}
+    on:exitViewport={oneExitViewport}
 >
     {#if loaded}
         <div class="left">
