@@ -112,7 +112,7 @@
     /** Updates the groups based on the current grouping criteria
      * and updates the selection to match the new groups
      */
-    function updateCards() {
+    export function updateCards() {
         let { predicate, nameTransform } = groupCriteriaTable[criteria];
         groups = groupTogether(filteredCards, predicate, nameTransform);
 

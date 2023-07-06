@@ -2093,6 +2093,7 @@ name = "polythree"
 version = "0.0.0"
 dependencies = [
  "byte-unit",
+ "gba_types",
  "poly3lib",
  "serde",
  "serde_json",

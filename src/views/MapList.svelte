@@ -174,7 +174,21 @@
         const res = spawnDialog(DeleteMapDialog, {
             toDelete: cards,
             all: $data,
+            context,
         });
+    }
+
+    let mapsContainer: MapsContainer;
+    export function removeDeleted(deleted: MapId[]) {
+        data.update((d) => {
+            for (const map of deleted) {
+                d = d.filter(
+                    (m) => m.group !== map.group || m.index !== map.index
+                );
+            }
+            return d;
+        });
+        mapsContainer.updateCards();
     }
 
     export function deleteSelected() {
@@ -284,6 +298,7 @@
                 <MapsContainer
                     on:select={selectMap}
                     removeFromSelection={removeMapFromSelection}
+                    bind:this={mapsContainer}
                     bind:groups
                     bind:criteria
                     bind:filter

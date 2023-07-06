@@ -5,9 +5,10 @@
   import WarningDiv from "src/components/WarningDiv.svelte";
   import ErrorDiv from "src/components/ErrorDiv.svelte";
   import { onMount } from "svelte";
-  import type { MapCardProps } from "../MapList";
+  import type { MapCardProps, MapId, MapListContext } from "../MapList";
   import Select from "src/components/Select.svelte";
   import MapPreview from "./MapPreview.svelte";
+  import { invoke } from "@tauri-apps/api";
 
   // Dialog options
   export let noOutsideClose = false;
@@ -18,9 +19,11 @@
   export let toDelete: { group: number; index: number; layout?: number }[];
   /** The reference to the MapList $data */
   export let all: MapCardProps[];
+  /** The MapListContext reference */
+  export let context: MapListContext;
 
   /** Valid actions to be done to the layout (an passed to the backend on deletion) */
-  type Action = "nothing" | "clear" | "delete" | "change";
+  type Action = "Nothing" | "Clear" | "Delete" | "Change";
   /** List for showing the action cards */
   let actionableLayoutToMap: Record<
     string,
@@ -59,13 +62,11 @@
     noEscapeClose = noOutsideClose = true;
 
     try {
-      // Wait 1 second
-      await new Promise((res, rej) =>
-        setTimeout(() => {
-          if (Math.random() > 0.5) res(false);
-          else rej("Generic error message");
-        }, 1000)
-      );
+      const deleted: MapId[] = await invoke("delete_maps", { 
+        maps: toDelete,
+        actions: actionableLayoutToMap ?? {}
+       });
+       context.component.removeDeleted(deleted);
     } catch (err) {
       errored = true;
       errorString = err;
@@ -87,7 +88,7 @@
     for (const index of Object.keys(actionableLayoutToMap)) {
       const layout = +index;
       const more = actionableLayoutToMap[layout];
-      if (more.action !== "nothing") invalidLayouts.push(layout);
+      if (more.action !== "Nothing") invalidLayouts.push(layout);
     }
 
     validLayouts = [...allLayouts].filter(
@@ -102,7 +103,7 @@
 
     for (const index of Object.keys(actionableLayoutToMap)) {
       const more = actionableLayoutToMap[index];
-      if (more.action === "change" && more.invalid) {
+      if (more.action === "Change" && more.invalid) {
         anyInvalid = true;
         break;
       }
@@ -160,7 +161,7 @@
       actionableLayoutToMap = {};
       layoutToMap.forEach((maps, layout) => {
         actionableLayoutToMap[layout] = {
-          action: "nothing",
+          action: "Nothing",
           maps: [...maps],
           changeTo: "1",
         };
@@ -236,7 +237,7 @@
               <div
                 class="maps"
                 class:striked={actionableLayoutToMap[layout].action ===
-                  "delete"}
+                  "Delete"}
               >
                 {#each o.maps as map}
                   {#if map?.name}
@@ -250,13 +251,13 @@
                 <Select
                   bind:value={actionableLayoutToMap[layout].action}
                   options={[
-                    ["nothing", "Don't Delete"],
-                    ["change", "Delete and change Maps Layout:"],
-                    ["clear", "Delete and set these Map's Layout to null"],
-                    ["delete", "Delete both the Layout and these Maps"],
+                    ["Nothing", "Don't Delete"],
+                    ["Change", "Delete and change Maps Layout:"],
+                    ["Clear", "Delete and set these Map's Layout to null"],
+                    ["Delete", "Delete both the Layout and these Maps"],
                   ]}
                 />
-                {#if actionableLayoutToMap[layout].action === "change"}
+                {#if actionableLayoutToMap[layout].action === "Change"}
                   <Select
                     bind:value={actionableLayoutToMap[layout].changeTo}
                     bind:invalid={actionableLayoutToMap[layout].invalid}
