@@ -10,6 +10,8 @@ export interface Rom {
 export interface Config {
     /** A map of layout numbers to layout name */
     layout_names: Record<number, string>;
+    /** A map of tileset offsets to tileset name */
+    tileset_names: Record<number, string>;
 }
 
 /** The curretly open ROM */

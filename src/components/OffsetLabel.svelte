@@ -15,5 +15,6 @@
 <style lang="scss">
     .offset {
         font-family: monospace;
+        color: var(--weak-fg);
     }
 </style>

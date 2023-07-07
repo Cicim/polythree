@@ -50,7 +50,6 @@ export async function openRom() {
             message: err,
             title: "Error while loading ROM"
         });
-        closeRom();
     }
 
     try {
@@ -64,7 +63,6 @@ export async function openRom() {
             message: err,
             title: "Error while loading configs"
         });
-        closeRom();
     }
 }
 

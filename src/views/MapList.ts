@@ -43,6 +43,7 @@ export interface MapSelectionEvent {
 }
 
 export interface MapGroup {
+    /** The group's identifier string */
     name: string;
     maps: MapCardProps[];
 }
@@ -57,41 +58,26 @@ export enum GroupCriteria {
 export type GroupCriteriaMethods = {
     name: string;
     predicate: (card: MapCardProps) => string,
-    nameTransform: (name: string) => string,
 }
 
 export const groupCriteriaTable: Record<GroupCriteria, GroupCriteriaMethods> = {
     [GroupCriteria.Group]: {
         name: "Group",
         predicate: (card: MapCardProps) => card.group.toString(),
-        nameTransform: (name: string) => `Group #${name}`,
     },
     [GroupCriteria.Name]: {
         name: "Name",
         predicate: (card: MapCardProps) => card.name ?? "",
-        nameTransform: (name: string) => name,
     },
     [GroupCriteria.Tilesets]: {
         name: "Tilesets",
         predicate: (card: MapCardProps) => {
             return `${card.tileset1}+${card.tileset2}`;
         },
-        nameTransform: (name: string) => {
-            let [t1, t2] = name.split("+");
-
-            t1 = t1 === "null" ? "???" : "$" + parseInt(t1).toString(16).padStart(7, '0').toUpperCase();
-            t2 = t2 === "null" ? "???" : "$" + parseInt(t2).toString(16).padStart(7, '0').toUpperCase();
-
-            return `Primary: ${t1}, Secondary: ${t2}`;
-        },
     },
     [GroupCriteria.Layout]: {
         name: "Layout",
         predicate: (card: MapCardProps) => card.layout.toString(),
-        nameTransform: (name: string) => {
-            if (name === "0") return "No Layout";
-            return `Layout #${name}`;
-        },
     },
 }
 

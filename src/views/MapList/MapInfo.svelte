@@ -108,10 +108,20 @@
             <span class="value">
                 <OffsetLabel offset={selectedProps.offset} />
             </span>
+            <span class="title">Layout</span>
+            <span class="value">
+                <i>{$config.layout_names[selectedProps.layout] ?? "Unknown"}</i>
+            </span>
             <span class="title">tilesets</span>
             <span class="value">
-                <OffsetLabel offset={selectedProps.tileset1} /><br />
-                <OffsetLabel offset={selectedProps.tileset2} />
+                <div class="tileset">
+                    <i>{$config.tileset_names[selectedProps.tileset1]}</i><br />
+                    <OffsetLabel offset={selectedProps.tileset1} /><br />
+                </div>
+                <div class="tileset">
+                    <i>{$config.tileset_names[selectedProps.tileset2]}</i><br />
+                    <OffsetLabel offset={selectedProps.tileset2} />
+                </div>
             </span>
             <span class="title">Music</span>
             <span class="value">
@@ -138,10 +148,6 @@
                 {:else}
                     ({selectedProps.weather})
                 {/if}
-            </span>
-            <span class="title">Layout</span>
-            <span class="value">
-                {$config.layout_names[selectedProps.layout] ?? "Unknown"}
             </span>
         {/if}
     </div>
@@ -213,6 +219,10 @@
 
             .value {
                 align-self: center;
+
+                .tileset:first-child {
+                    margin-bottom: 0.5em;
+                }
             }
 
             .more {

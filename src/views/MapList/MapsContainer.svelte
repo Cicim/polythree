@@ -7,6 +7,7 @@
         type SelectedCards,
         type MapId,
     } from "../MapList";
+    import GroupSeparator from "./GroupSeparator.svelte";
     import MapCard from "./MapCard.svelte";
 
     /** The data from which this component gets the info about the cards */
@@ -64,8 +65,7 @@
         which returns the group name each map belongs to */
     function groupTogether(
         cards: MapCardProps[],
-        predicate: (card: MapCardProps) => string,
-        nameTransform?: (name: string) => string
+        predicate: (card: MapCardProps) => string
     ) {
         let groups: MapGroup[] = [];
 
@@ -80,12 +80,6 @@
                     name: groupName,
                     maps: [card],
                 });
-            }
-        }
-
-        if (nameTransform) {
-            for (let group of groups) {
-                group.name = nameTransform(group.name);
             }
         }
 
@@ -108,8 +102,10 @@
      * and updates the selection to match the new groups
      */
     export function update() {
-        let { predicate, nameTransform } = groupCriteriaTable[criteria];
-        groups = groupTogether(filteredCards, predicate, nameTransform);
+        groups = groupTogether(
+            filteredCards,
+            groupCriteriaTable[criteria].predicate
+        );
 
         // Keep only the cards in the selection that are in the results
         for (let group in selectedCards) {
@@ -168,7 +164,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="maps-container">
     {#each groups as group}
-        <h2 class="separator">{group.name}</h2>
+        <GroupSeparator id={group.name} {criteria} />
         {#each group.maps as card ((card.group << 8) + card.index)}
             <MapCard
                 on:select
@@ -200,14 +196,6 @@
             margin-top: 2em;
 
             color: var(--weak-fg);
-        }
-
-        .separator {
-            font-weight: 400;
-            color: var(--weak-fg);
-            margin-left: 0.5em;
-
-            grid-column: 1 / -1;
         }
 
         @container (min-width: 800px) {
