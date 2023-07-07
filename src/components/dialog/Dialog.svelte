@@ -50,8 +50,7 @@
 </script>
 
 <svelte:window
-    on:keydown|preventDefault
-    on:keyup|preventDefault={closeOnEscape}
+    on:keyup={closeOnEscape}
     on:mousedown={closeOnClickOutside}
 />
 

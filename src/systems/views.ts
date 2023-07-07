@@ -1,5 +1,5 @@
+import { ViewContext, EditorContext } from "./contexts";
 import { writable } from "svelte/store";
-import { type ViewContext, EditorContext } from "./contexts";
 
 /** All of the currently open views */
 export let openViews = writable<ViewContext[]>([]);
@@ -58,3 +58,5 @@ export async function safeCloseViews(views: ViewContext[]) {
 
     return true;
 }
+
+export { ViewContext, EditorContext };

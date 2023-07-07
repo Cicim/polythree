@@ -3,19 +3,10 @@ import { get, writable, type Writable } from "svelte/store";
 import { open } from "@tauri-apps/api/dialog";
 import { spawnDialog } from "./dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
-import { openViews } from "./views";
 import CloseViewsDialog from "src/components/dialog/CloseViewsDialog.svelte";
 import { HomePageContext } from "src/views/HomePage";
-
-interface Rom {
-    path: string;
-    type: string;
-    size: number;
-    sizePretty: string;
-}
-
-/** The curretly open ROM */
-export const rom: Writable<Rom | null> = writable(null);
+import { openViews } from "./views";
+import { rom } from "./global";
 
 type RomOpenResponse = {
     rom_type: string,

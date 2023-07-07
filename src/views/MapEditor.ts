@@ -1,5 +1,5 @@
-import { EditorContext } from "../systems/contexts";
 import MapEditor from "./MapEditor.svelte";
+import { EditorContext } from "../systems/contexts";
 
 export interface MapEditorProperties {
     group: number;

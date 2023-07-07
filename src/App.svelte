@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { HomePageContext } from "./views/HomePage";
+    // import { HomePageContext } from "./views/HomePage";
     import TabBar from "./components/app/TopBar.svelte";
     import FootBar from "./components/app/FootBar.svelte";
     import ContextMenu from "./components/app/ContextMenu.svelte";
@@ -8,7 +8,7 @@
     import Tooltip from "./components/app/Tooltip.svelte";
 
     onMount(() => {
-        new HomePageContext().create().select();
+        // new HomePageContext().create().select();
     });
 </script>
 

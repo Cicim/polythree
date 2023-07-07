@@ -1,12 +1,12 @@
 import type { SvelteComponent } from "svelte";
 import { get, writable, type Writable } from "svelte/store";
 import { Bindings } from "./bindings";
-import { rom } from "./rom";
+import { rom } from "./global";
 import { spawnDialog } from "./dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import SaveDialog from "src/components/dialog/SaveDialog.svelte";
-import { openViews, lastClosedViews } from "./views";
 import { EditorChanges } from "./changes";
+import { openViews, lastClosedViews } from "./views";
 
 
 export abstract class ViewContext {
@@ -179,7 +179,6 @@ export abstract class ViewContext {
         };
     }
 }
-
 
 /** The container for all of the editor's functionalities
  * that integrate with Svelte or the DOM.

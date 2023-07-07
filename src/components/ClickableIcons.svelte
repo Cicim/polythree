@@ -94,6 +94,11 @@
             }
         }
 
+        &:focus {
+            outline: 1px solid var(--accent-fg);
+            outline-offset: 1px;
+        }
+
         &:active {
             background: var(--btn-secondary-bg-hover);
             color: var(--btn-secondary-fg-hover);

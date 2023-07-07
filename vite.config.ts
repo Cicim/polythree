@@ -33,6 +33,9 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
+    // watch: {
+    //   usePolling: true,
+    // }
   },
   // to make use of `TAURI_DEBUG` and other env variables
   // https://tauri.studio/v1/api/config#buildconfig.beforedevcommand

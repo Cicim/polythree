@@ -130,12 +130,10 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div
-    class="maps-container"
->
-    {#each groups as group (group.name)}
+<div class="maps-container">
+    {#each groups as group}
         <h2 class="separator">{group.name}</h2>
-        {#each group.maps as card}
+        {#each group.maps as card ((card.group << 8) + card.index)}
             <MapCard
                 on:select
                 {...card}

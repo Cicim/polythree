@@ -1,12 +1,12 @@
 <script lang="ts">
     import Button from "src/components/Button.svelte";
-    import type { HomePageContext } from "./HomePage";
 
-    import { openRom, closeRom, rom } from "src/systems/rom";
+    import { openRom, closeRom } from "src/systems/rom";
+    import { rom } from "src/systems/global";
     import { MapListContext } from "./MapList";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
-    import { showTooltip as showTooltip } from "src/systems/tooltip";
-
+    import type { HomePageContext } from "./HomePage";
+    
     export let context: HomePageContext;
 </script>
 

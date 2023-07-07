@@ -188,7 +188,6 @@
             }
             return d;
         });
-        mapsContainer.updateCards();
     }
 
     export function deleteSelected() {
