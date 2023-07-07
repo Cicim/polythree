@@ -41,7 +41,9 @@
     <div class="content">
         <div class="message">
             {#if message}
-                {message}
+                <WarningDiv>
+                    {message}
+                </WarningDiv>
             {:else}
                 <WarningDiv>
                     The following Views must to be closed in order to proceed:

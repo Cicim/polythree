@@ -109,6 +109,15 @@
         }
     }
 
+    function onKeyDown(event: KeyboardEvent) {
+        switch (event.code) {
+            case "Space":
+            case "Enter":
+                event.preventDefault();
+                break;
+        }
+    }
+
     // Fully load a card in only if it's been on screen for at least X milliseconds
     // X = 50
     let viewportTimer: NodeJS.Timeout;
@@ -138,12 +147,13 @@
     class:last-selected={lastSelected}
     class="card"
     on:keyup={onKeyUp}
+    on:keydown={onKeyDown}
     on:click={selectCard}
     on:dblclick={(e) => {
         if (e.ctrlKey || e.shiftKey) return;
         new MapEditorContext({ group, index }).create().select();
     }}
-    on:contextmenu={(e) => {        
+    on:contextmenu={(e) => {
         showContextMenu(
             e,
             new Menu([
