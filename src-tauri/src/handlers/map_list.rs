@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
-use poly3lib::maps::{header::MapHeaderDump, mapsec::MapSectionDump};
 use gba_types::pointers::PointedData;
+use poly3lib::maps::{header::MapHeaderDump, mapsec::MapSectionDump};
 
 use crate::state::{AppResult, AppState, AppStateFunctions, PolythreeState};
 use serde::{Deserialize, Serialize};
@@ -125,7 +125,7 @@ pub fn delete_maps(
     println!("Maps to Update: \n{:?}", maps_to_update);
     println!("Layouts to Delete: \n{:?}", layouts_to_delete);
 
-    state.with_rom(|rom| {
+    state.update_rom(|rom| {
         let mut headers = rom.map_headers();
         let mut scripts_to_remove = vec![];
 
@@ -163,15 +163,23 @@ pub fn delete_maps(
                     map_header.map_layout = PointedData::Null;
                 } else {
                     map_header.map_layout = PointedData::NoData(
-                        headers.rom.map_layouts().get_header_offset(layout)
-                        .map_err(|e| {
-                            format!("Error while getting layout offset for id {}: {}", layout, e)
-                        })? as u32
+                        headers
+                            .rom
+                            .map_layouts()
+                            .get_header_offset(layout)
+                            .map_err(|e| {
+                                format!(
+                                    "Error while getting layout offset for id {}: {}",
+                                    layout, e
+                                )
+                            })? as u32,
                     );
                 }
-                headers.write_header(group, index, map_header).map_err(|e| {
-                    format!("Error while writing header {}.{}: {}", group, index, e)
-                })?;
+                headers
+                    .write_header(group, index, map_header)
+                    .map_err(|e| {
+                        format!("Error while writing header {}.{}: {}", group, index, e)
+                    })?;
             }
         }
 

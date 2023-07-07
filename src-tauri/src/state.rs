@@ -89,19 +89,13 @@ impl AppStateFunctions for AppState<'_> {
         let mut rom = rom_data.rom.clone();
 
         // Call the callback with the ROM and save the result
-        let res = callback(&mut rom);
-        // If there was no error, update the ROM
-        if let Ok(_) = res {
-            // Save the ROM
-            rom_data
-                .rom
-                .save(&rom_data.path)
-                .map_err(|err| format!("Failed to save ROM: {}", err))?;
-            // Then update the one in the state
-            rom_data.rom = rom;
-        }
+        let res = callback(&mut rom)?;
+        // Save the modified ROM to disk
+        rom.save(&rom_data.path)
+            .map_err(|err| format!("Failed to save ROM: {}", err))?;
+        // Then, since everything succeeded, update the one in the state
+        rom_data.rom = rom;
 
-        // Return the callback's result
-        res
+        Ok(res)
     }
 }
