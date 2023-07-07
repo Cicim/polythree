@@ -2,9 +2,11 @@ use std::sync::Mutex;
 
 use poly3lib::rom::Rom;
 
+use crate::config::RomConfig;
+
 pub trait AppStateFunctions {
     /// Set the ROM and path when opened.
-    fn set_rom(&self, path: String, rom: Rom);
+    fn set_rom(&self, path: String, rom: Rom, config: RomConfig);
     /// Clear the ROM and path when closed.
     fn clear_rom(&self);
     /// Runs the function if a ROM is open, otherwise returns an error.
@@ -37,12 +39,15 @@ pub struct RomData {
 pub struct PolythreeState {
     /// Info about the open ROM, if any.
     rom: Mutex<Option<RomData>>,
+    /// Open Rom configuration
+    pub(crate) config: Mutex<Option<RomConfig>>,
 }
 
 impl PolythreeState {
     pub fn new() -> Self {
         Self {
             rom: Mutex::new(None),
+            config: Mutex::new(None),
         }
     }
 }
@@ -52,14 +57,19 @@ pub type AppState<'a> = tauri::State<'a, PolythreeState>;
 pub type AppResult<T> = Result<T, String>;
 
 impl AppStateFunctions for AppState<'_> {
-    fn set_rom(&self, path: String, rom: Rom) {
+    fn set_rom(&self, path: String, rom: Rom, config: RomConfig) {
         let mut rom_data = self.rom.lock().unwrap();
-        *rom_data = Some(RomData { path, rom })
+        *rom_data = Some(RomData { path, rom });
+
+        let mut config_data = self.config.lock().unwrap();
+        *config_data = Some(config);
     }
 
     fn clear_rom(&self) {
         let mut rom_data = self.rom.lock().unwrap();
         *rom_data = None;
+        let mut config_data = self.config.lock().unwrap();
+        *config_data = None;
     }
 
     fn with_rom<T>(&self, callback: impl FnOnce(&mut Rom) -> AppResult<T>) -> AppResult<T> {
@@ -98,4 +108,15 @@ impl AppStateFunctions for AppState<'_> {
 
         Ok(res)
     }
+}
+
+pub fn get_rom_path(state: &AppState) -> AppResult<String> {
+    let rom_data = state
+        .rom
+        .lock()
+        .map_err(|_| "Failed to unlock the map data")?;
+
+    let rom_data = rom_data.as_ref().ok_or("No ROM is open")?;
+
+    Ok(rom_data.path.clone())
 }

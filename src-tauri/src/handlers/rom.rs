@@ -1,7 +1,10 @@
 use poly3lib::rom::Rom;
 use serde::Serialize;
 
-use crate::state::{AppResult, AppState, AppStateFunctions};
+use crate::{
+    config::RomConfig,
+    state::{AppResult, AppState, AppStateFunctions},
+};
 
 #[derive(Serialize)]
 pub struct OpenRom {
@@ -27,6 +30,10 @@ pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
                 return Err(format!("Failed to save references: {}", err));
             }
 
+            // Check if you have the config file near the ROM.
+            // If you don't, create it.
+            let config = RomConfig::init(&path, &rom.rom_type)?;
+
             // Prepare the response
             let res = OpenRom {
                 rom_type: rom.rom_type.to_string(),
@@ -41,7 +48,7 @@ pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
 
             // Store the opened ROM in the state
             // Update the rom_path in the AppState
-            state.set_rom(path, rom);
+            state.set_rom(path, rom, config);
 
             Ok(res)
         }
