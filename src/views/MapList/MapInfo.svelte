@@ -110,16 +110,16 @@
             </span>
             <span class="title">Layout</span>
             <span class="value">
-                <i>{$config.layout_names[selectedProps.layout] ?? "Unknown"}</i>
+                <i>{$config.layout_names[selectedProps.layout] ?? "Unnamed"}</i>
             </span>
             <span class="title">tilesets</span>
             <span class="value">
                 <div class="tileset">
-                    <i>{$config.tileset_names[selectedProps.tileset1]}</i><br />
+                    <i>{$config.tileset_names[selectedProps.tileset1] ?? "Unnamed"}</i><br />
                     <OffsetLabel offset={selectedProps.tileset1} /><br />
                 </div>
                 <div class="tileset">
-                    <i>{$config.tileset_names[selectedProps.tileset2]}</i><br />
+                    <i>{$config.tileset_names[selectedProps.tileset2] ?? "Unnamed"}</i><br />
                     <OffsetLabel offset={selectedProps.tileset2} />
                 </div>
             </span>
