@@ -1,5 +1,6 @@
 use poly3lib::rom::Rom;
 use serde::Serialize;
+use tauri::AppHandle;
 
 use crate::{
     config::RomConfig,
@@ -14,7 +15,7 @@ pub struct OpenRom {
 }
 
 #[tauri::command]
-pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
+pub fn init_rom(state: AppState, handle: AppHandle, path: String) -> AppResult<OpenRom> {
     println!("Loading ROM: {}", path);
 
     match Rom::load(&path) {
@@ -32,7 +33,7 @@ pub fn init_rom(state: AppState, path: String) -> AppResult<OpenRom> {
 
             // Check if you have the config file near the ROM.
             // If you don't, create it.
-            let config = RomConfig::init(&path, &rom.rom_type)?;
+            let config = RomConfig::init(handle, &path, &rom.rom_type)?;
 
             // Prepare the response
             let res = OpenRom {

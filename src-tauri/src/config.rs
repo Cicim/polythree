@@ -5,6 +5,7 @@ use std::{
 
 use poly3lib::rom::RomType;
 use serde::{Deserialize, Serialize, Serializer};
+use tauri::AppHandle;
 
 use crate::state::{get_rom_path, AppResult, AppState};
 
@@ -13,6 +14,8 @@ pub struct RomConfig {
     /// Associations of layout IDs to layout names.
     #[serde(serialize_with = "ordered_map")]
     pub layout_names: HashMap<u16, String>,
+    #[serde(serialize_with = "ordered_map")]
+    pub tileset_names: HashMap<u32, String>,
 }
 
 fn ordered_map<S, T>(value: &HashMap<T, String>, serializer: S) -> Result<S::Ok, S::Error>
@@ -25,11 +28,11 @@ where
 }
 
 impl RomConfig {
-    pub fn init(rom_path: &str, rom_type: &RomType) -> AppResult<Self> {
+    pub fn init(handle: AppHandle, rom_path: &str, rom_type: &RomType) -> AppResult<Self> {
         let config_path = format!("{}.config.json", rom_path);
 
         let config = if !Path::new(&config_path).exists() {
-            RomConfig::default_for(rom_type)
+            RomConfig::default_for(handle, rom_type)
         } else {
             RomConfig::load(&config_path)?
         };
@@ -39,25 +42,35 @@ impl RomConfig {
         Ok(config)
     }
 
-    pub fn default_for(rom_type: &RomType) -> Self {
-        let empty_config = Self {
-            layout_names: HashMap::new(),
-        };
-
+    pub fn default_for(handle: AppHandle, rom_type: &RomType) -> Self {
         // Read the config file from the configs folder
         use RomType::*;
-        let template_name = match rom_type {
+        let template_path_str = match rom_type {
             FireRed | LeafGreen => "configs/bpre.json",
             Ruby | Sapphire | Emerald => "configs/bpee.json",
         };
+        let template_path = handle
+            .path_resolver()
+            .resolve_resource(template_path_str)
+            .ok_or("Could not resolve resource path")
+            .unwrap();
+
+        if let Ok(template_file) = std::fs::File::open(template_path) {
+            println!("Loaded config template from {}.", template_path_str);
+
+            match serde_json::from_reader(template_file)
+                .map_err(|e| format!("Could not read config file: {}", e))
+            {
+                Ok(config) => return config,
+                Err(e) => println!("Could not parse config file: {}", e),
+            }
+        }
 
         // Read the template
-        if let Ok(template) = RomConfig::load(template_name) {
-            println!("Loaded config template from {}.", template_name);
-            template
-        } else {
-            println!("Could not load config template from {}", template_name);
-            empty_config
+        println!("Could not load config template from {}", template_path_str);
+        Self {
+            layout_names: HashMap::new(),
+            tileset_names: HashMap::new(),
         }
     }
 
