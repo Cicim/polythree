@@ -1,9 +1,10 @@
 <script lang="ts">
     import "iconify-icon";
-    import { onMount, setContext } from "svelte";
+    import { onMount, setContext, tick } from "svelte";
     import {
         GroupCriteria,
         groupCriteriaTable,
+        type MapCardProps,
         type MapGroup,
         type MapId,
         type MapListContext,
@@ -41,8 +42,7 @@
     let searchString = writable("");
     /** The current grouping criteria */
     let criteria: GroupCriteria = GroupCriteria.Group;
-    /** The current filter string */
-    let filter: string = "";
+    let allCards: MapCardProps[];
     /** The list of selected cards */
     let selectedCards: { [group: number]: { [index: number]: boolean } } = {};
     let selectedMaps: MapId[] = [];
@@ -52,7 +52,8 @@
 
     /** The submit method for applying a search */
     function submitSearch() {
-        filter = $searchString;
+        console.log("----> Submitting Search");
+        mapsContainer.doSearch($searchString);
     }
 
     let contextMenu: Menu;
@@ -69,6 +70,11 @@
         selectedMaps = selectedMaps.filter(
             (m) => m.group !== group || m.index !== index
         );
+
+        // If the last selected card was removed, set the last selected to null
+        if (lastSelected?.group === group && lastSelected?.index === index)
+            lastSelected = null;
+
         selectedCount--;
     }
     function clearMapSelection() {
@@ -171,23 +177,16 @@
 
             if (!res) return;
         }
-        const res = spawnDialog(DeleteMapDialog, {
+        await spawnDialog(DeleteMapDialog, {
             toDelete: cards,
-            all: $data,
+            all: allCards,
             context,
         });
     }
 
     let mapsContainer: MapsContainer;
     export function removeDeleted(deleted: MapId[]) {
-        data.update((d) => {
-            for (const map of deleted) {
-                d = d.filter(
-                    (m) => m.group !== map.group || m.index !== map.index
-                );
-            }
-            return d;
-        });
+        mapsContainer.remove(deleted);
     }
 
     export function deleteSelected() {
@@ -211,7 +210,7 @@
     export function getMultiOptions() {
         if (selectedCount < 1) return [];
         return [
-            new Separator("All Selected Maps"),
+            new Separator("All Selected Maps (" + selectedCount + ")"),
             new IconOption("Delete", "mdi:delete", "maplist/delete_selected"),
         ];
     }
@@ -229,14 +228,32 @@
         clearMapSelection();
     }
 
+    function debugAction(event) {
+        switch (event.code) {
+            case "KeyC":
+                // Remove the 0.0 card from the groups
+                groups = groups.map((g) => ({
+                    ...g,
+                    maps: g.maps.filter((m) => m.group !== 0 || m.index !== 0),
+                }));
+                break;
+        }
+    }
+
     onMount(async () => {
         await context.load();
+        await tick();
+        allCards = $data;
 
         contextMenu = new Menu([
             new IconOption("Refresh View", "mdi:refresh", "maplist/refresh"),
         ]);
+
+        mapsContainer.init(allCards, criteria);
     });
 </script>
+
+<svelte:window on:keypress={debugAction} />
 
 {#key $data}
     {#if $isLoading}
@@ -280,6 +297,7 @@
                             pressed={criteria === i}
                             on:click={() => {
                                 criteria = i;
+                                mapsContainer.doGrouping(criteria);
                             }}
                         >
                             {groupCriteria.name}
@@ -299,8 +317,7 @@
                     removeFromSelection={removeMapFromSelection}
                     bind:this={mapsContainer}
                     bind:groups
-                    bind:criteria
-                    bind:filter
+                    bind:allCards
                     bind:selectedCards
                     bind:lastSelected
                 />

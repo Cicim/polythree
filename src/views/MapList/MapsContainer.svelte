@@ -1,37 +1,32 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import type { Writable } from "svelte/store";
-
     import {
         groupCriteriaTable,
         type GroupCriteria,
         type MapCardProps,
         type MapGroup,
         type SelectedCards,
+        type MapId,
     } from "../MapList";
     import MapCard from "./MapCard.svelte";
 
     /** The data from which this component gets the info about the cards */
-    const allCards: Writable<MapCardProps[]> = getContext("data");
+    export let allCards: MapCardProps[];
     /** Maps separated by group from the output of a search or filter operation */
     export let groups: MapGroup[];
     /** The cards as were filtered since the last search */
-    let filteredCards = $allCards;
+    let filteredCards: MapCardProps[] = [];
 
-    export let filter: string;
-    export let criteria: GroupCriteria;
+    let filter: string;
+    let criteria: GroupCriteria;
     export let selectedCards: SelectedCards;
     export let lastSelected: { group: number; index: number };
     export let removeFromSelection: (group: number, index: number) => void;
-
-    $: filterCards(), updateCards(), filter;
-    $: updateCards(), criteria;
 
     /** Filters the cards based on the current filter string */
     function filterCards() {
         let match = filter.match(/#(\d+)(\.(\d+))?/);
 
-        filteredCards = $allCards.filter((card) => {
+        filteredCards = allCards.filter((card) => {
             // If the filter is empty, return all cards
             if (filter === "") return true;
 
@@ -112,7 +107,7 @@
     /** Updates the groups based on the current grouping criteria
      * and updates the selection to match the new groups
      */
-    export function updateCards() {
+    export function update() {
         let { predicate, nameTransform } = groupCriteriaTable[criteria];
         groups = groupTogether(filteredCards, predicate, nameTransform);
 
@@ -126,6 +121,47 @@
         }
         // If the last selected card is not in the results, reset it
         if (!inGroup(lastSelected)) lastSelected = null;
+    }
+
+    export function doGrouping(group: GroupCriteria) {
+        criteria = group;
+        update();
+    }
+
+    export function doSearch(filterString: string) {
+        filter = filterString;
+        filterCards();
+        update();
+    }
+
+    export function remove(toRemove: MapId[]) {
+        // Remove the deleted cards from the selection
+        for (let { group, index } of toRemove) {
+            removeFromSelection(group, index);
+        }
+        // Remove the deleted cards from all the cards
+        allCards = allCards.filter(
+            (c) =>
+                !toRemove.find(
+                    (r) => r.group === c.group && r.index === c.index
+                )
+        );
+        // Remove the deleted cards from the filtered cards
+        filteredCards = filteredCards.filter(
+            (c) =>
+                !toRemove.find(
+                    (r) => r.group === c.group && r.index === c.index
+                )
+        );
+        // Update the groups
+        update();
+    }
+
+    export function init(cards: MapCardProps[], groupCriteria: GroupCriteria) {
+        allCards = cards;
+        filteredCards = allCards;
+        criteria = groupCriteria;
+        update();
     }
 </script>
 
@@ -154,6 +190,7 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: 1em;
+        margin-top: 1em;
         margin-bottom: 2em;
         padding: 0 1em;
 

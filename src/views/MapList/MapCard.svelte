@@ -26,7 +26,11 @@
 
     const dispatch = createEventDispatcher();
 
-    function selectCard(e: MouseEvent) {
+    function selectCard(e: {
+        ctrlKey: boolean;
+        shiftKey: boolean;
+        preventDefault: () => void;
+    }) {
         if (e.ctrlKey || e.shiftKey) e.preventDefault();
 
         // Get if the control button is pressed
@@ -95,6 +99,16 @@
         });
     }
 
+    function onKeyUp(event: KeyboardEvent) {
+        switch (event.code) {
+            case "Space":
+            case "Enter":
+                event.preventDefault();
+                selectCard(event);
+                break;
+        }
+    }
+
     // Fully load a card in only if it's been on screen for at least X milliseconds
     // X = 50
     let viewportTimer: NodeJS.Timeout;
@@ -116,23 +130,26 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
+    tabindex={1}
     bind:this={cardEl}
     class:selected
     class:last-selected={lastSelected}
     class="card"
+    on:keyup={onKeyUp}
     on:click={selectCard}
     on:dblclick={(e) => {
         if (e.ctrlKey || e.shiftKey) return;
         new MapEditorContext({ group, index }).create().select();
     }}
-    on:contextmenu={(e) => {
+    on:contextmenu={(e) => {        
         showContextMenu(
             e,
             new Menu([
+                ...context.component.getMultiOptions(),
                 new Separator(`This Map (${group}.${index})`),
                 ...ctxMenu,
-                ...context.component.getMultiOptions(),
             ])
         );
     }}
@@ -209,6 +226,11 @@
                 background: var(--card-selected-bg-hover);
                 border-color: var(--card-selected-border-hover);
             }
+        }
+
+        &:focus {
+            outline: 1px solid var(--accent-fg);
+            outline-offset: 1px;
         }
 
         &:hover {

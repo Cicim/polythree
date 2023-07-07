@@ -6,9 +6,10 @@
     import ContextMenu from "./components/app/ContextMenu.svelte";
     import { Bindings } from "./systems/bindings";
     import Tooltip from "./components/app/Tooltip.svelte";
+    import { HomePageContext } from "./views/HomePage";
 
     onMount(() => {
-        // new HomePageContext().create().select();
+        new HomePageContext().create().select();
     });
 </script>
 
