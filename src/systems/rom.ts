@@ -6,7 +6,7 @@ import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import CloseViewsDialog from "src/components/dialog/CloseViewsDialog.svelte";
 import { HomePageContext } from "src/views/HomePage";
 import { openViews } from "./views";
-import { rom } from "./global";
+import { config, rom, type Config } from "./global";
 
 type RomOpenResponse = {
     rom_type: string,
@@ -38,7 +38,7 @@ export async function openRom() {
 
     try {
         // Initialize the ROM
-        let res = await invoke("init_rom", { path: filePath }) as RomOpenResponse;
+        const res = await invoke("init_rom", { path: filePath }) as RomOpenResponse;
         rom.set({
             size: res.rom_size,
             sizePretty: res.rom_size_fmt,
@@ -50,6 +50,21 @@ export async function openRom() {
             message: err,
             title: "Error while loading ROM"
         });
+        closeRom();
+    }
+
+    try {
+        // Load the configs too
+        const configs: Config = await invoke("get_config");
+        // Update the config store
+        config.set(configs);
+    }
+    catch (err) {
+        await spawnDialog(AlertDialog, {
+            message: err,
+            title: "Error while loading configs"
+        });
+        closeRom();
     }
 }
 

@@ -9,6 +9,7 @@
   import Select from "src/components/Select.svelte";
   import MapPreview from "./MapPreview.svelte";
   import { invoke } from "@tauri-apps/api";
+  import { config } from "src/systems/global";
 
   // Dialog options
   export let noOutsideClose = false;
@@ -62,11 +63,11 @@
     noEscapeClose = noOutsideClose = true;
 
     try {
-      const deleted: MapId[] = await invoke("delete_maps", { 
+      const deleted: MapId[] = await invoke("delete_maps", {
         maps: toDelete,
-        actions: actionableLayoutToMap ?? {}
-       });
-       context.component.removeDeleted(deleted);
+        actions: actionableLayoutToMap ?? {},
+      });
+      context.component.removeDeleted(deleted);
     } catch (err) {
       errored = true;
       errorString = err;
@@ -261,10 +262,9 @@
                   <Select
                     bind:value={actionableLayoutToMap[layout].changeTo}
                     bind:invalid={actionableLayoutToMap[layout].invalid}
-                    options={validLayouts.map((e) => [
-                      e.toString(),
-                      e.toString(),
-                    ])}
+                    options={Object.entries($config.layout_names).filter(
+                      ([k, v]) => validLayouts.includes(+k)
+                    )}
                   />
                 {/if}
               </div>

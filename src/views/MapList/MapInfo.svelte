@@ -7,6 +7,7 @@
     import "iconify-icon";
     import { MapEditorContext } from "../MapEditor";
     import OffsetLabel from "src/components/OffsetLabel.svelte";
+    import { config } from "src/systems/global";
 
     export let selectedMaps: MapId[];
 
@@ -137,6 +138,10 @@
                 {:else}
                     ({selectedProps.weather})
                 {/if}
+            </span>
+            <span class="title">Layout</span>
+            <span class="value">
+                {$config.layout_names[selectedProps.layout] ?? "Unknown"}
             </span>
         {/if}
     </div>

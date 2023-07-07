@@ -10,7 +10,7 @@
     }
 </script>
 
-<svelte:window on:resize={closeTooltip} on:keydown={onKeyDown}  />
+<svelte:window on:resize={closeTooltip} on:keydown={onKeyDown} />
 
 <dialog
     id="tooltip"
