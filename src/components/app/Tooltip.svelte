@@ -10,13 +10,13 @@
     }
 </script>
 
-<svelte:window on:resize={closeTooltip}  />
+<svelte:window on:resize={closeTooltip} on:keydown={onKeyDown}  />
 
 <dialog
     id="tooltip"
     class="modal"
     on:click={closeTooltip}
-    on:keydown={onKeyDown}
+    on:keydown|preventDefault
 />
 
 <style lang="scss">
