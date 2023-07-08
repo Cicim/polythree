@@ -7,7 +7,7 @@
 
     export let tabs: Tab[] = [];
 
-    export let activeTab: string = tabs[0].id;
+    export let activeTab: string;
 
     function onTabClick(tabId: string) {
         activeTab = tabId;
@@ -40,6 +40,9 @@
         flex-flow: column-reverse;
         background: var(--tabs-bg);
         user-select: none;
+
+        box-shadow: inset calc(var(--tab-border-width) * -1) 0
+                var(--tab-selected-border);
 
         .tab {
             display: flex;
@@ -79,6 +82,9 @@
             }
             &.active {
                 background: var(--main-bg);
+
+                box-shadow: 0 var(--tab-border-width) var(--tab-selected-border),
+                    inset 0 var(--tab-border-width) var(--tab-selected-border);
             }
         }
     }

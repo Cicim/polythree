@@ -169,19 +169,11 @@
         overflow-y: hidden;
         scroll-behavior: auto;
         user-select: none;
-
-        &:not(:hover) {
-            &::-webkit-scrollbar {
-                display: none;
-            }
-            &::-webkit-scrollbar-thumb {
-                background: transparent;
-            }
-        }
     }
 
     .tabs-container {
-        width: 100%;
+        width: calc(100% - 2px);
+        padding-left: 2px;
         display: flex;
         height: 40px;
         overflow-x: auto;
@@ -200,9 +192,17 @@
             }
         }
 
+        &:not(:hover) {
+            &::-webkit-scrollbar {
+                display: none;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: transparent;
+            }
+        }
+
         &::-webkit-scrollbar {
             height: 5px;
-            background: transparent;
         }
 
         &::-webkit-scrollbar-thumb {

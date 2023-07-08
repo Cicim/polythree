@@ -5,8 +5,8 @@
 
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <div class="top-bar">
-    <TabBar />
     <NavBar />
+    <TabBar />
 </div>
 
 <style lang="scss">
@@ -18,6 +18,6 @@
         scroll-behavior: auto;
         user-select: none;
 
-        grid-template-columns: 1fr max-content;
+        grid-template-columns: max-content 1fr;
     }
 </style>
