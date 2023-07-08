@@ -1,23 +1,33 @@
 <script lang="ts">
     import "iconify-icon";
+    import { openViews } from "src/systems/views";
 </script>
 
-<div class="navbar">
+<div
+    class="navbar"
+    class:border={!$openViews.find((view) => view.selected)
+        ?._cosmeticHasSideTabs}
+>
     <iconify-icon icon="quill:meatballs-v" />
 </div>
 
 <style lang="scss">
     .navbar {
         display: flex;
+        width: 14px;
         height: 40px;
         align-items: center;
         padding: 0 8px;
 
         float: right;
 
-        box-shadow: -4px 0 1px -4px var(--medium-shadow);
         background: var(--tabs-bg);
         color: var(--tabs-fg);
+
+        &.border {
+            box-shadow: inset 0 calc(var(--tab-border-width) * -1)
+                var(--tab-selected-border);
+        }
 
         iconify-icon {
             transform: scale(1.5);

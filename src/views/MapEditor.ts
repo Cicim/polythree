@@ -20,11 +20,28 @@ export class MapEditorContext extends EditorContext {
     public singularTab = true;
     declare public identifier: MapEditorProperties;
     declare public component: MapEditor;
+    
+    public _cosmeticHasSideTabs = true;
 
     public actions = {
-        "map_editor/print_group": () => {
-            console.log("Printing group", this.identifier.group);
-        }
+        "map_editor/select_layout": () => {
+            this.component.selectLayoutEditor();
+        },
+        "map_editor/select_level": () => {
+            this.component.selectLevelEditor();
+        },
+        "map_editor/select_scripts": () => {
+            this.component.selectScriptsEditor();
+        },
+        "map_editor/select_encounters": () => {
+            this.component.selectEncountersEditor();
+        },
+        "map_editor/select_connections": () => {
+            this.component.selectConnectionsEditor();
+        },
+        "map_editor/select_header": () => {
+            this.component.selectHeaderEditor();
+        },
     }
 
     public async save(): Promise<boolean> {

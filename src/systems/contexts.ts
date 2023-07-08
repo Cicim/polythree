@@ -27,6 +27,11 @@ export abstract class ViewContext {
     /** The list of key-bindable actions for this editor's tab */
     public tabActions: Record<string, () => void> = this.getTabActions();
 
+    /** Whether or not the view has side tabs
+     * just a cosmetic flag for the Navbar
+     */
+    public _cosmeticHasSideTabs: boolean = false;
+
     /** The HTML element that the view is rendered in */
     public container: HTMLDivElement;
     /** Whether or not the view is currently active */

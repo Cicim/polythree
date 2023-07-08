@@ -59,7 +59,7 @@
         "resizable": true,
         "title": "Polythree",
         "minWidth": 450,
-        "minHeight": 300,
+        "minHeight": 333,
         "width": 800,
         "height": 600,
         "fileDropEnabled": false

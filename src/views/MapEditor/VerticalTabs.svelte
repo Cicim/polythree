@@ -13,7 +13,7 @@
     export let activeTab: string;
     let oldTabId = activeTab;
 
-    function onTabChange(newTabId: string) {
+    export function changeTab(newTabId: string) {
         if (newTabId === activeTab) return;
 
         // If the old tab is not null, unbind its bindings
@@ -35,7 +35,7 @@
     {#each Object.entries(tabs) as [id, tab]}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
-            on:click={() => onTabChange(id)}
+            on:click={() => changeTab(id)}
             class:active={activeTab === id}
             class="tab"
             {id}
@@ -79,7 +79,7 @@
                 transform: rotate(-90deg);
             }
 
-            @media screen and (max-height: 654px) {
+            @media screen and (max-height: 800px) {
                 padding: 0.75em 0;
                 .icon {
                     transform: rotate(0deg);

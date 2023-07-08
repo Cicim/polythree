@@ -33,15 +33,21 @@ export class Bindings {
         "maplist/delete_selected": "Delete",
         "maplist/new_map": "Ctrl+N",
 
+        "map_editor/select_layout": "Ctrl+1",
+        "map_editor/select_level": "Ctrl+2",
+        "map_editor/select_scripts": "Ctrl+3",
+        "map_editor/select_connections": "Ctrl+4",
+        "map_editor/select_encounters": "Ctrl+5",
+        "map_editor/select_header": "Ctrl+6",
+
         "layout_editor/pick_pencil": "P",
-        
+
         "editor/save": "Ctrl+S",
         "editor/undo": "Ctrl+Z",
         "editor/redo": "Ctrl+Y",
         "tab/close": "Ctrl+W",
 
         "home_page/open_last_project": "Alt+O",
-        "map_editor/print_group": "Alt+O",
     };
 
     // ANCHOR Loading

@@ -6,6 +6,7 @@
     import LayoutEditor from "./MapEditor/LayoutEditor.svelte";
     import LevelEditor from "./MapEditor/LevelEditor.svelte";
     import ScriptsEditor from "./MapEditor/ScriptsEditor.svelte";
+    import EncountersEditor from "./MapEditor/EncountersEditor.svelte";
     import ConnectionsEditor from "./MapEditor/ConnectionsEditor.svelte";
     import HeaderEditor from "./MapEditor/HeaderEditor.svelte";
     import { Bindings } from "src/systems/bindings";
@@ -19,11 +20,33 @@
     let layoutComponent: LayoutEditor;
     let levelComponent: LevelEditor;
     let scriptsComponent: ScriptsEditor;
+    let encountersComponent: EncountersEditor;
     let connectionsComponent: ConnectionsEditor;
     let headerComponent: HeaderEditor;
 
     let activeTab = "tab-layout";
+    let tabsComponent: VerticalTabs;
     let tabs: any;
+
+    // ANCHOR Bindings
+    export function selectLayoutEditor() {
+        tabsComponent.changeTab("tab-layout");
+    }
+    export function selectLevelEditor() {
+        tabsComponent.changeTab("tab-level");
+    }
+    export function selectScriptsEditor() {
+        tabsComponent.changeTab("tab-scripts");
+    }
+    export function selectEncountersEditor() {
+        tabsComponent.changeTab("tab-encounters");
+    }
+    export function selectConnectionsEditor() {
+        tabsComponent.changeTab("tab-connections");
+    }
+    export function selectHeaderEditor() {
+        tabsComponent.changeTab("tab-header");
+    }
 
     export function getActiveBinding() {
         return tabs?.[activeTab]?.component?.bindings;
@@ -38,7 +61,12 @@
                 icon: "mdi:file-document-edit-outline",
                 component: headerComponent,
             },
-            "tab-conns": {
+            "tab-encounters": {
+                title: "Encounters",
+                icon: "mdi:account-group",
+                component: encountersComponent,
+            },
+            "tab-connections": {
                 title: "Connections",
                 icon: "mdi:link",
                 component: connectionsComponent,
@@ -71,7 +99,7 @@
     </div>
 {:else}
     <div class="view">
-        <VerticalTabs {tabs} bind:activeTab />
+        <VerticalTabs bind:this={tabsComponent} {tabs} bind:activeTab />
         <div
             class="editor-container layout"
             class:hidden={activeTab !== "tab-layout"}
@@ -91,8 +119,14 @@
             <ScriptsEditor bind:this={scriptsComponent} />
         </div>
         <div
-            class="editor-container conns"
-            class:hidden={activeTab !== "tab-conns"}
+            class="editor-container encounters"
+            class:hidden={activeTab !== "tab-encounters"}
+        >
+            <EncountersEditor bind:this={encountersComponent} />
+        </div>
+        <div
+            class="editor-container connections"
+            class:hidden={activeTab !== "tab-connections"}
         >
             <ConnectionsEditor bind:this={connectionsComponent} />
         </div>
