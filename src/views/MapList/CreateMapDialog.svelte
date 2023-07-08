@@ -1,16 +1,21 @@
 <script lang="ts">
     import Select from "src/components/Select.svelte";
-    import type {
-        CreateMapOptions,
-        MapCardProps,
-        MapListContext,
+    import {
+        mapDumpToCardProps,
+        type CreateMapOptions,
+        type MapCardProps,
+        type MapHeaderDump,
+        type MapListContext,
     } from "../MapList";
-    import { config } from "src/systems/global";
+    import { config, mapNames } from "src/systems/global";
     import Input from "src/components/Input.svelte";
     import Button from "src/components/Button.svelte";
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api";
     import CheckBox from "src/components/CheckBox.svelte";
+    import ErrorDiv from "src/components/ErrorDiv.svelte";
+    import WarningDiv from "src/components/WarningDiv.svelte";
+    import { MapEditorContext } from "../MapEditor";
 
     export let options: CreateMapOptions;
     export let context: MapListContext;
@@ -54,6 +59,12 @@
     groupOptions = Object.entries(freeGroups).map(([k]) => [k, k]);
     // Initialize the group value, which will change with the select
     groupValue = groupOptions[0][0];
+    if (
+        options?.group !== undefined &&
+        Object.keys(freeGroups).includes(options.group.toString())
+    ) {
+        groupValue = options.group.toString();
+    }
     // Initialize the indexes
     updateIndexes();
 
@@ -68,106 +79,198 @@
 
     // Useful values
     $: group = +groupValue;
-    $: index: +indexValue;
-    $: layout: +layoutValue;
-    $: tileset1: +tileset1Value;
-    $: tileset2: +tileset2Value;
-    let width: number = 10;
-    let height: number = 10;
+    $: index = +indexValue;
+    $: layout = +layoutValue;
+    $: tileset1 = +tileset1Value;
+    $: tileset2 = +tileset2Value;
+    let width: number = 20;
+    let height: number = 20;
     let openInEditor: boolean = true;
 
-    $: notAllGood = width * height > 0x2800;
-
     let usingLayout = true;
+    let creating = false;
+    let errored = false;
+    let errorString = "";
+
+    $: notAllGood = width * height > 0x2800 || creating;
+
+    async function createMap() {
+        creating = true;
+        try {
+            let options = usingLayout
+                ? { Use: { layout } }
+                : {
+                      New: { tileset1, tileset2, width, height },
+                  };
+            let res: MapHeaderDump = await invoke("create_map", {
+                group,
+                index,
+                layoutOptions: options,
+            });
+
+            // Get the map card's data
+            let cardProps = mapDumpToCardProps(res, $mapNames);
+            // Update the list
+            context.component.addCreated(cardProps);
+            // Close 
+            close(true);
+
+            // Open the Map Editor if specified
+            if (openInEditor) {
+                new MapEditorContext({ group, index }).create().select();
+            }
+
+        } catch (err) {
+            errored = true;
+            errorString = err;
+        }
+        creating = false;
+    }
 
     let tileset1Options: [string, string][];
     let tileset2Options: [string, string][];
-    let tilesetOptionsReady = false;
+    let layoutOptions: [string, string][];
+    let optionsReady = false;
 
     onMount(async () => {
-        const tilesets = await invoke("get_tilesets");
+        const tilesets: { offset: number; is_primary: boolean }[] =
+            await invoke("get_tilesets");
+        const layoutIds: number[] = await invoke("get_layout_ids");
 
         tileset1Options = Object.values(tilesets)
             .filter((v) => v.is_primary)
-            .map((v) => [v.offset, $config.tileset_names[v.offset] ?? "Unnamed"]);
+            .map((v) => [
+                v.offset.toString(),
+                $config.tileset_names[v.offset] ?? "Unnamed",
+            ]);
+        tileset1Options.sort((a, b) => a[0].localeCompare(b[0]));
 
         tileset2Options = Object.values(tilesets)
             .filter((v) => !v.is_primary)
-            .map((v) => [v.offset, $config.tileset_names[v.offset] ?? "Unnamed"]);
+            .map((v) => [
+                v.offset.toString(),
+                $config.tileset_names[v.offset] ?? "Unnamed",
+            ]);
+        tileset2Options.sort((a, b) => a[0].localeCompare(b[0]));
 
-        tilesetOptionsReady = true;
+        layoutOptions = layoutIds.map((v) => [
+            v.toString(),
+            $config.layout_names[v] ?? "Unnamed",
+        ]);
+
+        optionsReady = true;
     });
 </script>
 
 <div class="dialog-content">
-    <div class="title">Create Map</div>
+    {#if creating}
+        <div class="icon-title">
+            <iconify-icon icon="eos-icons:loading" />
+            <span>Creating...</span>
+        </div>
+    {:else}
+        <div class="title">Create Map</div>
+    {/if}
     <div class="content">
-        <div class="title">Group</div>
-        <div class="title">Index</div>
-        <div class="select">
-            <Select
-                bind:value={groupValue}
-                on:change={updateIndexes}
-                options={groupOptions}
-            />
-        </div>
-        <div class="select">
-            <Select bind:value={indexValue} options={indexOptions} />
-        </div>
-        <div class="mode" class:closed={!usingLayout}>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div class="header cols2" on:click={() => (usingLayout = true)}>
-                Using a preexisting Layout
+        {#if creating}
+            <div class="cols2">
+                <WarningDiv>
+                    Creating Map, do not close this program or data may be
+                    corrupted!
+                </WarningDiv>
             </div>
-            <div class="title cols2">Layout</div>
-            <div class="select cols2">
+        {:else if errored}
+            <div class="cols2">
+                <ErrorDiv>{errorString}</ErrorDiv>
+            </div>
+        {:else}
+            <div class="title">Group</div>
+            <div class="title">Index</div>
+            <div class="select">
                 <Select
-                    showValue="number"
-                    bind:value={layoutValue}
-                    options={Object.entries($config.layout_names)}
+                    bind:value={groupValue}
+                    on:change={updateIndexes}
+                    options={groupOptions}
                 />
             </div>
-        </div>
-        <div class="mode" class:closed={usingLayout}>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div class="header cols2" on:click={() => (usingLayout = false)}>
-                Creating a new Layout
-            </div>
-            <div class="title cols2">Primary Tileset</div>
-            <div class="select cols2">
-                {#if tilesetOptionsReady}
-                    <Select
-                        showValue="offset"
-                        bind:value={tileset1Value}
-                        options={tileset1Options}
-                    />
-                {/if}
-            </div>
-            <div class="title cols2">Secondary Tileset</div>
-            <div class="select cols2">
-                {#if tilesetOptionsReady}
-                    <Select
-                        showValue="offset"
-                        bind:value={tileset2Value}
-                        options={tileset2Options}
-                    />
-                {/if}
-            </div>
-            <div class="title">Width</div>
-            <div class="title">Height</div>
             <div class="select">
-                <Input type="number" bind:value={width} />
+                <Select bind:value={indexValue} options={indexOptions} />
             </div>
-            <div class="select">
-                <Input type="number" bind:value={height} />
+            <div class="mode" class:closed={!usingLayout}>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div class="header cols2" on:click={() => (usingLayout = true)}>
+                    Using a preexisting Layout
+                </div>
+                <div class="title cols2">Layout</div>
+                <div class="select cols2">
+                    {#if optionsReady}
+                        <Select
+                            showValue="number"
+                            bind:value={layoutValue}
+                            options={layoutOptions}
+                        />
+                    {:else}
+                        <div class="placeholder" />
+                    {/if}
+                </div>
             </div>
-        </div>
-        <div class="select">
-            <CheckBox bind:checked={openInEditor}>Open in Map Editor</CheckBox>
-        </div>
+            <div class="mode" class:closed={usingLayout}>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    class="header cols2"
+                    on:click={() => (usingLayout = false)}
+                >
+                    Creating a new Layout
+                </div>
+                <div class="title cols2">Name</div>
+                <div class="select cols2">
+                    <Input />
+                </div>
+                <div class="title cols2">Primary Tileset</div>
+                <div class="select cols2">
+                    {#if optionsReady}
+                        <Select
+                            showValue="offset"
+                            bind:value={tileset1Value}
+                            options={tileset1Options}
+                        />
+                    {:else}
+                        <div class="placeholder" />
+                    {/if}
+                </div>
+                <div class="title cols2">Secondary Tileset</div>
+                <div class="select cols2">
+                    {#if optionsReady}
+                        <Select
+                            showValue="offset"
+                            bind:value={tileset2Value}
+                            options={tileset2Options}
+                        />
+                    {:else}
+                        <div class="placeholder" />
+                    {/if}
+                </div>
+                <div class="title">Width</div>
+                <div class="title">Height</div>
+                <div class="select">
+                    <Input type="number" bind:value={width} />
+                </div>
+                <div class="select">
+                    <Input type="number" bind:value={height} />
+                </div>
+            </div>
+            <div class="select cols2">
+                <CheckBox bind:checked={openInEditor}
+                    >Open in Map Editor</CheckBox
+                >
+            </div>
+        {/if}
     </div>
     <div class="buttons">
-        <Button color="secondary" disabled={notAllGood}>Create Map</Button>
+        <Button on:click={() => close(null)} disabled={creating}>Cancel</Button>
+        <Button color="secondary" on:click={createMap} disabled={notAllGood}
+            >Create Map</Button
+        >
     </div>
 </div>
 
@@ -229,7 +332,12 @@
             display: flex;
             flex-direction: column;
             place-items: stretch;
-            overflow: hidden;
+
+            .placeholder {
+                height: 28px;
+                background: var(--sel-bg);
+                margin: 2px;
+            }
 
             :global(.select) {
                 font-size: 16px;

@@ -4,6 +4,7 @@ import { spawnDialog } from "src/systems/dialogs";
 import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
 import type { Writable } from "svelte/store";
+import { mapNames } from "src/systems/global";
 
 export interface MapCardProps {
     group: number;
@@ -93,7 +94,7 @@ interface MapSectionDump {
     names: (string | null)[],
 }
 
-interface MapHeaderDump {
+export interface MapHeaderDump {
     group: number,
     index: number,
     offset: number,
@@ -124,6 +125,32 @@ interface MapHeader {
     battle_type: number;
 }
 
+export function mapDumpToCardProps(map: MapHeaderDump, names: string[]): MapCardProps {
+    return {
+        group: map.group,
+        index: map.index,
+        offset: map.offset,
+        tileset1: map.tileset1,
+        tileset2: map.tileset2,
+        layout: map.header.map_layout_id,
+        mapsec: map.header.region_map_section_id,
+        name: names[map.header.region_map_section_id],
+
+        music: map.header.music,
+        mapLayoutId: map.header.map_layout_id,
+        cave: map.header.cave,
+        weather: map.header.weather,
+        mapType: map.header.map_type,
+        bikingAllowed: map.header.biking_allowed,
+        allowEscaping: map.header.allow_escaping,
+        allowRunning: map.header.allow_running,
+        showMapName: map.header.show_map_name,
+        floorNum: map.header.floor_num,
+        battleType: map.header.battle_type,
+    };
+
+}
+
 export class MapListContext extends EditorContext {
     public name: string = "Map List";
     declare public component: MapList;
@@ -152,6 +179,9 @@ export class MapListContext extends EditorContext {
             // Copy each name from the dump into the names array
             for (let i = 0; i < mapsecDump.names.length; i++)
                 names[i + mapsecDump.start_index] = mapsecDump.names[i];
+
+            // Set the name writable
+            mapNames.set(names);
         } catch (err) {
             await spawnDialog(AlertDialog, {
                 title: "Could not retrieve map names",
@@ -165,28 +195,7 @@ export class MapListContext extends EditorContext {
 
             let mapCards: MapCardProps[] = [];
             for (const map of res) {
-                mapCards.push({
-                    group: map.group,
-                    index: map.index,
-                    offset: map.offset,
-                    tileset1: map.tileset1,
-                    tileset2: map.tileset2,
-                    layout: map.header.map_layout_id,
-                    mapsec: map.header.region_map_section_id,
-                    name: names[map.header.region_map_section_id],
-
-                    music: map.header.music,
-                    mapLayoutId: map.header.map_layout_id,
-                    cave: map.header.cave,
-                    weather: map.header.weather,
-                    mapType: map.header.map_type,
-                    bikingAllowed: map.header.biking_allowed,
-                    allowEscaping: map.header.allow_escaping,
-                    allowRunning: map.header.allow_running,
-                    showMapName: map.header.show_map_name,
-                    floorNum: map.header.floor_num,
-                    battleType: map.header.battle_type,
-                });
+                mapCards.push(mapDumpToCardProps(map, names));
             }
 
             this.data.set(mapCards);

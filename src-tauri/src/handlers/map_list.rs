@@ -216,3 +216,73 @@ pub fn get_tilesets(state: AppState) -> AppResult<Vec<TilesetType>> {
         None => Ok(vec![]),
     })
 }
+
+#[tauri::command]
+pub fn get_layout_ids(state: AppState) -> AppResult<Vec<u16>> {
+    state.with_rom(|rom| {
+        rom.map_layouts()
+            .dump_valid()
+            .map_err(|e| format!("Error while loading layout ids: {}", e))
+    })
+}
+
+#[derive(Deserialize)]
+pub enum MapCreationLayoutOptions {
+    Use {
+        layout: u16,
+    },
+    New {
+        width: i32,
+        height: i32,
+        tileset1: u32,
+        tileset2: u32,
+    },
+}
+
+#[tauri::command]
+pub fn create_map(
+    state: AppState,
+    group: u8,
+    index: u8,
+    layout_options: MapCreationLayoutOptions,
+) -> AppResult<MapHeaderDump> {
+    use MapCreationLayoutOptions::*;
+
+    state.with_rom(|rom| {
+        let layout_id = match layout_options {
+            Use { layout } => layout,
+            New {
+                width,
+                height,
+                tileset1,
+                tileset2,
+            } => rom
+                .map_layouts()
+                .create_data(tileset1, tileset2, width, height)
+                .map_err(|e| format!("Error while creating new layout: {}", e))?,
+        };
+
+        rom.map_headers()
+            .create_header(group, index, layout_id)
+            .map_err(|e| format!("Error while creating new map: {}", e))?;
+
+        let offset = rom
+            .map_headers()
+            .get_header_offset(group, index)
+            .map_err(|e| {
+                format!(
+                    "Error while getting offset for new map {}.{}: {}",
+                    group, index, e
+                )
+            })?;
+
+        let map_header = rom
+            .map_headers()
+            .read_header(group, index)
+            .map_err(|e| format!("Error while reading new map header: {}", e))?;
+
+        rom.map_headers()
+            .dump_header(group, index, offset, map_header)
+            .ok_or("Error while dumping new map header".to_string())
+    })
+}

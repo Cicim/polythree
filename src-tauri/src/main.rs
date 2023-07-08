@@ -25,6 +25,8 @@ fn main() {
             get_map_names,
             get_map_preview,
             get_tilesets,
+            get_layout_ids,
+            create_map,
             delete_maps,
         ])
         .run(tauri::generate_context!())

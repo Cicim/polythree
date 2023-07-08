@@ -17,7 +17,7 @@
     /** The cards as were filtered since the last search */
     let filteredCards: MapCardProps[] = [];
 
-    let filter: string;
+    let filter: string = "";
     let criteria: GroupCriteria;
     export let selectedCards: SelectedCards;
     export let lastSelected: { group: number; index: number };
@@ -150,6 +150,12 @@
                 )
         );
         // Update the groups
+        update();
+    }
+
+    export function add(card: MapCardProps) {
+        allCards.push(card);
+        filterCards();
         update();
     }
 

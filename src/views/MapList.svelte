@@ -186,8 +186,7 @@
             context,
         });
     }
-
-    export async function createMap(options: CreateMapOptions) {
+    export async function createMap(options: CreateMapOptions = {}) {
         const res = await spawnDialog(CreateMapDialog, {
             options,
             all: allCards,
@@ -196,8 +195,16 @@
     }
 
     let mapsContainer: MapsContainer;
+    /** Removes the last deleted cards from the container */
     export function removeDeleted(deleted: MapId[]) {
         mapsContainer.remove(deleted);
+    }
+    /** Adds a card into the contaienr once it's created for the first time */
+    export async function addCreated(card: MapCardProps) {
+        clearMapSelection();
+        mapsContainer.add(card);
+        // Select the card
+        addMapToSelection(card.group, card.index);
     }
 
     export function deleteSelected() {

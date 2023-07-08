@@ -46,7 +46,8 @@
             border-color: var(--check-checked-border-hover);
         }
         input:focus ~ .checkmark {
-            outline: 2px solid var(--fg-active);
+            outline: 1px solid var(--accent-fg);
+            outline-offset: 1px;
         }
     }
 

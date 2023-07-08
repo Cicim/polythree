@@ -47,7 +47,7 @@
     let cardEl: HTMLDivElement;
 
     let ctxMenu = [
-        new IconOption("Duplicate", "mdi:content-copy", () => {}),
+        // new IconOption("Duplicate", "mdi:content-copy", () => {}),
         new IconOption("New in Group", "mdi:plus", () => {context.component.createMap({group})}),
         new IconOption("Delete", "mdi:delete", () => {
             context.component.deleteCard(group, index);

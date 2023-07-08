@@ -14,8 +14,6 @@
     export let edits: string = null;
     export let value: string | number = "";
 
-    console.log(edits);
-
     export let min: number = Number.MIN_SAFE_INTEGER;
     export let max: number = Number.MAX_SAFE_INTEGER;
 
@@ -48,14 +46,12 @@
                 context.changes.setValue(edits as string, number);
             } else {
                 value = number;
-                console.log(value);
             }
         } else {
             if (edits !== null) {
                 context.changes.setValue(edits as string, newValue);
             } else {
                 value = newValue;
-                console.log(value);
             }
         }
     }
