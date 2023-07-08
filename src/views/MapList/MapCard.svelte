@@ -23,6 +23,8 @@
     export let offset: number;
     export let selected = false;
     export let lastSelected = false;
+    
+    $: selected === true && cardEl?.focus();
 
     const dispatch = createEventDispatcher();
 
