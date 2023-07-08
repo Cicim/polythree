@@ -2,7 +2,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onDestroy } from "svelte";
     import r from "src/systems/navigate";
-    import { get, type Unsubscriber, type Writable } from "svelte/store";
+    import type { Unsubscriber, Writable } from "svelte/store";
     import type { EditorContext } from "src/systems/contexts";
 
     type InputType = "text" | "number";
@@ -11,9 +11,10 @@
     export let type: InputType = "text";
     export let spellcheck: boolean = false;
     /** The path to the object this input updates or the writable store */
-    export let edits: string | Writable<string> = null;
-    /** Whether the data from the context is being edited */
-    let editingData = typeof edits === "string";
+    export let edits: string = null;
+    export let value: string | number = "";
+
+    console.log(edits);
 
     export let min: number = Number.MIN_SAFE_INTEGER;
     export let max: number = Number.MAX_SAFE_INTEGER;
@@ -24,47 +25,38 @@
 
     // Initalize the data and context variables
     // for the data editing
-    if (editingData) {
+    if (edits !== null) {
         data = getContext("data");
         context = getContext("context");
+        value = r.get($data, edits) as string | number;
     }
-    // Create the subscriber for updating the value from the store
-    else if (edits !== null) {
-        unsub = (edits as Writable<string>).subscribe((newValue) => {
-            value = newValue;
-        });
-    }
-
-    // The value of the input
-    // Changes depending on the type of the input
-    $: value =
-        edits === null
-            ? ""
-            : editingData
-            ? r.get($data, edits as string)
-            : get(edits as Writable<string>);
 
     function onChange(
         event: Event & { currentTarget: EventTarget & HTMLInputElement }
     ) {
-        if (edits === null) return;
-        if (editingData) {
-            const value = event.currentTarget.value;
+        const newValue = event.currentTarget.value;
 
-            if (type === "number") {
-                let number = parseInt(value);
+        if (type === "number") {
+            let number = parseInt(newValue);
 
-                if (number < min) number = min;
-                if (number > max) number = max;
+            if (number < min) number = min;
+            if (number > max) number = max;
 
-                if (isNaN(number)) number = 0;
+            if (isNaN(number)) number = 0;
 
+            if (edits !== null) {
                 context.changes.setValue(edits as string, number);
             } else {
-                context.changes.setValue(edits as string, value);
+                value = number;
+                console.log(value);
             }
         } else {
-            (edits as Writable<string>).set(event.currentTarget.value);
+            if (edits !== null) {
+                context.changes.setValue(edits as string, newValue);
+            } else {
+                value = newValue;
+                console.log(value);
+            }
         }
     }
 
@@ -79,8 +71,7 @@
             event.preventDefault();
         }
 
-        if (event.code === "Delete")
-            event.stopPropagation();
+        if (event.code === "Delete") event.stopPropagation();
     }
 
     function onKeyUp(event: KeyboardEvent) {
@@ -89,6 +80,14 @@
                 value: (event.currentTarget as HTMLInputElement).value,
             });
         }
+    }
+
+    // If the data is being edited, update the value
+    // when the data changes
+    if (edits !== null) {
+        unsub = data.subscribe((newData) => {
+            value = r.get(newData, edits) as string | number;
+        });
     }
 
     onDestroy(() => {

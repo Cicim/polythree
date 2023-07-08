@@ -42,6 +42,12 @@ export interface MapSelectionEvent {
     shiftKey: boolean;
 }
 
+export interface CreateMapOptions {
+    /** The group to create the map in, starts at first available
+     *  if unspecified or group is full */
+    group?: number;
+}
+
 export interface MapGroup {
     /** The group's identifier string */
     name: string;
@@ -128,6 +134,7 @@ export class MapListContext extends EditorContext {
         "maplist/delete_selected": () => this.component.deleteSelected(),
         "maplist/focus_search": () => this.component.focusSearch(),
         "maplist/clear_and_focus_search": () => this.component.focusSearch(true),
+        "maplist/new_map": () => this.component.createMap(),
     }
 
     public async save(): Promise<boolean> {

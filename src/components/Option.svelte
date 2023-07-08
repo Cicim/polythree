@@ -1,9 +1,11 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
+    import OffsetLabel from "./OffsetLabel.svelte";
 
     export let value: string;
     export let selected: boolean;
+    export let showValue: "off" | "number" | "offset" = "off";
 
     // Get the select context
     let close = getContext("close") as Function;
@@ -34,6 +36,11 @@
     on:keydown|preventDefault={() => {}}
 >
     <span>
+        {#if showValue === "number"}
+            <div class="tag number">{value}</div>
+        {:else if showValue === "offset"}
+            <div class="tag offset"><OffsetLabel offset={value} /></div>
+        {/if}
         <slot />
     </span>
 </button>
@@ -57,6 +64,15 @@
             overflow: hidden;
             text-overflow: ellipsis;
             text-align: left;
+
+            .tag {
+                display: inline-flex;
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                padding: 0 0.125em;
+                margin-right: 0.125em;
+                color: var(--weak-fg);
+            }
         }
 
         &.selected {

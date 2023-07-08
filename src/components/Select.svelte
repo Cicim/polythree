@@ -1,7 +1,14 @@
 <script lang="ts">
     import "iconify-icon";
     import Option from "./Option.svelte";
-    import { getContext, onDestroy, onMount, setContext, tick } from "svelte";
+    import {
+        createEventDispatcher,
+        getContext,
+        onDestroy,
+        onMount,
+        setContext,
+        tick,
+    } from "svelte";
     import type { NavigatePath } from "src/systems/navigate";
     import type { EditorContext } from "src/systems/contexts";
     import { writable, type Unsubscriber, type Writable } from "svelte/store";
@@ -15,6 +22,10 @@
     export let edits: NavigatePath = null;
 
     export let invalid: boolean = false;
+
+    export let showValue: "off" | "number" | "offset" = "off";
+
+    const dispatcher = createEventDispatcher();
 
     $: invalid = O.findIndex((o) => value === o.value) === -1;
 
@@ -62,7 +73,7 @@
         }
 
         // Dispatch the change event
-        selectEl.dispatchEvent(new Event("change"));
+        dispatcher("change", { value });
         // Update the previous value
         lastValue = value;
     }
@@ -440,10 +451,15 @@
     {/if}
 </button>
 
-<dialog bind:this={optionsEl} class="options-list modal" on:keydown={onKeyDown}>
+<dialog
+    bind:this={optionsEl}
+    class="options-list modal"
+    on:mousedown|stopPropagation
+    on:keydown={onKeyDown}
+>
     <div class="options-container" bind:this={optionsContainer}>
         {#each O as option}
-            <Option value={option.value} selected={option.selected}>
+            <Option {showValue} value={option.value} selected={option.selected}>
                 {option.text}
             </Option>
         {/each}

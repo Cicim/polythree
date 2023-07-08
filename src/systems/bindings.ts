@@ -31,6 +31,7 @@ export class Bindings {
         "maplist/focus_search": "Ctrl+F",
         "maplist/clear_and_focus_search": "Ctrl+G",
         "maplist/delete_selected": "Delete",
+        "maplist/new_map": "Ctrl+N",
         
         "editor/save": "Ctrl+S",
         "editor/undo": "Ctrl+Z",

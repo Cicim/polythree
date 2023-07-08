@@ -3,6 +3,7 @@
     --main-fg: #f2f2f0;
     --strong-bg: #000000;
     --strong-fg: #ffffff;
+    --medium-bg: #16161a;
     --weak-bg: #1f1f22;
     --weak-fg: #b2b2b0;
     --error-fg: #ff511c;
@@ -12,7 +13,7 @@
     --warn-card-fg: #602a00;
     --warn-card-border: #c45500;
     --warn-card-icon: var(--warn-border);
-    
+
     --error-card-bg: #d7340b;
     --error-card-fg: #ffd7be;
     --error-card-border: #ff905d;
@@ -104,6 +105,21 @@
     --input-fg: var(--main-fg);
     --input-border: #39393d;
     --input-placeholder: var(--weak-fg);
+
+    /* Checkboxes */
+    --check-bg: #1f1f22;
+    --check-fg: var(--main-fg);
+    --check-border: #39393d;
+    --check-bg-hover: #2f2f32;
+    --check-border-hover: #a3a3a9;
+    --check-bg-disabled: #5f5f63;
+    --check-fg-disabled: var(--weak-fg);
+    --check-border-disabled: #5c5c5f;
+    --check-checked-bg: #2760b6;
+    --check-checked-fg: var(--strong-fg);
+    --check-checked-border: #193b6e;
+    --check-checked-bg-hover: #4886e2;
+    --check-checked-border-hover: #81b3ff;
 
     /* Dialogs */
     --dialog-bg: #1f1f22;

@@ -4,6 +4,7 @@
     import {
         GroupCriteria,
         groupCriteriaTable,
+        type CreateMapOptions,
         type MapCardProps,
         type MapGroup,
         type MapId,
@@ -19,6 +20,7 @@
         IconOption,
         Menu,
         Separator,
+        TextOption,
         showContextMenu,
     } from "src/systems/context_menu";
     import MapInfo from "./MapList/MapInfo.svelte";
@@ -28,6 +30,7 @@
     import { openViews } from "src/systems/views";
     import { MapEditorContext } from "./MapEditor";
     import CloseViewsDialog from "../components/dialog/CloseViewsDialog.svelte";
+    import CreateMapDialog from "./MapList/CreateMapDialog.svelte";
 
     export let context: MapListContext;
     let data = context.data;
@@ -39,7 +42,7 @@
     $: mapInfoOpen = true;
 
     /** The content of the searchbar */
-    let searchString = writable("");
+    let searchString = "";
     /** The current grouping criteria */
     let criteria: GroupCriteria = GroupCriteria.Group;
     let allCards: MapCardProps[];
@@ -52,8 +55,8 @@
 
     /** The submit method for applying a search */
     function submitSearch() {
-        console.log("----> Submitting Search");
-        mapsContainer.doSearch($searchString);
+        console.log(searchString);
+        mapsContainer.doSearch(searchString);
     }
 
     let contextMenu: Menu;
@@ -184,6 +187,14 @@
         });
     }
 
+    export async function createMap(options: CreateMapOptions) {
+        const res = await spawnDialog(CreateMapDialog, {
+            options,
+            all: allCards,
+            context,
+        });
+    }
+
     let mapsContainer: MapsContainer;
     export function removeDeleted(deleted: MapId[]) {
         mapsContainer.remove(deleted);
@@ -202,7 +213,7 @@
         const input = searchBarEl.querySelector("input");
         if (input) input.focus();
         if (clear) {
-            searchString.set("");
+            searchString = "";
             submitSearch();
         }
     }
@@ -247,6 +258,8 @@
 
         contextMenu = new Menu([
             new IconOption("Refresh View", "mdi:refresh", "maplist/refresh"),
+            new Separator(),
+            new TextOption("Create Map", "maplist/new_map"),
         ]);
 
         mapsContainer.init(allCards, criteria);
@@ -284,7 +297,7 @@
                 <div class="searchbar" bind:this={searchBarEl}>
                     <Input
                         on:submit={submitSearch}
-                        edits={searchString}
+                        bind:value={searchString}
                         placeholder="Search"
                     />
                     <Button color="secondary" on:click={submitSearch}

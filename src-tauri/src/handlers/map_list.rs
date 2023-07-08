@@ -192,3 +192,27 @@ fn parse_u16(number: String) -> AppResult<u16> {
         .parse::<u16>()
         .map_err(|e| format!("Svelte-side mishap: Failed to parse string. {}", e))
 }
+
+#[derive(Serialize)]
+pub struct TilesetType {
+    offset: usize,
+    is_primary: bool,
+}
+
+#[tauri::command]
+pub fn get_tilesets(state: AppState) -> AppResult<Vec<TilesetType>> {
+    state.with_rom(|rom| match rom.refs.tilesets_table {
+        Some(ref table) => {
+            let mut tilesets = vec![];
+
+            for (offset, (_, is_secondary)) in table {
+                tilesets.push(TilesetType {
+                    offset: *offset,
+                    is_primary: !is_secondary,
+                });
+            }
+            Ok(tilesets)
+        }
+        None => Ok(vec![]),
+    })
+}
