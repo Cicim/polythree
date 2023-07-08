@@ -34,6 +34,10 @@ export abstract class ViewContext {
     /** Whether or not the tab is a valid dropzone for the currently dragged tab */
     public activeDropzone: boolean = false;
 
+
+    public onSelect: () => void = () => {};
+    public onDeselect: () => void = () => {};
+
     public constructor(ComponentClass: typeof SvelteComponent, id: Record<string, any>) {
         // Set the identifiers
         this.identifier = id;
@@ -99,6 +103,8 @@ export abstract class ViewContext {
                 // Unregister all the other editor's actions
                 Bindings.unregister(otherView.actions);
                 Bindings.unregister(otherView.tabActions);
+
+                otherView.onDeselect();
                 // Hide all the views that aren't the selected one
                 otherView.container.classList.add("hidden");
                 otherView.selected = false;
@@ -107,6 +113,8 @@ export abstract class ViewContext {
             // Register this editor's actions
             Bindings.register(this.actions);
             Bindings.register(this.tabActions);
+
+            this.onSelect();
 
             // Show the selected view
             this.container.classList.remove("hidden");

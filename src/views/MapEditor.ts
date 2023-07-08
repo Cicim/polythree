@@ -1,5 +1,6 @@
 import MapEditor from "./MapEditor.svelte";
 import { EditorContext } from "../systems/contexts";
+import { Bindings } from "src/systems/bindings";
 
 export interface MapEditorProperties {
     group: number;
@@ -18,6 +19,7 @@ export class MapEditorContext extends EditorContext {
     public name = "Map Editor";
     public singularTab = true;
     declare public identifier: MapEditorProperties;
+    declare public component: MapEditor;
 
     public actions = {
         "map_editor/print_group": () => {
@@ -37,6 +39,16 @@ export class MapEditorContext extends EditorContext {
         this.isLoading.set(true);
         this.data.set({});
         this.isLoading.set(false);
+    }
+
+    public onSelect = () => {
+        const binding = this.component.getActiveBinding();
+        if (!binding) return;
+        Bindings.register(binding);
+    }
+    public onDeselect = () => {
+        const binding = this.component.getActiveBinding();
+        Bindings.unregister(binding);
     }
 
     public constructor(id: MapEditorProperties) {
