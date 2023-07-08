@@ -1,6 +1,7 @@
 import MapEditor from "./MapEditor.svelte";
 import { EditorContext } from "../systems/contexts";
 import { Bindings } from "src/systems/bindings";
+import { openViews } from "src/systems/views";
 
 export interface MapEditorProperties {
     group: number;
@@ -20,7 +21,7 @@ export class MapEditorContext extends EditorContext {
     public singularTab = true;
     declare public identifier: MapEditorProperties;
     declare public component: MapEditor;
-    
+
     public _cosmeticHasSideTabs = true;
 
     public actions = {
@@ -54,7 +55,14 @@ export class MapEditorContext extends EditorContext {
 
     public async load() {
         this.isLoading.set(true);
+        this._cosmeticHasSideTabs = false;
+
         this.data.set({});
+
+        // Update the cosmetics
+        this._cosmeticHasSideTabs = true;
+        // Trigger a re-render
+        openViews.update(views => views);
         this.isLoading.set(false);
     }
 
@@ -71,5 +79,6 @@ export class MapEditorContext extends EditorContext {
     public constructor(id: MapEditorProperties) {
         // Create the editor element
         super(MapEditor, { ...id });
+        this.subtitle.set(id.group + "." + id.index);
     }
 }

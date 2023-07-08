@@ -39,9 +39,12 @@ export abstract class ViewContext {
     /** Whether or not the tab is a valid dropzone for the currently dragged tab */
     public activeDropzone: boolean = false;
 
-
-    public onSelect: () => void = () => {};
-    public onDeselect: () => void = () => {};
+    /** A callback that is ran every time this tab is selected */
+    public onSelect: () => void = () => { };
+    /** A callback that is ran every time this tab is deselected */
+    public onDeselect: () => void = () => { };
+    /** The subtitle of the tab */
+    public subtitle: Writable<string> = writable("");
 
     public constructor(ComponentClass: typeof SvelteComponent, id: Record<string, any>) {
         // Set the identifiers
@@ -144,6 +147,9 @@ export abstract class ViewContext {
         // Unregister the view's actions
         Bindings.unregister(this.actions);
         Bindings.unregister(this.tabActions);
+
+        // Execute the on deselect callback
+        this.onDeselect();
         // Destroy the view
         this.component.$destroy();
         // Remove the view's container

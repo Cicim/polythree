@@ -152,5 +152,6 @@
     }
     .editor-container {
         display: flex;
+        overflow: hidden;
     }
 </style>

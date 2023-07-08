@@ -112,14 +112,13 @@
             let cardProps = mapDumpToCardProps(res, $mapNames);
             // Update the list
             context.component.addCreated(cardProps);
-            // Close 
+            // Close
             close(true);
 
             // Open the Map Editor if specified
             if (openInEditor) {
                 new MapEditorContext({ group, index }).create().select();
             }
-
         } catch (err) {
             errored = true;
             errorString = err;
@@ -267,10 +266,16 @@
         {/if}
     </div>
     <div class="buttons">
-        <Button on:click={() => close(null)} disabled={creating}>Cancel</Button>
-        <Button color="secondary" on:click={createMap} disabled={notAllGood}
-            >Create Map</Button
-        >
+        {#if errored}
+            <Button on:click={() => close(null)}>Ok</Button>
+        {:else}
+            <Button on:click={() => close(null)} disabled={creating}
+                >Cancel</Button
+            >
+            <Button color="secondary" on:click={createMap} disabled={notAllGood}
+                >Create Map</Button
+            >
+        {/if}
     </div>
 </div>
 

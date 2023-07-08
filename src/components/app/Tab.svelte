@@ -16,6 +16,7 @@
     // Whether the tab needs to be saved
     $: needsSave = (<EditorContext>view)?.changes?.unsaved ?? writable(false);
     $: isSaving = (<EditorContext>view)?.changes?.saving ?? writable(false);
+    $: subtitle = view.subtitle;
 
     // ANCHOR TabMenu
     // Closes all tabs except the current tab
@@ -129,6 +130,7 @@
     <!-- Text -->
     <span class="text">
         {view.name}
+        <span class="subtitle">{$subtitle}</span>
     </span>
     <!-- Close Buttom -->
     <button
@@ -173,6 +175,10 @@
             overflow: hidden;
             text-overflow: ellipsis;
             pointer-events: none;
+
+            .subtitle {
+                color: var(--weak-fg);
+            }
         }
 
         .close {
