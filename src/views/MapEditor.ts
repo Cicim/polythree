@@ -35,8 +35,7 @@ export class MapEditorContext extends EditorContext {
 
     public async load() {
         this.isLoading.set(true);
-        const data = await invokeMapData("test", {});
-        this.data.set(data);
+        this.data.set({});
         this.isLoading.set(false);
     }
 
@@ -44,21 +43,4 @@ export class MapEditorContext extends EditorContext {
         // Create the editor element
         super(MapEditor, { ...id });
     }
-}
-
-async function invokeMapData(msg: string, props: Object) {
-    // Wait 20 millisecs, then return the data
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return {
-        name: "Test Map",
-        width: 100,
-        height: 100,
-        tileset: "of",
-        tilemap: [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-    };
 }

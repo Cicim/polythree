@@ -1,10 +1,13 @@
 <script lang="ts">
     import { onMount, setContext } from "svelte";
     import type { MapEditorContext } from "./MapEditor";
-    import MapEditorTabs from "./MapEditor/MapEditorTabs.svelte";
     import LoadingScreen from "../components/LoadingScreen.svelte";
-    import Select from "src/components/Select.svelte";
-    import { writable } from "svelte/store";
+    import VerticalTabs from "./MapEditor/VerticalTabs.svelte";
+    import LayoutEditor from "./MapEditor/LayoutEditor.svelte";
+    import LevelEditor from "./MapEditor/LevelEditor.svelte";
+    import ScriptsEditor from "./MapEditor/ScriptsEditor.svelte";
+    import ConnectionsEditor from "./MapEditor/ConnectionsEditor.svelte";
+    import HeaderEditor from "./MapEditor/HeaderEditor.svelte";
 
     export let context: MapEditorContext;
     setContext("context", context);
@@ -15,48 +18,52 @@
     onMount(async () => {
         await context.load();
     });
-
-    let changes = context.changes;
-    setInterval(() => {
-        changes = context.changes;
-    }, 1);
-
-    let value = "1";
 </script>
 
-<div class="view">
-    <Select
-        bind:value
-        options={[
-            ["0", "Zero"],
-            ["1", "One"],
-            ["2", "Two"],
-            ["3", "Three"],
-            ["4", "Four"],
-        ]}
-    />
-    {value}
-
-    {#if $isLoading}
+{#if $isLoading}
+    <div class="loading">
         <LoadingScreen />
-    {:else}
-        <MapEditorTabs />
-    {/if}
-
-    Stack: {changes.top}
-    {#each changes.stack as change}
-        <div
-            style="border-top: {changes.stack.indexOf(change) === changes.top
-                ? 1
-                : 0}px solid white"
-        >
-            {change.toString()}
-        </div>
-    {/each}
-</div>
+    </div>
+{:else}
+    <div class="view">
+        <VerticalTabs
+            tabs={[
+                {
+                    title: "Header",
+                    id: "tab-header",
+                    icon: "mdi:file-document-edit-outline",
+                },
+                {
+                    title: "Connections",
+                    id: "tab-connections",
+                    icon: "mdi:link",
+                },
+                {
+                    title: "Scripts",
+                    id: "tab-scripts",
+                    icon: "mdi:script-text",
+                },
+                { title: "Level", id: "tab-level", icon: "mdi:map" },
+                { title: "Layout", id: "tab-layout", icon: "mdi:grid" },
+            ]}
+        />
+        <LayoutEditor />
+        <LevelEditor />
+        <ScriptsEditor />
+        <ConnectionsEditor />
+        <HeaderEditor />
+    </div>
+{/if}
 
 <style lang="scss">
+    .loading {
+        height: 100%;
+    }
     .view {
         height: 100%;
+
+        display: grid;
+        grid-template-columns: min-width 1fr;
+        grid-template-areas: "tabs editor";
     }
 </style>
