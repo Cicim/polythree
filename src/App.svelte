@@ -4,7 +4,7 @@
     import TabBar from "./components/app/TopBar.svelte";
     import FootBar from "./components/app/FootBar.svelte";
     import ContextMenu from "./components/app/ContextMenu.svelte";
-    import { Bindings } from "./systems/bindings";
+    import { handleKeydown } from "./systems/bindings";
     import Tooltip from "./components/app/Tooltip.svelte";
     import { HomePageContext } from "./views/HomePage";
 
@@ -13,7 +13,7 @@
     });
 </script>
 
-<svelte:body on:keydown={Bindings.handleKeypress} />
+<svelte:body on:keydown={handleKeydown} />
 
 <!-- Page container -->
 <main id="container">

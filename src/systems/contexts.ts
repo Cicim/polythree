@@ -1,6 +1,5 @@
 import type { SvelteComponent } from "svelte";
 import { get, writable, type Writable } from "svelte/store";
-import { Bindings } from "./bindings";
 import { rom } from "./global";
 import { spawnDialog } from "./dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
@@ -22,10 +21,6 @@ export abstract class ViewContext {
     public identifier: Record<string, any>;
     /** The Svelte component for the view's view */
     protected component: SvelteComponent;
-    /** The list of key-bindable actions for this editor */
-    public actions: Record<string, () => void> = {};
-    /** The list of key-bindable actions for this editor's tab */
-    public tabActions: Record<string, () => void> = this.getTabActions();
 
     /** Whether or not the view has side tabs
      * just a cosmetic flag for the Navbar
@@ -111,9 +106,6 @@ export abstract class ViewContext {
 
     /** Deselect this view */
     public deselect() {
-        // Unregister this editor's actions
-        Bindings.unregister(this.actions);
-        Bindings.unregister(this.tabActions);
         // Run the onDeselect callback
         this.onDeselect();
         // Hide the this view
@@ -129,10 +121,6 @@ export abstract class ViewContext {
         if (active === this) return;
         // Try to disable the active view
         active?.deselect();
-
-        // Register this editor's actions
-        Bindings.register(this.actions);
-        Bindings.register(this.tabActions);
 
         this.onSelect();
 
@@ -231,19 +219,6 @@ export abstract class EditorContext extends ViewContext {
     /** If this value is true, the editor will close 
      * as soon as it is done saving */
     protected slatedForClose: boolean = false;
-
-    public tabActions = {
-        ...super.getTabActions(),
-        "editor/save": () => {
-            this.save();
-        },
-        "editor/undo": () => {
-            this.changes.undo();
-        },
-        "editor/redo": () => {
-            this.changes.redo();
-        }
-    }
 
     public constructor(ComponentClass: typeof SvelteComponent,
         id: Record<string, any>) {

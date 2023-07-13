@@ -2,11 +2,6 @@
     import Tab from "./Tab.svelte";
 
     import {
-        draggingId,
-        openViews,
-        reopenLastClosedView,
-    } from "src/systems/views";
-    import {
         IconOption,
         Menu,
         Separator,
@@ -14,15 +9,20 @@
         TextOption,
         showContextMenu,
     } from "src/systems/context_menu";
-    import { Bindings } from "src/systems/bindings";
+    import { redefineBindings } from "src/systems/bindings";
 
     import { MapEditorContext } from "src/views/MapEditor";
     import { HomePageContext } from "src/views/HomePage";
     import type { EditorContext } from "src/systems/contexts";
     import { MapListContext } from "src/views/MapList";
+    import {
+        reopenLastClosedView,
+        openViews,
+        draggingId,
+    } from "src/systems/views";
 
-    // Add the actions to the global keybindings
-    Bindings.register({
+    // Redefine the default keybindings for the TabBar
+    redefineBindings({
         "tabbar/close_all": async () => {
             let views = [...$openViews];
             for (const view of views.reverse()) {
@@ -34,8 +34,6 @@
             [...$openViews].reverse().forEach((view) => {
                 if (!(<EditorContext>view)?.needsSaveNow) view.close();
             }),
-        // Goes to the next tab to the right
-        // Wraps around if it's the last tab
         "tabbar/next": () => {
             const current = $openViews.find((view) => view.selected);
             const index = $openViews.indexOf(current);

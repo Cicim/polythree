@@ -1,6 +1,5 @@
 import MapEditor from "./MapEditor.svelte";
 import { EditorContext } from "../systems/contexts";
-import { Bindings } from "src/systems/bindings";
 import { openViews } from "src/systems/views";
 
 export interface MapEditorProperties {
@@ -67,13 +66,8 @@ export class MapEditorContext extends EditorContext {
     }
 
     public onSelect = () => {
-        const binding = this.component.getActiveBinding();
-        if (!binding) return;
-        Bindings.register(binding);
     }
     public onDeselect = () => {
-        const binding = this.component.getActiveBinding();
-        Bindings.unregister(binding);
     }
 
     public constructor(id: MapEditorProperties) {

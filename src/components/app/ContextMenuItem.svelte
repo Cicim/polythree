@@ -10,7 +10,6 @@
         closeContextMenu,
     } from "src/systems/context_menu";
     import { tick } from "svelte";
-    import { Bindings } from "src/systems/bindings";
 
     /** The menu item this component represents */
     export let item: MenuItem;
@@ -121,9 +120,7 @@
         <span>{item.text}</span>
         {#if item.keybinding !== ""}
             <span class="keybinding"
-                >{#if item.keybinding}{Bindings.formatBinding(
-                        item.keybinding
-                    )}{/if}</span
+                >{#if item.keybinding}{item.keybinding}{/if}</span
             >{/if}
     </button>
     <!-- Icon Button -->
@@ -138,9 +135,7 @@
         <iconify-icon class="ctx-icon" icon={item.icon} />
         <span>{item.text}</span>
         {#if item.keybinding !== ""}
-            <span class="keybinding"
-                >{Bindings.formatBinding(item.keybinding)}</span
-            >{/if}
+            <span class="keybinding">{item.keybinding}</span>{/if}
     </button>
     <!-- Sub Menu Button -->
 {:else if item instanceof SubMenuOption}

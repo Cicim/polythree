@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Bindings } from "src/systems/bindings";
     import type { SvelteComponent } from "svelte";
 
     interface Tab {
@@ -16,17 +15,9 @@
     export function changeTab(newTabId: string) {
         if (newTabId === activeTab) return;
 
-        // If the old tab is not null, unbind its bindings
-        if (oldTabId !== null) {
-            Bindings.unregister(tabs[oldTabId].component.bindings);
-        }
-
         // Set the new tab
         activeTab = newTabId;
 
-        Bindings.register(tabs[activeTab].component.bindings);
-
-        // Update the old tab
         oldTabId = activeTab;
     }
 </script>

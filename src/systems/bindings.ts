@@ -1,4 +1,243 @@
+// import {
+//     bCloseAllTabs, bCloseSavedTabs, bNextTab, bPrevTab, bReopenLastTab
+// } from "src/components/app/TabBar.svelte";
+import { get } from "svelte/store";
 import { getMenu } from "./context_menu";
+import { EditorContext, type ViewContext } from "./contexts";
+import { activeView } from "./views";
+
+// type KeyBinding = [name: string, shortcut: string, callback: (view: ViewContext | EditorContext) => void, condition: string];
+enum ConditionType {
+    /** Always true */
+    AlwaysTrue,
+    /** Checks if the active view is not null */
+    ActiveNotNull,
+    /** Checks if the active view is an instance of EditorContext */
+    ActiveEditorContext,
+    /** Checks if the active view has the specified property and it true */
+    TrueProperty,
+    /** Checks if the active view has the specified property and it false */
+    FalseProperty,
+    /** Checks if the active view has the specified property and it equals the specified value */
+    EqualProperty,
+    /** Checks if the active view has the specified property and it does not equal the specified value */
+    NotEqualProperty,
+};
+type Condition = [ConditionType, string?, string?];
+type Conditions = Condition[];
+type BindingFunction = (view: ViewContext | EditorContext) => void | undefined;
+
+class KeyBinding {
+    public name: string;
+    public shortcutCode: string;
+    public binding: BindingFunction;
+    public condition: Conditions;
+
+    constructor(name: string, shortcut: string, callback: BindingFunction, condition: string) {
+        this.name = name;
+        this.shortcutCode = shortcut;
+        this.binding = callback;
+        this.condition = KeyBinding.parseConditions(condition);
+    }
+
+    public get shortcutPretty(): string {
+        return this.shortcutCode.replaceAll("+", " + ");
+    }
+
+    /** Parsed a condition from the string
+     Returns a list of parsed conditions, ready to be checked
+    Here's a list of possible conditions: 
+        - `"-"` - Always true
+        - `"active !== null"` - Checks if the active view is not null
+        - `"active instanceof EditorContext"` - Checks if the active view is an instance of EditorContext
+        - `"active.{property}"` - Checks if the active view has the specified property and it true
+        - `"!active.{property}"` - Checks if the active view has the specified property and it false
+        - `"active.{property} === {value}"` - Checks if the active view has the specified property and it equals the specified value
+        - `"active.{property} !== {value}"` - Checks if the active view has the specified property and it does not equal the specified value
+    */
+    private static parseConditions(condition: string): Conditions {
+        const parts = condition.split("&&");
+        let conditions = [];
+
+        for (const part of parts) {
+            const trimmed = part.trim();
+
+            if (trimmed === "-") {
+                conditions = [[ConditionType.AlwaysTrue]];
+                break;
+            }
+
+            if (trimmed === "active !== null")
+                conditions.push([ConditionType.ActiveNotNull]);
+            else if (trimmed === "active instanceof EditorContext")
+                conditions.push([ConditionType.ActiveEditorContext]);
+            else if (trimmed.startsWith("!active."))
+                conditions.push([ConditionType.FalseProperty, trimmed.split(".")[1]]);
+            else if (trimmed.startsWith("active.")) {
+                const [_, property] = trimmed.split(".");
+                const other = property.split(" ");
+                if (other.length === 0)
+                    conditions.push([ConditionType.TrueProperty, property]);
+                else {
+                    const [property, operator, ...values] = other;
+                    const value = this.parseValue(values.join(" "));
+
+                    if (operator === "===")
+                        conditions.push([ConditionType.EqualProperty, property, value]);
+                    else if (operator === "!==")
+                        conditions.push([ConditionType.NotEqualProperty, property, value]);
+                    else throw new Error(`Invalid operator ${operator}`);
+                }
+            }
+        }
+
+        return conditions;
+    }
+
+    /** Parses a value */
+    private static parseValue(value: string): string | number | boolean {
+        if (value.startsWith("'"))
+            return value.slice(1, -1);
+        else if (value === "false" || value === "true")
+            return Boolean(value);
+        else if (!isNaN(parseFloat(value)))
+            return parseFloat(value);
+        throw new Error("Only literal values are supported in keybinding conditions");
+    }
+
+    /** Checks if this keybinding's condition is true at the moment of execution */
+    public checkCondition(view: ViewContext) {
+        for (const condition of this.condition) {
+            switch (condition[0]) {
+                case ConditionType.AlwaysTrue:
+                    break;
+                case ConditionType.ActiveNotNull:
+                    if (view === null) return false;
+                    break;
+                case ConditionType.ActiveEditorContext:
+                    if (!(view instanceof EditorContext)) return false;
+                    break;
+                case ConditionType.TrueProperty:
+                    if (!view[condition[1]]) return false;
+                    break;
+                case ConditionType.FalseProperty:
+                    if (view[condition[1]]) return false;
+                    break;
+                case ConditionType.EqualProperty:
+                    if (view[condition[1]] !== condition[2]) return false;
+                    break;
+                case ConditionType.NotEqualProperty:
+                    if (view[condition[1]] === condition[2]) return false;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return true;
+    }
+
+    public redefineBinding(binding: BindingFunction) {
+        this.binding = binding;
+    }
+}
+
+export const keybindings: Record<string, KeyBinding> = {
+    "tab/close": new KeyBinding("Close Tab", "Ctrl+W", (view: ViewContext) => view.close(), "active !== null"),
+    "tabbar/reopen_last": new KeyBinding("Reopen Last Closed Tab", "Ctrl+Shift+T", undefined, "-"),
+    "tabbar/close_saved": new KeyBinding("Close Saved Tabs", "Ctrl+Shift+Q", undefined, "-"),
+    "tabbar/close_all": new KeyBinding("Close All Tabs", "Ctrl+Shift+W", undefined, "-"),
+    "tabbar/next": new KeyBinding("Next Tab", "Ctrl+Tab", undefined, "-"),
+    "tabbar/prev": new KeyBinding("Previous Tab", "Ctrl+Shift+Tab", undefined, "-"),
+    "editor/save": new KeyBinding("Save", "Ctrl+S", (editor: EditorContext) => editor.save(), "active instanceof EditorContext"),
+    "editor/undo": new KeyBinding("Undo", "Ctrl+Z", (editor: EditorContext) => editor.changes.undo(), "active instanceof EditorContext"),
+    "editor/redo": new KeyBinding("Redo", "Ctrl+Y", (editor: EditorContext) => editor.changes.redo(), "active instanceof EditorContext"),
+    "maplist/refresh": new KeyBinding("Refresh", "F5", undefined, "active.name === 'Map List"),
+    "maplist/focus_search": new KeyBinding("Focus Search", "Ctrl+F", undefined, "active.name === 'Map List"),
+    "maplist/clear_and_focus_search": new KeyBinding("Clear and Focus Search", "Ctrl+G", undefined, "active.name === 'Map List"),
+    "maplist/delete_selected": new KeyBinding("Delete Selected", "Delete", undefined, "active.name === 'Map List"),
+    "maplist/new_map": new KeyBinding("New Map", "Ctrl+N", undefined, "active.name === 'Map List"),
+    "map_editor/select_layout": new KeyBinding("Select Layout", "Ctrl+1", undefined, "active.name === 'Map Editor"),
+    "map_editor/select_level": new KeyBinding("Select Level", "Ctrl+2", undefined, "active.name === 'Map Editor"),
+    "map_editor/select_scripts": new KeyBinding("Select Scripts", "Ctrl+3", undefined, "active.name === 'Map Editor"),
+    "map_editor/select_connections": new KeyBinding("Select Connections", "Ctrl+4", undefined, "active.name === 'Map Editor"),
+    "map_editor/select_encounters": new KeyBinding("Select Encounters", "Ctrl+5", undefined, "active.name === 'Map Editor"),
+    "map_editor/select_header": new KeyBinding("Select Header", "Ctrl+6", undefined, "active.name === 'Map Editor"),
+    "layout_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
+    "permissions_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", undefined, "active.name === 'Map Editor' && active.tab === 'permissions'"),
+};
+
+/** The object containing all the existing shortcuts */
+const shortcutCodeToKeybindings: Record<string, KeyBinding[]> = {};
+
+// Compose the shortcut to id list
+for (const id in keybindings) {
+    // Get the binding
+    const binding: KeyBinding = keybindings[id];
+    const shortcut: string = binding.shortcutCode;
+    // Add it to the list under the shortcut
+    if (shortcutCodeToKeybindings[shortcut])
+        shortcutCodeToKeybindings[shortcut] = [binding, ...shortcutCodeToKeybindings[shortcut]];
+
+    shortcutCodeToKeybindings[shortcut] = [binding];
+}
+
+/** Updates multiple bindings functions */
+export function redefineBindings(toUpdate: { [id: string]: BindingFunction }) {
+    for (const id in toUpdate)
+        redefineBinding(id, toUpdate[id]);
+}
+
+/** Updates the specified keybinding's binding function */
+export function redefineBinding(id: string, callback: BindingFunction) {
+    if (id in keybindings)
+        keybindings[id].redefineBinding(callback);
+    else throw new Error(`Binding ${id} does not exist`);
+}
+
+/** Given an id, returns the keybinding's shortcut (good for printing) and whether the action is active or not */
+export function getActionsShortcut(id: string): [binding: BindingFunction, shortcut: string, active: boolean] {
+    const keybinding = keybindings[id];
+    if (!keybinding) throw Error(`Invalid keybinding ${id}`);
+    return [keybinding.binding, keybinding.shortcutPretty, keybinding.checkCondition(get(activeView))];
+}
+
+
+/** Window keydown event listener */
+export function handleKeydown(event: KeyboardEvent) {
+    // Get the shortcut pressed
+    const shortcutCode = getShortcutCode(event);
+    // Get the bindings from the shortcutCode
+    const keybindings = shortcutCodeToKeybindings[shortcutCode];
+    // Exit if the keybindings were not defined
+    if (keybindings === undefined) return;
+
+    const active = get(activeView);
+    // Loop through all the possible keybindings
+    for (const keybinding of keybindings) {
+        const valid = keybinding.checkCondition(active);
+        // If the conditions are valid, execute the binding if it exists
+        if (valid && keybinding.binding)
+            keybinding.binding(active);
+    }
+}
+
+/** Returns the shortcut's code from the KeyboardEvent */
+function getShortcutCode(event: KeyboardEvent) {
+    // Get the key hash
+    let shortcutCode = "";
+    if (event.ctrlKey) shortcutCode += "Ctrl+";
+    if (event.shiftKey) shortcutCode += "Shift+";
+    if (event.altKey) shortcutCode += "Alt+";
+
+    if (isAlphanumeric(event)) shortcutCode += event.key.toUpperCase();
+    else shortcutCode += event.code;
+    return shortcutCode;
+}
+
+/** Returns true if the given event's code is a letter or a number */
+function isAlphanumeric(event: KeyboardEvent) {
+    return event.code.startsWith("Key") || event.code.startsWith("Digit");
+}
 
 /** A hashed keyboard combination */
 type KeyHash = string;
@@ -15,119 +254,4 @@ type BindingMap = Record<ActionName, KeyHash>;
 
 function isModalOpen() {
     return !!document.querySelector(".modal[open]");
-}
-
-export class Bindings {
-    static active: KeypressMap = {};
-    static stored: ActionMap[] = [];
-    static defaults: BindingMap = {
-        "tabbar/reopen_last": "Ctrl+Shift+T",
-        "tabbar/close_saved": "Ctrl+Shift+Q",
-        "tabbar/close_all": "Ctrl+Shift+W",
-        "tabbar/next": "Ctrl+Tab",
-        "tabbar/prev": "Ctrl+Shift+Tab",
-
-        "maplist/refresh": "F5",
-        "maplist/focus_search": "Ctrl+F",
-        "maplist/clear_and_focus_search": "Ctrl+G",
-        "maplist/delete_selected": "Delete",
-        "maplist/new_map": "Ctrl+N",
-
-        "map_editor/select_layout": "Ctrl+1",
-        "map_editor/select_level": "Ctrl+2",
-        "map_editor/select_scripts": "Ctrl+3",
-        "map_editor/select_connections": "Ctrl+4",
-        "map_editor/select_encounters": "Ctrl+5",
-        "map_editor/select_header": "Ctrl+6",
-
-        "layout_editor/pick_pencil": "P",
-
-        "editor/save": "Ctrl+S",
-        "editor/undo": "Ctrl+Z",
-        "editor/redo": "Ctrl+Y",
-        "tab/close": "Ctrl+W",
-
-        "home_page/open_last_project": "Alt+O",
-    };
-
-    // ANCHOR Loading
-    static loadDefaults() {
-    }
-    /** Loads all the keybindings to the `activeBindings`
-     * in an easy to reference map */
-    static register(bindings: ActionMap) {
-        // Add the bindings to activeBindings
-        for (const actionName in bindings) {
-            // Get the binding from the default bindings
-            const binding = this.defaults[actionName];
-            // Add the binding to activeBindings
-            this.active[binding] = bindings[actionName];
-        }
-        // Register the bindings
-        this.stored.push(bindings);
-    }
-
-    // ANCHOR Events
-    static isAlphanumeric(event: KeyboardEvent) {
-        return event.code.startsWith("Key") || event.code.startsWith("Digit");
-    }
-    /** Returns the key hash from the given key */
-    static getKeyHash(event: KeyboardEvent) {
-        // Get the key hash
-        let keyHash = "";
-        if (event.ctrlKey) keyHash += "Ctrl+";
-        if (event.shiftKey) keyHash += "Shift+";
-        if (event.altKey) keyHash += "Alt+";
-
-        if (this.isAlphanumeric(event)) keyHash += event.key.toUpperCase();
-        else keyHash += event.code;
-        return keyHash;
-    }
-
-    /** Handles a keypress event */
-    static handleKeypress(event: KeyboardEvent) {
-        if (isModalOpen()) return;
-        // Get the key hash
-        const keyHash = Bindings.getKeyHash(event);
-        // Check if the key hash is in activeBindings
-        if (keyHash in Bindings.active) {
-            // Prevent the default action
-            event.preventDefault();
-            // Run the action
-            Bindings.active[keyHash]();
-            // Close the context menu
-            getMenu()?.close();
-        }
-    }
-
-    // ANCHOR Unloading
-    /** Unregisters all the keybindings from the given list
-     * if they were added previously */
-    static unregister(bindings: ActionMap) {
-        // Check if the bindings have been previously registered
-        const index = this.stored.indexOf(bindings);
-        if (index !== -1) {
-            // Remove the bindings from activeBindings
-            for (const actionName in bindings) {
-                // Get the binding from the default bindings
-                const binding = this.defaults[actionName];
-                // Remove the binding from activeBindings
-                delete this.active[binding];
-            }
-            // Remove the bindings from storedActionMaps
-            this.stored.splice(index, 1);
-        }
-    }
-
-    // ANCHOR Utility
-    /** Returns a pretty version of the given keybinding */
-    static formatBinding(keybinding: string) {
-        // Split the keybinding into parts
-        return keybinding.replaceAll("+", " + ");
-    }
-    /** Returns the action from the given action name */
-    static getActionFromName(actionName: ActionName) {
-        // Get the action from the active bindings
-        return this.active[this.defaults[actionName]];
-    }
 }

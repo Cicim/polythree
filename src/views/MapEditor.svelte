@@ -9,7 +9,6 @@
     import EncountersEditor from "./MapEditor/EncountersEditor.svelte";
     import ConnectionsEditor from "./MapEditor/ConnectionsEditor.svelte";
     import HeaderEditor from "./MapEditor/HeaderEditor.svelte";
-    import { Bindings } from "src/systems/bindings";
 
     export let context: MapEditorContext;
     setContext("context", context);
@@ -87,9 +86,6 @@
                 component: layoutComponent,
             },
         };
-
-        // Register the bindings of the active tab the first time it's laoded
-        Bindings.register(tabs[activeTab].component.bindings);
     });
 </script>
 
