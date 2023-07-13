@@ -16,6 +16,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { MapListContext, MapSelectionEvent } from "../MapList";
     import OffsetLabel from "src/components/OffsetLabel.svelte";
+    import { fade } from "svelte/transition";
 
     export let group: number;
     export let index: number;
@@ -171,11 +172,11 @@
     on:exitViewport={oneExitViewport}
 >
     {#if loaded}
-        <div class="left">
+        <div class="left" in:fade={{ duration: 100 }}>
             <span class="group">{group}</span>.<span class="index">{index}</span
             >
         </div>
-        <div class="right" {...$$restProps}>
+        <div class="right" {...$$restProps} in:fade={{ duration: 100 }}>
             {#if name !== null}
                 <div class="pair">
                     <span class="title">Name: </span>

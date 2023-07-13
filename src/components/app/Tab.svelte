@@ -137,7 +137,7 @@
         tabindex="-1"
         class="close"
         class:busy-dragging={$draggingId !== null}
-        on:click|stopPropagation|preventDefault={() => view.close()}
+        on:click|stopImmediatePropagation|preventDefault={() => view.close()}
         draggable="true"
         on:dragstart|stopPropagation={(e) => e.preventDefault()}
         on:dragover|stopPropagation={(e) => e.preventDefault()}

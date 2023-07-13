@@ -6,7 +6,7 @@ import { spawnDialog } from "./dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import SaveDialog from "src/components/dialog/SaveDialog.svelte";
 import { EditorChanges } from "./changes";
-import { openViews, lastClosedViews } from "./views";
+import { openViews, lastClosedViews, activeView } from "./views";
 
 
 export abstract class ViewContext {
@@ -103,36 +103,49 @@ export abstract class ViewContext {
 
         return this;
     }
+
+    public destroy() {
+        this.component.$destroy();
+        this.container.remove();
+    }
+
+    public deselect() {
+        Bindings.unregister(this.actions);
+        Bindings.unregister(this.tabActions);
+        this.onDeselect();
+        // Hide the this view
+        this.container.classList.add("hidden");
+        this.selected = false;
+    }
     /** Function to run when the view is selected to be the active one */
     public select() {
-        // Loop through all the open views
-        openViews.update((views: ViewContext[]) => {
-            for (const otherView of views) {
-                // Unregister all the other editor's actions
-                Bindings.unregister(otherView.actions);
-                Bindings.unregister(otherView.tabActions);
+        // Get the active view
+        const active = get(activeView);
+        if (active === this) return;
+        console.log("Selecting", this.name, "(deselecting " + (active?.name ?? "[NONE]") + ")");
+        // Try to disable the active view
+        active.deselect();
 
-                otherView.onDeselect();
-                // Hide all the views that aren't the selected one
-                otherView.container.classList.add("hidden");
-                otherView.selected = false;
-            }
+        // Register this editor's actions
+        Bindings.register(this.actions);
+        Bindings.register(this.tabActions);
 
-            // Register this editor's actions
-            Bindings.register(this.actions);
-            Bindings.register(this.tabActions);
+        this.onSelect();
 
-            this.onSelect();
+        // Show the selected view
+        this.container.classList.remove("hidden");
+        this.selected = true;
 
-            // Show the selected view
-            this.container.classList.remove("hidden");
-            this.selected = true;
+        // Update the active view
+        activeView.set(this);
 
-            return views;
-        });
+        // Update the tabbar
+        openViews.update(views => views);
     }
     /** Function to run when the view is closed */
     public async close(): Promise<boolean> {
+        console.log("Closing", this.name);
+
         // Find this view's position in the store
         let index = -1;
         openViews.update((views: ViewContext[]) => {
@@ -144,28 +157,27 @@ export abstract class ViewContext {
 
             return views;
         });
-        // Unregister the view's actions
-        Bindings.unregister(this.actions);
-        Bindings.unregister(this.tabActions);
 
-        // Execute the on deselect callback
-        this.onDeselect();
+        // Deselect the view
+        this.deselect();
         // Destroy the view
-        this.component.$destroy();
-        // Remove the view's container
-        this.container.remove();
-        openViews.update(views => {
-            // Select the view to the right of this one if it exists
-            if (views.length > 0) {
-                if (index >= views.length) {
-                    views[views.length - 1].select();
-                } else {
-                    views[index].select();
-                }
-            }
+        this.destroy();
 
-            return views;
+        // If this view was the active one, set the active view to null
+        const active = get(activeView);
+        activeView.update(active => {
+            if (active === this) return null;
         });
+
+        if (active === this) {
+            // Select the view to the right of this one if it exists
+            const views = get(openViews);
+            if (views.length > 0)
+                if (index >= views.length)
+                    views[views.length - 1].select();
+                else
+                    views[index].select();
+        }
 
         return true;
     }
