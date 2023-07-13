@@ -5,6 +5,7 @@ import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
 import type { Writable } from "svelte/store";
 import { mapNames } from "src/systems/global";
+import { redefineBindings } from "src/systems/bindings";
 
 export interface MapCardProps {
     group: number;
@@ -156,13 +157,6 @@ export class MapListContext extends EditorContext {
     declare public component: MapList;
     declare public data: Writable<MapCardProps[]>;
     public singularTab = true;
-    public actions = {
-        "maplist/refresh": () => this.load(),
-        "maplist/delete_selected": () => this.component.deleteSelected(),
-        "maplist/focus_search": () => this.component.focusSearch(),
-        "maplist/clear_and_focus_search": () => this.component.focusSearch(true),
-        "maplist/new_map": () => this.component.createMap(),
-    }
 
     public async save(): Promise<boolean> {
         return true;
@@ -217,3 +211,16 @@ export class MapListContext extends EditorContext {
         super(MapList, {});
     }
 }
+
+redefineBindings({
+    "maplist/refresh": (view: MapListContext) =>
+        view.load(),
+    "maplist/delete_selected": (view: MapListContext) =>
+        view.component.deleteSelected(),
+    "maplist/focus_search": (view: MapListContext) =>
+        view.component.focusSearch(),
+    "maplist/clear_and_focus_search": (view: MapListContext) =>
+        view.component.focusSearch(true),
+    "maplist/new_map": (view: MapListContext) =>
+        view.component.createMap(),
+});

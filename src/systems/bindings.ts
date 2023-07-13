@@ -2,7 +2,6 @@
 //     bCloseAllTabs, bCloseSavedTabs, bNextTab, bPrevTab, bReopenLastTab
 // } from "src/components/app/TabBar.svelte";
 import { get } from "svelte/store";
-import { getMenu } from "./context_menu";
 import { EditorContext, type ViewContext } from "./contexts";
 import { activeView } from "./views";
 
@@ -141,7 +140,7 @@ class KeyBinding {
     }
 }
 
-export const keybindings: Record<string, KeyBinding> = {
+const keybindings: Record<string, KeyBinding> = {
     "tab/close": new KeyBinding("Close Tab", "Ctrl+W", (view: ViewContext) => view.close(), "active !== null"),
     "tabbar/reopen_last": new KeyBinding("Reopen Last Closed Tab", "Ctrl+Shift+T", undefined, "-"),
     "tabbar/close_saved": new KeyBinding("Close Saved Tabs", "Ctrl+Shift+Q", undefined, "-"),
@@ -151,17 +150,17 @@ export const keybindings: Record<string, KeyBinding> = {
     "editor/save": new KeyBinding("Save", "Ctrl+S", (editor: EditorContext) => editor.save(), "active instanceof EditorContext"),
     "editor/undo": new KeyBinding("Undo", "Ctrl+Z", (editor: EditorContext) => editor.changes.undo(), "active instanceof EditorContext"),
     "editor/redo": new KeyBinding("Redo", "Ctrl+Y", (editor: EditorContext) => editor.changes.redo(), "active instanceof EditorContext"),
-    "maplist/refresh": new KeyBinding("Refresh", "F5", undefined, "active.name === 'Map List"),
-    "maplist/focus_search": new KeyBinding("Focus Search", "Ctrl+F", undefined, "active.name === 'Map List"),
-    "maplist/clear_and_focus_search": new KeyBinding("Clear and Focus Search", "Ctrl+G", undefined, "active.name === 'Map List"),
-    "maplist/delete_selected": new KeyBinding("Delete Selected", "Delete", undefined, "active.name === 'Map List"),
-    "maplist/new_map": new KeyBinding("New Map", "Ctrl+N", undefined, "active.name === 'Map List"),
-    "map_editor/select_layout": new KeyBinding("Select Layout", "Ctrl+1", undefined, "active.name === 'Map Editor"),
-    "map_editor/select_level": new KeyBinding("Select Level", "Ctrl+2", undefined, "active.name === 'Map Editor"),
-    "map_editor/select_scripts": new KeyBinding("Select Scripts", "Ctrl+3", undefined, "active.name === 'Map Editor"),
-    "map_editor/select_connections": new KeyBinding("Select Connections", "Ctrl+4", undefined, "active.name === 'Map Editor"),
-    "map_editor/select_encounters": new KeyBinding("Select Encounters", "Ctrl+5", undefined, "active.name === 'Map Editor"),
-    "map_editor/select_header": new KeyBinding("Select Header", "Ctrl+6", undefined, "active.name === 'Map Editor"),
+    "maplist/refresh": new KeyBinding("Refresh", "F5", undefined, "active.name === 'Map List'"),
+    "maplist/focus_search": new KeyBinding("Focus Search", "Ctrl+F", undefined, "active.name === 'Map List'"),
+    "maplist/clear_and_focus_search": new KeyBinding("Clear and Focus Search", "Ctrl+G", undefined, "active.name === 'Map List'"),
+    "maplist/delete_selected": new KeyBinding("Delete Selected", "Delete", undefined, "active.name === 'Map List'"),
+    "maplist/new_map": new KeyBinding("New Map", "Ctrl+N", undefined, "active.name === 'Map List'"),
+    "map_editor/select_layout": new KeyBinding("Select Layout", "Ctrl+1", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_level": new KeyBinding("Select Level", "Ctrl+2", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_scripts": new KeyBinding("Select Scripts", "Ctrl+3", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_connections": new KeyBinding("Select Connections", "Ctrl+4", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_encounters": new KeyBinding("Select Encounters", "Ctrl+5", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_header": new KeyBinding("Select Header", "Ctrl+6", undefined, "active.name === 'Map Editor'"),
     "layout_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
     "permissions_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", undefined, "active.name === 'Map Editor' && active.tab === 'permissions'"),
 };
@@ -210,7 +209,8 @@ export function handleKeydown(event: KeyboardEvent) {
     const keybindings = shortcutCodeToKeybindings[shortcutCode];
     // Exit if the keybindings were not defined
     if (keybindings === undefined) return;
-
+    event.preventDefault();
+    
     const active = get(activeView);
     // Loop through all the possible keybindings
     for (const keybinding of keybindings) {
@@ -237,21 +237,4 @@ function getShortcutCode(event: KeyboardEvent) {
 /** Returns true if the given event's code is a letter or a number */
 function isAlphanumeric(event: KeyboardEvent) {
     return event.code.startsWith("Key") || event.code.startsWith("Digit");
-}
-
-/** A hashed keyboard combination */
-type KeyHash = string;
-/** The name of an action */
-export type ActionName = string;
-/** The function bound to the action */
-type Action = () => void;
-/** A map of actions to their names */
-type ActionMap = Record<ActionName, Action>;
-/** A map of key hashes to their actions */
-type KeypressMap = Record<KeyHash, Action>;
-/** A map of action names to their key hashes */
-type BindingMap = Record<ActionName, KeyHash>;
-
-function isModalOpen() {
-    return !!document.querySelector(".modal[open]");
 }

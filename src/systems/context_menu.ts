@@ -1,6 +1,7 @@
 import { tick } from "svelte";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { type ActionName, getActionsShortcut } from "./bindings";
+import { activeView } from "./views";
 
 /** A context menu action definition */
 export type ContextMenuAction = () => void;
@@ -60,7 +61,7 @@ export class TextOption extends MenuItem {
         this.text = text;
         if (typeof action === "string") {
             const [binding, shortcut, _] = getActionsShortcut(action);
-            this.action = binding as ContextMenuAction;
+            this.action = () => binding(get(activeView));
             this.keybinding = shortcut;
         }
         else {
@@ -87,7 +88,7 @@ export class IconOption extends MenuItem {
         this.icon = icon;
         if (typeof action === "string") {
             const [binding, shortcut, _] = getActionsShortcut(action);
-            this.action = binding as ContextMenuAction;
+            this.action = () => binding(get(activeView));
             this.keybinding = shortcut;
         }
         else {

@@ -14,7 +14,6 @@
     import LoadingScreen from "src/components/LoadingScreen.svelte";
     import Input from "src/components/Input.svelte";
     import Button from "src/components/Button.svelte";
-    import { writable } from "svelte/store";
     import MapsContainer from "./MapList/MapsContainer.svelte";
     import {
         IconOption,
@@ -55,7 +54,6 @@
 
     /** The submit method for applying a search */
     function submitSearch() {
-        console.log(searchString);
         mapsContainer.doSearch(searchString);
     }
 
