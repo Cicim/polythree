@@ -231,6 +231,13 @@
         ];
     }
 
+    export async function refresh() {
+        await context.load();
+        await tick();
+        allCards = $data;
+        mapsContainer.init(allCards, criteria);
+    }
+
     let containerEl: HTMLDivElement;
     function onClickOutsideCard(event: MouseEvent) {
         const target = event.target as HTMLElement;

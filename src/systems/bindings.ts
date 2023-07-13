@@ -232,7 +232,6 @@ export function handleKeydown(event: KeyboardEvent) {
     const keybindings = shortcutCodeToKeybindings[shortcutCode];
     // Exit if the keybindings were not defined
     if (keybindings === undefined) return;
-    event.preventDefault();
 
     const active = get(activeView);
 
@@ -240,8 +239,10 @@ export function handleKeydown(event: KeyboardEvent) {
     for (const keybinding of keybindings) {
         const valid = keybinding.checkCondition(active);
         // If the conditions are valid, execute the binding if it exists
-        if (valid && keybinding.binding)
+        if (valid && keybinding.binding) {
+            event.preventDefault();
             keybinding.binding(active);
+        }
     }
 }
 

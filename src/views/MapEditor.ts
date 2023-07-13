@@ -21,7 +21,7 @@ export class MapEditorContext extends TabbedEditorContext {
     public singularTab = true;
     declare public identifier: MapEditorProperties;
     declare public component: MapEditor;
-    private static tabs = {
+    public tabs = {
         "header": {
             title: "Header",
             icon: "mdi:file-document-edit-outline",
@@ -48,8 +48,6 @@ export class MapEditorContext extends TabbedEditorContext {
         }
     }
 
-    public _cosmeticHasSideTabs = true;
-
     public async save(): Promise<boolean> {
         if (this.startSaving()) return;
         // Wait 1 seconds
@@ -71,9 +69,9 @@ export class MapEditorContext extends TabbedEditorContext {
         this.isLoading.set(false);
     }
 
-    public constructor(id: MapEditorProperties) {
+    constructor(id: MapEditorProperties) {
         // Create the editor element
-        super(MapEditor, { ...id }, MapEditorContext.tabs);
+        super(MapEditor, { ...id });
         this.subtitle.set(id.group + "." + id.index);
         this.selectedTab.set("layout");
     }

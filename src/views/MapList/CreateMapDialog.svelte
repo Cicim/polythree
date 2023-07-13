@@ -200,18 +200,20 @@
                 <div class="header cols2" on:click={() => (usingLayout = true)}>
                     Using a preexisting Layout
                 </div>
-                <div class="title cols2">Layout</div>
-                <div class="select cols2">
-                    {#if optionsReady}
-                        <Select
-                            showValue="number"
-                            bind:value={layoutValue}
-                            options={layoutOptions}
-                        />
-                    {:else}
-                        <div class="placeholder" />
-                    {/if}
-                </div>
+                {#if usingLayout}
+                    <div class="title cols2">Layout</div>
+                    <div class="select cols2">
+                        {#if optionsReady}
+                            <Select
+                                showValue="number"
+                                bind:value={layoutValue}
+                                options={layoutOptions}
+                            />
+                        {:else}
+                            <div class="placeholder" />
+                        {/if}
+                    </div>
+                {/if}
             </div>
             <div class="mode" class:closed={usingLayout}>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -221,42 +223,44 @@
                 >
                     Creating a new Layout
                 </div>
-                <div class="title cols2">Name</div>
-                <div class="select cols2">
-                    <Input />
-                </div>
-                <div class="title cols2">Primary Tileset</div>
-                <div class="select cols2">
-                    {#if optionsReady}
-                        <Select
-                            showValue="offset"
-                            bind:value={tileset1Value}
-                            options={tileset1Options}
-                        />
-                    {:else}
-                        <div class="placeholder" />
-                    {/if}
-                </div>
-                <div class="title cols2">Secondary Tileset</div>
-                <div class="select cols2">
-                    {#if optionsReady}
-                        <Select
-                            showValue="offset"
-                            bind:value={tileset2Value}
-                            options={tileset2Options}
-                        />
-                    {:else}
-                        <div class="placeholder" />
-                    {/if}
-                </div>
-                <div class="title">Width</div>
-                <div class="title">Height</div>
-                <div class="select">
-                    <Input type="number" bind:value={width} />
-                </div>
-                <div class="select">
-                    <Input type="number" bind:value={height} />
-                </div>
+                {#if !usingLayout}
+                    <div class="title cols2">Name</div>
+                    <div class="select cols2">
+                        <Input />
+                    </div>
+                    <div class="title cols2">Primary Tileset</div>
+                    <div class="select cols2">
+                        {#if optionsReady}
+                            <Select
+                                showValue="offset"
+                                bind:value={tileset1Value}
+                                options={tileset1Options}
+                            />
+                        {:else}
+                            <div class="placeholder" />
+                        {/if}
+                    </div>
+                    <div class="title cols2">Secondary Tileset</div>
+                    <div class="select cols2">
+                        {#if optionsReady}
+                            <Select
+                                showValue="offset"
+                                bind:value={tileset2Value}
+                                options={tileset2Options}
+                            />
+                        {:else}
+                            <div class="placeholder" />
+                        {/if}
+                    </div>
+                    <div class="title">Width</div>
+                    <div class="title">Height</div>
+                    <div class="select">
+                        <Input type="number" bind:value={width} />
+                    </div>
+                    <div class="select">
+                        <Input type="number" bind:value={height} />
+                    </div>
+                {/if}
             </div>
             <div class="select cols2">
                 <CheckBox bind:checked={openInEditor}
@@ -280,6 +284,10 @@
 </div>
 
 <style lang="scss">
+    .dialog-content {
+        min-width: 434px;
+        max-width: 434px;
+    }
     .content {
         min-height: 0;
         overflow-y: auto;

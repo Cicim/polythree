@@ -214,7 +214,7 @@ export class MapListContext extends EditorContext {
 
 redefineBindings({
     "maplist/refresh": (view: MapListContext) =>
-        view.load(),
+        view.component.refresh(),
     "maplist/delete_selected": (view: MapListContext) =>
         view.component.deleteSelected(),
     "maplist/focus_search": (view: MapListContext) =>

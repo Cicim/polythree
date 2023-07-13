@@ -324,6 +324,7 @@ export interface EditorSubTab {
 export abstract class TabbedEditorContext extends EditorContext {
     public tabs: Record<string, EditorSubTab>;
     public selectedTab: Writable<string> = writable("");
+    public _cosmeticHasSideTabs = true;
 
     /** Getter for the selected tab's id, used in keybindings */
     public get tab() {
@@ -336,9 +337,14 @@ export abstract class TabbedEditorContext extends EditorContext {
 
     /** Creates the TabbedContext and sets the selected tab as the first one */
     constructor(ComponentClass: typeof SvelteComponent,
-        id: Record<string, any>, tabs: Record<string, EditorSubTab>) {
+        id: Record<string, any>) {
         super(ComponentClass, { ...id });
-        this.tabs = tabs;
-        this.selectedTab.set(Object.keys(this.tabs)[0]);
+    }
+
+    public create(): this {
+        // If the selected tab is empty, set it to the first tab
+        if (get(this.selectedTab) === "")
+            this.selectedTab.set(Object.keys(this.tabs)[0]);
+        return super.create();
     }
 }
