@@ -244,18 +244,6 @@
         clearMapSelection();
     }
 
-    function debugAction(event) {
-        switch (event.code) {
-            case "KeyC":
-                // Remove the 0.0 card from the groups
-                groups = groups.map((g) => ({
-                    ...g,
-                    maps: g.maps.filter((m) => m.group !== 0 || m.index !== 0),
-                }));
-                break;
-        }
-    }
-
     onMount(async () => {
         await context.load();
         await tick();
@@ -270,8 +258,6 @@
         mapsContainer.init(allCards, criteria);
     });
 </script>
-
-<svelte:window on:keypress={debugAction} />
 
 {#key $data}
     {#if $isLoading}

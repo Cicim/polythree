@@ -2,7 +2,7 @@
 //     bCloseAllTabs, bCloseSavedTabs, bNextTab, bPrevTab, bReopenLastTab
 // } from "src/components/app/TabBar.svelte";
 import { get } from "svelte/store";
-import { EditorContext, type ViewContext } from "./contexts";
+import { EditorContext, TabbedEditorContext, type ViewContext } from "./contexts";
 import { activeView } from "./views";
 
 // type KeyBinding = [name: string, shortcut: string, callback: (view: ViewContext | EditorContext) => void, condition: string];
@@ -21,10 +21,16 @@ enum ConditionType {
     EqualProperty,
     /** Checks if the active view has the specified property and it does not equal the specified value */
     NotEqualProperty,
+
+    /** If you are in a modal window
+     * usually, you want to use this as the first condition because it always checks if you in a modal, 
+     * so this option specifies that the condition is only true if you are in a modal window
+     */
+    InModal,
 };
 type Condition = [ConditionType, string?, string?];
 type Conditions = Condition[];
-type BindingFunction = (view: ViewContext | EditorContext) => void | undefined;
+type BindingFunction = (view: ViewContext | EditorContext | TabbedEditorContext) => void | undefined;
 
 class KeyBinding {
     public name: string;
@@ -53,6 +59,7 @@ class KeyBinding {
         - `"!active.{property}"` - Checks if the active view has the specified property and it false
         - `"active.{property} === {value}"` - Checks if the active view has the specified property and it equals the specified value
         - `"active.{property} !== {value}"` - Checks if the active view has the specified property and it does not equal the specified value
+        - `"inModal"` - If you are in a modal window, usually it's true if you aren't
     */
     private static parseConditions(condition: string): Conditions {
         const parts = condition.split("&&");
@@ -104,10 +111,23 @@ class KeyBinding {
         throw new Error("Only literal values are supported in keybinding conditions");
     }
 
+    static isModalOpen() {
+        return !!document.querySelector(".modal[open]");
+    }
+
     /** Checks if this keybinding's condition is true at the moment of execution */
     public checkCondition(view: ViewContext) {
+        // Check if the condition wants to be in a modal
+        // Assuming it's the first condition
+        if (this.condition[0][0] === ConditionType.InModal && !KeyBinding.isModalOpen()) {
+            return false;
+        }
+        else if (KeyBinding.isModalOpen()) return false;
+
+
         for (const condition of this.condition) {
             switch (condition[0]) {
+                case ConditionType.InModal:
                 case ConditionType.AlwaysTrue:
                     break;
                 case ConditionType.ActiveNotNull:
@@ -123,6 +143,7 @@ class KeyBinding {
                     if (view[condition[1]]) return false;
                     break;
                 case ConditionType.EqualProperty:
+                    // console.log(`view["${condition[1]}"] === "${condition[2]}" => ${view[condition[1]] === condition[2]}`);
                     if (view[condition[1]] !== condition[2]) return false;
                     break;
                 case ConditionType.NotEqualProperty:
@@ -141,6 +162,7 @@ class KeyBinding {
 }
 
 const keybindings: Record<string, KeyBinding> = {
+    "prevent_print": new KeyBinding("Prevents Printing", "Ctrl+P", () => { }, "-"),
     "tab/close": new KeyBinding("Close Tab", "Ctrl+W", (view: ViewContext) => view.close(), "active !== null"),
     "tabbar/reopen_last": new KeyBinding("Reopen Last Closed Tab", "Ctrl+Shift+T", undefined, "-"),
     "tabbar/close_saved": new KeyBinding("Close Saved Tabs", "Ctrl+Shift+Q", undefined, "-"),
@@ -161,8 +183,8 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/select_connections": new KeyBinding("Select Connections", "Ctrl+4", undefined, "active.name === 'Map Editor'"),
     "map_editor/select_encounters": new KeyBinding("Select Encounters", "Ctrl+5", undefined, "active.name === 'Map Editor'"),
     "map_editor/select_header": new KeyBinding("Select Header", "Ctrl+6", undefined, "active.name === 'Map Editor'"),
-    "layout_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
-    "permissions_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", undefined, "active.name === 'Map Editor' && active.tab === 'permissions'"),
+    "layout_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", () => console.log("Picked Pencil in layout"), "active.name === 'Map Editor' && active.tab === 'layout'"),
+    "permissions_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", () => console.log("Picked Pencil in level"), "active.name === 'Map Editor' && active.tab === 'level'"),
 };
 
 /** The object containing all the existing shortcuts */
@@ -173,11 +195,12 @@ for (const id in keybindings) {
     // Get the binding
     const binding: KeyBinding = keybindings[id];
     const shortcut: string = binding.shortcutCode;
-    // Add it to the list under the shortcut
-    if (shortcutCodeToKeybindings[shortcut])
-        shortcutCodeToKeybindings[shortcut] = [binding, ...shortcutCodeToKeybindings[shortcut]];
 
-    shortcutCodeToKeybindings[shortcut] = [binding];
+    // Add it to the list under the shortcut
+    if (shortcutCodeToKeybindings[shortcut]) {
+        shortcutCodeToKeybindings[shortcut] = [binding, ...shortcutCodeToKeybindings[shortcut]];
+    } else
+        shortcutCodeToKeybindings[shortcut] = [binding];
 }
 
 /** Updates multiple bindings functions */
@@ -210,8 +233,9 @@ export function handleKeydown(event: KeyboardEvent) {
     // Exit if the keybindings were not defined
     if (keybindings === undefined) return;
     event.preventDefault();
-    
+
     const active = get(activeView);
+
     // Loop through all the possible keybindings
     for (const keybinding of keybindings) {
         const valid = keybinding.checkCondition(active);

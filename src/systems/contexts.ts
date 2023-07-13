@@ -158,6 +158,7 @@ export abstract class ViewContext {
         const active = get(activeView);
         activeView.update(active => {
             if (active === this) return null;
+            return active;
         });
 
         if (active === this) {
@@ -185,7 +186,7 @@ export abstract class ViewContext {
         lastClosedViews.update(views => {
             views.push({
                 //@ts-ignore
-                Class: this.__proto__.constructor,
+                constructor: this.__proto__.constructor,
                 indentifier: this.identifier,
                 position,
             });
@@ -312,5 +313,32 @@ export abstract class EditorContext extends ViewContext {
         }
         else super.close();
         return true;
+    }
+}
+
+export interface EditorSubTab {
+    title: string;
+    icon: string;
+}
+/** A context that has multiple vertical tabs */
+export abstract class TabbedEditorContext extends EditorContext {
+    public tabs: Record<string, EditorSubTab>;
+    public selectedTab: Writable<string> = writable("");
+
+    /** Getter for the selected tab's id, used in keybindings */
+    public get tab() {
+        return get(this.selectedTab);
+    }
+
+    public changeTab(tab: string) {
+        this.selectedTab.set(tab);
+    }
+
+    /** Creates the TabbedContext and sets the selected tab as the first one */
+    constructor(ComponentClass: typeof SvelteComponent,
+        id: Record<string, any>, tabs: Record<string, EditorSubTab>) {
+        super(ComponentClass, { ...id });
+        this.tabs = tabs;
+        this.selectedTab.set(Object.keys(this.tabs)[0]);
     }
 }

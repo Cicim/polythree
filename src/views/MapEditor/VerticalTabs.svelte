@@ -1,33 +1,19 @@
 <script lang="ts">
-    import type { SvelteComponent } from "svelte";
+    import type { EditorSubTab } from "src/systems/contexts";
+    import { getContext } from "svelte";
+    import type { MapEditorContext } from "../MapEditor";
 
-    interface Tab {
-        title: string;
-        icon: string;
-        component: SvelteComponent;
-    }
-
-    export let tabs: Record<string, Tab> = {};
-
-    export let activeTab: string;
-    let oldTabId = activeTab;
-
-    export function changeTab(newTabId: string) {
-        if (newTabId === activeTab) return;
-
-        // Set the new tab
-        activeTab = newTabId;
-
-        oldTabId = activeTab;
-    }
+    export let tabs: Record<string, EditorSubTab> = {};
+    const context: MapEditorContext = getContext("context");
+    let activeTab = context.selectedTab;
 </script>
 
 <div class="tabs">
     {#each Object.entries(tabs) as [id, tab]}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
-            on:click={() => changeTab(id)}
-            class:active={activeTab === id}
+            on:click={() => context.changeTab(id)}
+            class:active={$activeTab === id}
             class="tab"
             {id}
         >

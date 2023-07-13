@@ -16,76 +16,30 @@
 
     $: isLoading = context.isLoading;
 
-    let layoutComponent: LayoutEditor;
-    let levelComponent: LevelEditor;
-    let scriptsComponent: ScriptsEditor;
-    let encountersComponent: EncountersEditor;
-    let connectionsComponent: ConnectionsEditor;
-    let headerComponent: HeaderEditor;
-
-    let activeTab = "tab-layout";
-    let tabsComponent: VerticalTabs;
-    let tabs: any;
+    let activeTab = context.selectedTab;
 
     // ANCHOR Bindings
     export function selectLayoutEditor() {
-        tabsComponent.changeTab("tab-layout");
+        context.changeTab("layout");
     }
     export function selectLevelEditor() {
-        tabsComponent.changeTab("tab-level");
+        context.changeTab("level");
     }
     export function selectScriptsEditor() {
-        tabsComponent.changeTab("tab-scripts");
+        context.changeTab("scripts");
     }
     export function selectEncountersEditor() {
-        tabsComponent.changeTab("tab-encounters");
+        context.changeTab("encounters");
     }
     export function selectConnectionsEditor() {
-        tabsComponent.changeTab("tab-connections");
+        context.changeTab("connections");
     }
     export function selectHeaderEditor() {
-        tabsComponent.changeTab("tab-header");
-    }
-
-    export function getActiveBinding() {
-        return tabs?.[activeTab]?.component?.bindings;
+        context.changeTab("header");
     }
 
     onMount(async () => {
         await context.load();
-
-        tabs = {
-            "tab-header": {
-                title: "Header",
-                icon: "mdi:file-document-edit-outline",
-                component: headerComponent,
-            },
-            "tab-encounters": {
-                title: "Encounters",
-                icon: "mdi:account-group",
-                component: encountersComponent,
-            },
-            "tab-connections": {
-                title: "Connections",
-                icon: "mdi:link",
-                component: connectionsComponent,
-            },
-            "tab-scripts": {
-                title: "Scripts",
-                icon: "mdi:script-text",
-                component: scriptsComponent,
-            },
-            "tab-level": {
-                title: "Level",
-                icon: "mdi:map",
-                component: levelComponent,
-            },
-            "tab-layout": {
-                title: "Layout",
-                icon: "mdi:grid",
-                component: layoutComponent,
-            },
-        };
     });
 </script>
 
@@ -95,42 +49,42 @@
     </div>
 {:else}
     <div class="view">
-        <VerticalTabs bind:this={tabsComponent} {tabs} bind:activeTab />
+        <VerticalTabs tabs={context.tabs} />
         <div
             class="editor-container layout"
-            class:hidden={activeTab !== "tab-layout"}
+            class:hidden={$activeTab !== "layout"}
         >
-            <LayoutEditor bind:this={layoutComponent} />
+            <LayoutEditor />
         </div>
         <div
             class="editor-container level"
-            class:hidden={activeTab !== "tab-level"}
+            class:hidden={$activeTab !== "level"}
         >
-            <LevelEditor bind:this={levelComponent} />
+            <LevelEditor />
         </div>
         <div
             class="editor-container scripts"
-            class:hidden={activeTab !== "tab-scripts"}
+            class:hidden={$activeTab !== "scripts"}
         >
-            <ScriptsEditor bind:this={scriptsComponent} />
+            <ScriptsEditor />
         </div>
         <div
             class="editor-container encounters"
-            class:hidden={activeTab !== "tab-encounters"}
+            class:hidden={$activeTab !== "encounters"}
         >
-            <EncountersEditor bind:this={encountersComponent} />
+            <EncountersEditor />
         </div>
         <div
             class="editor-container connections"
-            class:hidden={activeTab !== "tab-connections"}
+            class:hidden={$activeTab !== "connections"}
         >
-            <ConnectionsEditor bind:this={connectionsComponent} />
+            <ConnectionsEditor />
         </div>
         <div
             class="editor-container header"
-            class:hidden={activeTab !== "tab-header"}
+            class:hidden={$activeTab !== "header"}
         >
-            <HeaderEditor bind:this={headerComponent} />
+            <HeaderEditor />
         </div>
     </div>
 {/if}

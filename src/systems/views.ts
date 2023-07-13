@@ -24,8 +24,8 @@ export function reopenLastClosedView() {
     lastClosedViews.update(ctx => {
         if (ctx.length > 0) {
             const lastClosed = ctx[ctx.length - 1];
-            // @ts-ignore Do some class mumbo-jumbo to create a new instance of the view
-            const view = new lastClosed.Class(lastClosed.indentifier, lastClosed.position);
+            // Do some class mumbo-jumbo to create a new instance of the view
+            const view = new (lastClosed.constructor as any)(lastClosed.indentifier, lastClosed.position);
             // Select the view
             (<ViewContext>view).create(lastClosed.position).select();
             // Remove the view from the last closed store

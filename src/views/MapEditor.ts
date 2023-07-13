@@ -1,5 +1,5 @@
 import MapEditor from "./MapEditor.svelte";
-import { EditorContext } from "../systems/contexts";
+import { EditorContext, TabbedEditorContext } from "../systems/contexts";
 import { openViews } from "src/systems/views";
 import { redefineBindings } from "src/systems/bindings";
 
@@ -16,11 +16,37 @@ export interface MapEditorData {
     tilemap: number[][];
 };
 
-export class MapEditorContext extends EditorContext {
+export class MapEditorContext extends TabbedEditorContext {
     public name = "Map Editor";
     public singularTab = true;
     declare public identifier: MapEditorProperties;
     declare public component: MapEditor;
+    private static tabs = {
+        "header": {
+            title: "Header",
+            icon: "mdi:file-document-edit-outline",
+        },
+        "encounters": {
+            title: "Encounters",
+            icon: "mdi:account-group",
+        },
+        "connections": {
+            title: "Connections",
+            icon: "mdi:link",
+        },
+        "scripts": {
+            title: "Scripts",
+            icon: "mdi:script-text",
+        },
+        "level": {
+            title: "Level",
+            icon: "mdi:map",
+        },
+        "layout": {
+            title: "Layout",
+            icon: "mdi:grid",
+        }
+    }
 
     public _cosmeticHasSideTabs = true;
 
@@ -45,15 +71,11 @@ export class MapEditorContext extends EditorContext {
         this.isLoading.set(false);
     }
 
-    public onSelect = () => {
-    }
-    public onDeselect = () => {
-    }
-
     public constructor(id: MapEditorProperties) {
         // Create the editor element
-        super(MapEditor, { ...id });
+        super(MapEditor, { ...id }, MapEditorContext.tabs);
         this.subtitle.set(id.group + "." + id.index);
+        this.selectedTab.set("layout");
     }
 }
 
@@ -76,4 +98,5 @@ redefineBindings({
     "map_editor/select_header": (view: MapEditorContext) => {
         view.component.selectHeaderEditor();
     },
+
 });

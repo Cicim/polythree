@@ -49,10 +49,7 @@
     }
 </script>
 
-<svelte:window
-    on:keydown={closeOnEscape}
-    on:mousedown={closeOnClickOutside}
-/>
+<svelte:window on:keydown={closeOnEscape} on:mousedown={closeOnClickOutside} />
 
 <!-- The dialog -->
 <dialog class="dialog modal" bind:this={dialogElement}>
