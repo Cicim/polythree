@@ -109,22 +109,26 @@ export abstract class ViewContext {
         this.container.remove();
     }
 
+    /** Deselect this view */
     public deselect() {
+        // Unregister this editor's actions
         Bindings.unregister(this.actions);
         Bindings.unregister(this.tabActions);
+        // Run the onDeselect callback
         this.onDeselect();
         // Hide the this view
         this.container.classList.add("hidden");
         this.selected = false;
     }
-    /** Function to run when the view is selected to be the active one */
+
+    /** Select this view and deselect the active one */
     public select() {
         // Get the active view
         const active = get(activeView);
+        // If this view is already active, return
         if (active === this) return;
-        console.log("Selecting", this.name, "(deselecting " + (active?.name ?? "[NONE]") + ")");
         // Try to disable the active view
-        active.deselect();
+        active?.deselect();
 
         // Register this editor's actions
         Bindings.register(this.actions);
@@ -142,10 +146,9 @@ export abstract class ViewContext {
         // Update the tabbar
         openViews.update(views => views);
     }
-    /** Function to run when the view is closed */
-    public async close(): Promise<boolean> {
-        console.log("Closing", this.name);
 
+    /** Close this view and select a new active one if necessary */
+    public async close(): Promise<boolean> {
         // Find this view's position in the store
         let index = -1;
         openViews.update((views: ViewContext[]) => {
@@ -182,6 +185,7 @@ export abstract class ViewContext {
         return true;
     }
 
+    /** Closes the view, but does not stick around for it to finish closing */
     public async askClose(): Promise<boolean> {
         return this.close();
     }
@@ -221,7 +225,6 @@ export abstract class EditorContext extends ViewContext {
     public data: Writable<Record<string, any>>;
     /** Whether or not the editor is currently loading */
     public isLoading: Writable<boolean>;
-
     /** A promise that resolves once the editor is done saving */
     public savePromise: Promise<boolean>;
 
