@@ -50,7 +50,7 @@
                 </WarningDiv>
             {/if}
         </div>
-        <div class="view-container">
+        <div class="views-container">
             {#each views as view}
                 <div class="view">
                     <span class="name">
@@ -81,7 +81,7 @@
         grid-template-rows: max-content 1fr;
     }
 
-    .view-container {
+    .views-container {
         background: var(--main-bg);
         margin: 4px;
         padding: 0.5em;
