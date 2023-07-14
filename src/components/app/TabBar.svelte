@@ -85,28 +85,32 @@
     function onWheel(e: WheelEvent) {
         const delta = e.deltaY;
 
+        // Get the container you actually have to scroll
+        const element = this.children[0] as HTMLDivElement;
+
         // Choose next tab
         if (e.shiftKey) {
+            // Fix in case the shift key makes the deltaX property update instead of deltaY
+            const delta = e.deltaY || e.deltaX;
+
             const current = $openViews.find((view) => view.selected);
             const index = $openViews.indexOf(current);
-            const next = $openViews[index + (delta > 0 ? 1 : -1)];
+            const nextIndex = index + (delta > 0 ? 1 : -1);
+            const next = $openViews[nextIndex];
             if (next) {
                 next.select();
                 // Scroll to the new tab
-                const tab = document.getElementById(`tab-${index}`);
+                const tab = document.getElementById(`tab-${nextIndex}`);
                 if (!tab) return;
-                this.scrollLeft =
-                    tab.offsetLeft - (delta > 0 ? 0 : tab.offsetWidth);
+
+                element.scrollLeft = tab.offsetLeft - tab.offsetWidth / 2;
             }
         }
         // Beginning or end
-        else if (e.altKey) {
-            this.scrollLeft = delta > 0 ? this.scrollWidth : 0;
-        }
+        else if (e.altKey)
+            element.scrollLeft = delta > 0 ? this.scrollWidth : 0;
         // Horizontal scroll
-        else {
-            this.scrollLeft += delta;
-        }
+        else element.scrollLeft += delta;
     }
 
     // Saves whether the mouse is over the tabs

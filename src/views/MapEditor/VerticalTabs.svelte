@@ -34,6 +34,7 @@
         flex-flow: column-reverse;
         background: var(--tabs-bg);
         user-select: none;
+        -webkit-user-select: none;
 
         box-shadow: inset calc(var(--tab-border-width) * -1) 0
             var(--tab-selected-border);
@@ -56,7 +57,7 @@
                 transform: rotate(-90deg);
             }
 
-            @media screen and (max-height: 800px) {
+            @media screen and (max-height: 880px) {
                 padding: 0.75em 0;
                 .icon {
                     transform: rotate(0deg);
