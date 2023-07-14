@@ -27,9 +27,9 @@
     <div class="title">Pick a layout</div>
     <div class="content">
         {#if reason}
-        <div class="reason">
-            <ErrorDiv>{reason}</ErrorDiv>
-        </div>
+            <div class="reason">
+                <ErrorDiv>{reason}</ErrorDiv>
+            </div>
         {/if}
 
         {#if layoutOptions}
@@ -43,7 +43,13 @@
     </div>
     <div class="buttons">
         <Button on:click={() => close(null)}>Cancel</Button>
-        <Button color="secondary" on:click={() => close(layout)}>Choose</Button>
+        <Button
+            disabled={layout === null}
+            color="secondary"
+            on:click={() => close(layout)}
+        >
+            Choose
+        </Button>
     </div>
 </div>
 
@@ -65,5 +71,4 @@
     .reason {
         margin-bottom: 10px;
     }
-
 </style>
