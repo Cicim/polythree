@@ -61,7 +61,10 @@
     ]);
 
     // ANCHOR Drag and drop functionality
-    function onDragStart() {
+    function onDragStart(e: DragEvent) {
+        // We need to set it for some browsers
+        e.dataTransfer?.setData("text/plain", "");
+
         view.select();
         draggingId.set($openViews.indexOf(view));
     }
