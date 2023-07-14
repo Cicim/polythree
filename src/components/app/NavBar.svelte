@@ -24,7 +24,6 @@
         background: var(--tabs-bg);
         color: var(--tabs-fg);
 
-
         &.border {
             box-shadow: inset 0 calc(var(--tab-border-width) * -1)
                 var(--tab-selected-border);
@@ -32,10 +31,15 @@
 
         iconify-icon {
             transform: scale(1.5);
+            transition: transform 0.1s ease-out;
         }
 
         &:hover {
-            background: var(--light-shadow);
+            iconify-icon {
+                filter: drop-shadow(0 0 4px var(--hard-shadow));
+                color: var(--strong-fg);
+                transform: scale(1.8);
+            }
         }
     }
 </style>
