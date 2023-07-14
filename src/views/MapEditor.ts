@@ -6,6 +6,7 @@ import type { Writable } from "svelte/store";
 import { spawnDialog } from "src/systems/dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { invoke } from "@tauri-apps/api";
+import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
 
 export interface MapEditorProperties {
     group: number;
@@ -122,10 +123,8 @@ export class MapEditorContext extends TabbedEditorContext {
             }
             catch (message) {
                 // Spawn a dialog asking the user to select a layout
-                // TODO Replace AlertDialog with a custom dialog
-                const layoutId = await spawnDialog(AlertDialog, {
-                    title: "Cannot load layout",
-                    message: message + "\nUsing 1",
+                const layoutId = await spawnDialog(LayoutPickerDialog, {
+                    reason: `Could not load layout ${id}: ${message}`
                 });
 
                 // If the user asked to quit, close the editor

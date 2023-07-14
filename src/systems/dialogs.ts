@@ -17,7 +17,7 @@ type ConfirmDialogResult = true | false | null;
 /** Spawn a dialog */
 export async function spawnDialog(
     dialogType: typeof SvelteComponent,
-    options: Record<string, any>
+    options?: Record<string, any>
 ): Promise<any>;
 // Alert
 export async function spawnDialog(
