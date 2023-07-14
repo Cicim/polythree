@@ -97,7 +97,7 @@
         height: 100%;
 
         display: grid;
-        grid-template-columns: 32px 1fr;
+        grid-template-columns: 36px 1fr;
         grid-template-areas: "tabs editor";
     }
     .editor-container {

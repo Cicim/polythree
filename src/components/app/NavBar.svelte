@@ -14,15 +14,16 @@
 <style lang="scss">
     .navbar {
         display: flex;
-        width: 14px;
+        width: 18px;
         height: 40px;
         align-items: center;
-        padding: 0 8px;
+        padding: 0 6px 0 10px;
 
         float: right;
 
         background: var(--tabs-bg);
         color: var(--tabs-fg);
+
 
         &.border {
             box-shadow: inset 0 calc(var(--tab-border-width) * -1)

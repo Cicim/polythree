@@ -27,7 +27,7 @@
 
 <style lang="scss">
     .tabs {
-        width: 2em;
+        width: 36px;
         background: black;
         grid-area: tabs;
         display: flex;

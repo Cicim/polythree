@@ -70,11 +70,8 @@
         if (previousValue === value) return;
 
         // If this select edits some property, update it
-        if (edits !== null) {
+        if (edits !== null)
             context.changes.setValue(edits as NavigatePath, value);
-        }
-
-        console.log(previousValue, value, typeof value);
 
         // Dispatch the change event
         dispatcher("change", { value });

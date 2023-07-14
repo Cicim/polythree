@@ -79,9 +79,7 @@
 
     // Useful values
     let width: number = 20;
-    $: console.log(width);
     let height: number = 20;
-    $: console.log(height);
     let openInEditor: boolean = true;
 
     let usingLayout = true;
