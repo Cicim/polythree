@@ -16,3 +16,14 @@ interface MapHeader {
     floor_num: number;
     battle_type: number;
 }
+
+interface MapLayout {
+    width: number;
+    height: number;
+    border: VoidPointer;
+    data: VoidPointer;
+    primary_tileset: VoidPointer;
+    secondary_tileset: VoidPointer;
+    border_width: number;
+    border_height: number;
+}

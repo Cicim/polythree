@@ -92,3 +92,13 @@ export async function closeRom() {
     // Set the rom
     rom.set(null);
 }
+
+
+export function getPtrOffset<T>(voidPointer: PointedData<T>): number {
+    // In case it's unusable or invalid
+    if (typeof voidPointer === "number")
+        return null;
+
+    // Get the offset
+    return voidPointer.offset;
+}

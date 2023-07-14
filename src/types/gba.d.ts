@@ -1,6 +1,6 @@
 type PointedData<T> = {
-    data: T;
-    pointer: number;
+    data?: T;
+    offset: number;
 } | number;
 
 type VoidPointer = PointedData<null>;

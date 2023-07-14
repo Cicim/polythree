@@ -31,6 +31,10 @@ fn main() {
             // Map editor
             get_map_header_data,
             get_map_layout_data,
+            get_rendered_tilesets,
+            get_layout_offset,
+            update_map_header,
+            update_layout_header,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

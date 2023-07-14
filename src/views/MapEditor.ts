@@ -2,11 +2,14 @@ import MapEditor from "./MapEditor.svelte";
 import { TabbedEditorContext } from "../systems/contexts";
 import { openViews } from "src/systems/views";
 import { redefineBindings } from "src/systems/bindings";
-import type { Writable } from "svelte/store";
+import { get, type Writable } from "svelte/store";
 import { spawnDialog } from "src/systems/dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { invoke } from "@tauri-apps/api";
 import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
+import { getPtrOffset } from "src/systems/rom";
+import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
+import { config } from "src/systems/global";
 
 export interface MapEditorProperties {
     group: number;
@@ -21,14 +24,19 @@ export interface MapHeaderData {
 }
 
 export interface MapLayoutData {
-    // Unknown
+    index: number;
+    bits_per_block: number;
+    map_data: number[][];
+    border_data: number[][];
+    header: MapLayout;
 }
 
+type TilesetData = [HTMLImageElement, HTMLImageElement][];
 
 export interface MapEditorData {
     header: MapHeaderData,
     layout?: MapLayoutData,
-    tilesets?: [HTMLImageElement, HTMLImageElement][],
+    tilesets?: TilesetData,
 }
 
 export class MapEditorContext extends TabbedEditorContext {
@@ -97,16 +105,68 @@ export class MapEditorContext extends TabbedEditorContext {
         }
 
         // Load the map layout data
-        const layoutData = await this.loadLayoutUntilValid(headerData.header.map_layout_id);
-        if (layoutData === null) {
+        const layoutResults = await this.loadLayoutUntilValid(headerData.header.map_layout_id);
+        if (layoutResults === null) {
             // If the user asked to quit, close the editor
             this.isLoading.set(false);
             this.close();
             return;
         }
+        const [layoutId, layoutOffset, layoutData] = layoutResults;
+        headerData.header.map_layout_id = layoutId;
+        headerData.header.map_layout = { offset: layoutOffset };
 
-        this.data.set({ header: headerData, layout: layoutData });
+        // Update the rom with the new layout id
+        try {
+            await invoke('update_map_header', {
+                group: this.identifier.group, index: this.identifier.index,
+                header: headerData.header
+            });
+        }
+        catch (message) {
+            // If the map header failed to load, close the editor
+            await spawnDialog(AlertDialog, {
+                title: "Failed to update map header",
+                message,
+            });
+            this.isLoading.set(false);
+            this.close();
+            return;
+        }
 
+        const tilesetResults = await this.loadTilesetsUntilValid(
+            getPtrOffset(layoutData.header.primary_tileset),
+            getPtrOffset(layoutData.header.secondary_tileset)
+        );
+        if (tilesetResults === null) {
+            // If the user asked to quit, close the editor
+            this.isLoading.set(false);
+            this.close();
+            return;
+        }
+        const [tileset1, tileset2, tilesetData] = tilesetResults;
+        layoutData.header.primary_tileset = { offset: tileset1 };
+        layoutData.header.secondary_tileset = { offset: tileset2 };
+
+        // Update the rom with the new tileset ids
+        try {
+            await invoke('update_layout_header', {
+                id: layoutId,
+                header: layoutData.header
+            });
+        }
+        catch (message) {
+            // If the map header failed to load, close the editor
+            await spawnDialog(AlertDialog, {
+                title: "Failed to update layout header",
+                message,
+            });
+            this.isLoading.set(false);
+            this.close();
+            return;
+        }
+
+        this.data.set({ header: headerData, layout: layoutData, tilesets: tilesetData });
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
@@ -116,14 +176,16 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     /** Ask the user for a layout until that layout is valid for this map */
-    private async loadLayoutUntilValid(id?: number): Promise<MapLayoutData> {
+    private async loadLayoutUntilValid(id?: number): Promise<[number, number, MapLayoutData]> {
         while (true) {
             try {
-                return await invoke('get_map_layout_data', { id });
+                // Get the layout offset
+                const offset: number = await invoke('get_layout_offset', { id });
+                return [id, offset, await invoke('get_map_layout_data', { id })];
             }
             catch (message) {
                 // Spawn a dialog asking the user to select a layout
-                const layoutId = await spawnDialog(LayoutPickerDialog, {
+                const layoutId: number = await spawnDialog(LayoutPickerDialog, {
                     reason: `Could not load layout ${id}: ${message}`
                 });
 
@@ -131,9 +193,32 @@ export class MapEditorContext extends TabbedEditorContext {
                 if (layoutId === null) {
                     return null;
                 }
+                // Otherwise, try again with the new layout id
+                id = layoutId;
+            }
+        }
+    }
 
-                // Try again with the new layout id
-                id = 1;
+    /** Ask the user for tilesets until they are valid for this map */
+    private async loadTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, TilesetData]> {
+        while (true) {
+            try {
+                return [
+                    tileset1, tileset2,
+                    await invoke('get_rendered_tilesets', { tileset1, tileset2 })
+                ];
+            }
+            catch (message) {
+                const names = get(config).tileset_names;
+
+                const tilesets = await spawnDialog(TilesetPickerDialog, {
+                    reason: `Could not load tilesets (${names[tileset1]}, 
+                        ${names[tileset2]}): ${message}`
+                });
+
+                if (tilesets === null) return null;
+
+                [tileset1, tileset2] = tilesets;
             }
         }
     }
