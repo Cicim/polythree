@@ -3,12 +3,10 @@
     import type { MapEditorContext } from "./MapEditor";
     import LoadingScreen from "../components/LoadingScreen.svelte";
     import VerticalTabs from "./MapEditor/VerticalTabs.svelte";
-    import LayoutEditor from "./MapEditor/LayoutEditor.svelte";
-    import LevelEditor from "./MapEditor/LevelEditor.svelte";
-    import ScriptsEditor from "./MapEditor/ScriptsEditor.svelte";
-    import EncountersEditor from "./MapEditor/EncountersEditor.svelte";
-    import ConnectionsEditor from "./MapEditor/ConnectionsEditor.svelte";
-    import HeaderEditor from "./MapEditor/HeaderEditor.svelte";
+    import LayoutView from "./MapEditor/LayoutView.svelte";
+    import EncountersView from "./MapEditor/EncountersView.svelte";
+    import ConnectionsView from "./MapEditor/ConnectionsView.svelte";
+    import HeaderView from "./MapEditor/HeaderView.svelte";
 
     export let context: MapEditorContext;
     setContext("context", context);
@@ -52,39 +50,29 @@
         <VerticalTabs tabs={context.tabs} />
         <div
             class="editor-container layout"
-            class:hidden={$activeTab !== "layout"}
+            class:hidden={$activeTab !== "layout" &&
+                $activeTab !== "level" &&
+                $activeTab !== "scripts"}
         >
-            <LayoutEditor />
-        </div>
-        <div
-            class="editor-container level"
-            class:hidden={$activeTab !== "level"}
-        >
-            <LevelEditor />
-        </div>
-        <div
-            class="editor-container scripts"
-            class:hidden={$activeTab !== "scripts"}
-        >
-            <ScriptsEditor />
+            <LayoutView />
         </div>
         <div
             class="editor-container encounters"
             class:hidden={$activeTab !== "encounters"}
         >
-            <EncountersEditor />
+            <EncountersView />
         </div>
         <div
             class="editor-container connections"
             class:hidden={$activeTab !== "connections"}
         >
-            <ConnectionsEditor />
+            <ConnectionsView />
         </div>
         <div
             class="editor-container header"
             class:hidden={$activeTab !== "header"}
         >
-            <HeaderEditor />
+            <HeaderView />
         </div>
     </div>
 {/if}
