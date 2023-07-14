@@ -226,7 +226,9 @@ export abstract class EditorContext extends ViewContext {
         super(ComponentClass, { ...id });
 
         this.data = writable({});
-        this.changes = new EditorChanges(this.data);
+        this.changes = (this instanceof TabbedEditorContext) ? null :
+            new EditorChanges(this.data);
+
         this.isLoading = writable(true);
     }
 
@@ -331,6 +333,10 @@ export abstract class TabbedEditorContext extends EditorContext {
         return get(this.selectedTab);
     }
 
+    public set tab(tab: string) {
+        this.changeTab(tab);
+    }
+
     public changeTab(tab: string) {
         this.selectedTab.set(tab);
     }
@@ -339,6 +345,7 @@ export abstract class TabbedEditorContext extends EditorContext {
     constructor(ComponentClass: typeof SvelteComponent,
         id: Record<string, any>) {
         super(ComponentClass, { ...id });
+        this.changes = new EditorChanges(this.data, this.selectedTab);
     }
 
     public create(): this {

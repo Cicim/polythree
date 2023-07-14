@@ -1,5 +1,5 @@
 import MapEditor from "./MapEditor.svelte";
-import { EditorContext, TabbedEditorContext } from "../systems/contexts";
+import { TabbedEditorContext } from "../systems/contexts";
 import { openViews } from "src/systems/views";
 import { redefineBindings } from "src/systems/bindings";
 
@@ -60,7 +60,10 @@ export class MapEditorContext extends TabbedEditorContext {
         this.isLoading.set(true);
         this._cosmeticHasSideTabs = false;
 
-        this.data.set({});
+        this.data.set({
+            selectable: "2",
+            inputtable: "placeholder",
+        });
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;

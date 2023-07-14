@@ -1,18 +1,18 @@
-import { writable, type Writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 import r, { type NavigatePath } from "./navigate";
-import type { EditorContext } from "./editors";
+import { TabbedEditorContext, type EditorContext } from "./contexts";
 
 type Data = Writable<Record<string, any>>;
 
 export class EditorChanges {
     /** The data this class changes */
     public data: Data;
+    /** The current tab store */
+    public currentTab?: Writable<string>;
     /** Whether or not the editor needs to be saved */
     public unsaved: Writable<boolean>;
     /** Whether or not the editor is currently saving */
     public saving: Writable<boolean>;
-    /** The context of the editor */
-    public context: EditorContext;
     /** The change stack */
     public stack: Change[] = [];
     /** Whether you can accept undos/redos at the moment */
@@ -24,8 +24,9 @@ export class EditorChanges {
 
     public queue: Change[] = [];
 
-    public constructor(data: Data) {
+    public constructor(data: Data, tabStore?: Writable<string>) {
         this.data = data;
+        this.currentTab = tabStore ?? null;
         this.unsaved = writable(false);
         this.saving = writable(false);
     }
@@ -40,6 +41,9 @@ export class EditorChanges {
         const noUpdate = change.updatePrev(this);
         // If the change is invalid, return
         if (noUpdate) return;
+        // Update the edit's tab if necessary
+        if (this.currentTab)
+            change.tab = get(this.currentTab)
         // Remove all changes after the top
         this.stack.splice(this.top);
         // Add the change to the stack
@@ -58,6 +62,9 @@ export class EditorChanges {
 
         const change = this.stack[--this.top];
         change.revert(this.data);
+        // Go to the edit's tab
+        if (this.currentTab)
+            this.currentTab.set(change.tab);
 
         this.updateChanges();
     }
@@ -68,6 +75,10 @@ export class EditorChanges {
 
         const change = this.stack[this.top++];
         change.apply(this.data);
+
+        // Go to the edit's tab
+        if (this.currentTab)
+            this.currentTab.set(change.tab);
 
         this.updateChanges();
     }
@@ -118,6 +129,7 @@ export abstract class Change {
     protected edits: string[];
     protected timestamp: number = Date.now();
     protected uid: number = Change.getUID();
+    public tab: string;
 
     public constructor(
         /** The path to the data that was changed */
@@ -138,6 +150,7 @@ export abstract class Change {
 
 export class ValueChange extends Change {
     public prevValue: any;
+
     public constructor(
         edits: NavigatePath,
         public nextValue: any,
