@@ -25,6 +25,7 @@
 
   /** Valid actions to be done to the layout (an passed to the backend on deletion) */
   type Action = "Nothing" | "Clear" | "Delete" | "Change";
+  
   /** List for showing the action cards */
   let actionableLayoutToMap: Record<
     string,
@@ -263,7 +264,7 @@
                     bind:value={actionableLayoutToMap[layout].changeTo}
                     bind:invalid={actionableLayoutToMap[layout].invalid}
                     options={Object.entries($config.layout_names).filter(
-                      ([k, v]) => validLayouts.includes(+k)
+                      ([k, _]) => validLayouts.includes(+k)
                     )}
                   />
                 {/if}

@@ -61,7 +61,7 @@ export class MapEditorContext extends TabbedEditorContext {
         this._cosmeticHasSideTabs = false;
 
         this.data.set({
-            selectable: "2",
+            selectable: 2,
             inputtable: "placeholder",
         });
 

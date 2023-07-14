@@ -22,14 +22,14 @@
     export let all: MapCardProps[];
     export let close: (value: any) => void;
 
-    let groupValue: string;
-    let indexValue: string;
-    let layoutValue: string;
-    let tileset1Value: string;
-    let tileset2Value: string;
+    let group: number;
+    let index: number;
+    let layout: string;
+    let tileset1: number;
+    let tileset2: number;
     let freeGroups: Record<number, number[]> = {};
-    let groupOptions: [string, string][];
-    let indexOptions: [string, string][];
+    let groupOptions: [number, string][];
+    let indexOptions: [number, string][];
 
     // Transform all into a map of group to its indexes
     const groupToIndex = all.reduce((acc, cur) => {
@@ -56,35 +56,32 @@
     }
 
     // Create the group options once
-    groupOptions = Object.entries(freeGroups).map(([k]) => [k, k]);
+    groupOptions = Object.entries(freeGroups).map(([k]) => [+k, k]);
     // Initialize the group value, which will change with the select
-    groupValue = groupOptions[0][0];
+    group = groupOptions[0][0];
     if (
         options?.group !== undefined &&
         Object.keys(freeGroups).includes(options.group.toString())
     ) {
-        groupValue = options.group.toString();
+        group = options.group;
     }
     // Initialize the indexes
     updateIndexes();
 
     // Update the indexes when the group changes
     function updateIndexes() {
-        indexOptions = freeGroups[groupValue].map((i: number) => [
-            i.toString(),
+        indexOptions = freeGroups[group].map((i: number) => [
+            i,
             i.toString(),
         ]);
-        indexValue = indexOptions[0][0];
+        index = indexOptions[0][0];
     }
 
     // Useful values
-    $: group = +groupValue;
-    $: index = +indexValue;
-    $: layout = +layoutValue;
-    $: tileset1 = +tileset1Value;
-    $: tileset2 = +tileset2Value;
     let width: number = 20;
+    $: console.log(width);
     let height: number = 20;
+    $: console.log(height);
     let openInEditor: boolean = true;
 
     let usingLayout = true;
@@ -126,9 +123,9 @@
         creating = false;
     }
 
-    let tileset1Options: [string, string][];
-    let tileset2Options: [string, string][];
-    let layoutOptions: [string, string][];
+    let tileset1Options: [number, string][];
+    let tileset2Options: [number, string][];
+    let layoutOptions: [number, string][];
     let optionsReady = false;
 
     onMount(async () => {
@@ -139,21 +136,21 @@
         tileset1Options = Object.values(tilesets)
             .filter((v) => v.is_primary)
             .map((v) => [
-                v.offset.toString(),
+                v.offset,
                 $config.tileset_names[v.offset] ?? "Unnamed",
             ]);
-        tileset1Options.sort((a, b) => a[0].localeCompare(b[0]));
+        tileset1Options.sort((a, b) => a[0] - b[0]);
 
         tileset2Options = Object.values(tilesets)
             .filter((v) => !v.is_primary)
             .map((v) => [
-                v.offset.toString(),
+                v.offset,
                 $config.tileset_names[v.offset] ?? "Unnamed",
             ]);
-        tileset2Options.sort((a, b) => a[0].localeCompare(b[0]));
+        tileset2Options.sort((a, b) => a[0] - b[0]);
 
         layoutOptions = layoutIds.map((v) => [
-            v.toString(),
+            v,
             $config.layout_names[v] ?? "Unnamed",
         ]);
 
@@ -187,13 +184,13 @@
             <div class="title">Index</div>
             <div class="select">
                 <Select
-                    bind:value={groupValue}
+                    bind:value={group}
                     on:change={updateIndexes}
                     options={groupOptions}
                 />
             </div>
             <div class="select">
-                <Select bind:value={indexValue} options={indexOptions} />
+                <Select bind:value={index} options={indexOptions} />
             </div>
             <div class="mode" class:closed={!usingLayout}>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -206,7 +203,7 @@
                         {#if optionsReady}
                             <Select
                                 showValue="number"
-                                bind:value={layoutValue}
+                                bind:value={layout}
                                 options={layoutOptions}
                             />
                         {:else}
@@ -233,7 +230,7 @@
                         {#if optionsReady}
                             <Select
                                 showValue="offset"
-                                bind:value={tileset1Value}
+                                bind:value={tileset1}
                                 options={tileset1Options}
                             />
                         {:else}
@@ -245,7 +242,7 @@
                         {#if optionsReady}
                             <Select
                                 showValue="offset"
-                                bind:value={tileset2Value}
+                                bind:value={tileset2}
                                 options={tileset2Options}
                             />
                         {:else}

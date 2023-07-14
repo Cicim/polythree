@@ -2,8 +2,9 @@
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
     import OffsetLabel from "./OffsetLabel.svelte";
+    import type { SelectValueType } from "./Select.svelte";
 
-    export let value: string;
+    export let value: SelectValueType;
     export let selected: boolean;
     export let showValue: "off" | "number" | "offset" = "off";
 

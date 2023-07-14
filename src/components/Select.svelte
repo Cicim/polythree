@@ -1,3 +1,7 @@
+<script context="module" lang="ts">
+    export type SelectValueType = string | number;
+</script>
+
 <script lang="ts">
     import "iconify-icon";
     import Option from "./Option.svelte";
@@ -5,9 +9,7 @@
         createEventDispatcher,
         getContext,
         onDestroy,
-        onMount,
         setContext,
-        tick,
     } from "svelte";
     import type { NavigatePath } from "src/systems/navigate";
     import type { EditorContext } from "src/systems/contexts";
@@ -15,9 +17,9 @@
     import r from "src/systems/navigate";
 
     /** The options list as a record of `(value => text)` */
-    export let options: [string, string][];
+    export let options: [SelectValueType, string][];
     /** The currently selected value */
-    export let value: string = options[0][0];
+    export let value: SelectValueType = options[0][0];
     /** The path to the object this select updates */
     export let edits: NavigatePath = null;
 
@@ -63,7 +65,7 @@
     let searchTimeout: NodeJS.Timeout = null;
 
     /** To trigger the custom change event */
-    function triggerChange(previousValue: string) {
+    function triggerChange(previousValue: SelectValueType) {
         // If the value is unchanged, don't trigger a change
         if (previousValue === value) return;
 
@@ -71,6 +73,8 @@
         if (edits !== null) {
             context.changes.setValue(edits as NavigatePath, value);
         }
+
+        console.log(previousValue, value, typeof value);
 
         // Dispatch the change event
         dispatcher("change", { value });
@@ -362,7 +366,7 @@
 
     /** Closes the options, sets the selected to the
      * given value and dispatches an event */
-    function closeWithValue(v: string) {
+    function closeWithValue(v: SelectValueType) {
         if (!open) return;
 
         // Close the options list
@@ -386,7 +390,7 @@
     }
 
     /** Sets the option with the given value as selected */
-    function selectValue(v: string) {
+    function selectValue(v: SelectValueType) {
         // Modify the O element
         O = O.map((option) => ({
             ...option,
