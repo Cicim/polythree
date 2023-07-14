@@ -8,7 +8,7 @@ mod state;
 use config::{get_config, set_config};
 use state::PolythreeState;
 
-use crate::handlers::{map_list::*, rom::*};
+use crate::handlers::{map_editor::*, map_list::*, rom::*};
 
 fn main() {
     tauri::Builder::default()
@@ -28,6 +28,9 @@ fn main() {
             get_layout_ids,
             create_map,
             delete_maps,
+            // Map editor
+            get_map_header_data,
+            get_map_layout_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
