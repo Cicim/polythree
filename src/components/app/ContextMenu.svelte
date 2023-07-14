@@ -22,6 +22,9 @@
     on:contextmenu|preventDefault={() => null}
     on:resize={() => closeContextMenu()}
     on:mousedown={(e) => onClickOutside(e)}
+    on:keydown={(e) => {
+        if (e.key === "Escape") closeContextMenu();
+    }}
 />
 
 <dialog id="ctx-menu" class="ctx-menu">
