@@ -31,7 +31,7 @@ export interface MapLayoutData {
     header: MapLayout;
 }
 
-type TilesetData = [HTMLImageElement, HTMLImageElement][];
+export type TilesetData = [HTMLImageElement, HTMLImageElement][];
 
 export interface MapEditorData {
     header: MapHeaderData,
@@ -166,7 +166,18 @@ export class MapEditorContext extends TabbedEditorContext {
             return;
         }
 
-        this.data.set({ header: headerData, layout: layoutData, tilesets: tilesetData });
+        // Convert tilesetData to images
+        const lowPromises: Promise<HTMLImageElement>[] = [];
+        const hiPromises: Promise<HTMLImageElement>[] = [];
+        for (const metatile of tilesetData) {
+            lowPromises.push(this.convertStringToImage(metatile[0]));
+            hiPromises.push(this.convertStringToImage(metatile[1]));
+        }
+        const lowImages = await Promise.all(lowPromises);
+        const hiImages = await Promise.all(hiPromises);
+        const allImages: TilesetData = lowImages.map((low, i) => [low, hiImages[i]])
+
+        this.data.set({ header: headerData, layout: layoutData, tilesets: allImages });
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
@@ -200,7 +211,7 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     /** Ask the user for tilesets until they are valid for this map */
-    private async loadTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, TilesetData]> {
+    private async loadTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, [string, string][]]> {
         while (true) {
             try {
                 return [
@@ -221,6 +232,14 @@ export class MapEditorContext extends TabbedEditorContext {
                 [tileset1, tileset2] = tilesets;
             }
         }
+    }
+
+    /** Convert a string to an image */
+    private async convertStringToImage(string: string): Promise<HTMLImageElement> {
+        const image = new Image();
+        image.src = string;
+        await new Promise(resolve => image.onload = resolve);
+        return image;
     }
 
 
