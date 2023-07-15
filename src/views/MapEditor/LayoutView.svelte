@@ -5,6 +5,7 @@
     import LayoutSidebar from "./layout/LayoutSidebar.svelte";
     import ScriptsSidebar from "./scripts/ScriptsSidebar.svelte";
     import type { Brush } from "./editor/brushes";
+    import { resizeX } from "src/systems/resize";
 
     const context: MapEditorContext = getContext("context");
 
@@ -19,7 +20,15 @@
     <div class="area">
         <LayoutViewArea />
     </div>
-    <div class="sidebar">
+    <div
+        class="sidebar"
+        use:resizeX={{
+            startWidth: 300,
+            minWidth: 300,
+            maxWidth: () => Math.round(window.innerWidth * 0.5),
+        }}
+    >
+        <div class="resize-bar" />
         {#if $activeTab === "layout" || $activeTab === "level"}
             <LayoutSidebar bind:selection levelMode={$activeTab === "level"} />
         {:else if $activeTab === "scripts"}
@@ -61,5 +70,27 @@
         background: var(--medium-bg);
         box-shadow: -1px 0 0 var(--light-shadow);
         z-index: 2;
+        grid-template-columns: 0 1fr;
+
+        .resize-bar {
+            &::before {
+                content: "";
+                position: absolute;
+                width: 4px;
+                margin-left: -4px;
+                top: 40px;
+                bottom: 24px;
+
+                transition: box-shadow 50ms ease-in-out;
+            }
+
+            &:hover {
+                &::before {
+                    box-shadow: inset -2px 0 0 2px var(--light-shadow);
+                }
+            }
+
+            cursor: col-resize;
+        }
     }
 </style>

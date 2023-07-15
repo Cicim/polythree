@@ -2,7 +2,6 @@
     import { getContext } from "svelte";
     import Select from "src/components/Select.svelte";
     import type { Brush } from "../editor/brushes";
-    import { resizeX } from "src/systems/resize";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -35,15 +34,7 @@
         bind:value={editingMode}
     />
 </div>
-<div
-    class="sidebar-container"
-    use:resizeX={{
-        startWidth: 300,
-        maxWidth: () => Math.round(window.innerWidth * 0.5),
-    }}
->
-    <div class="resize-bar" />
-
+<div class="sidebar-container">
     {#if levelMode}
         levelMode ON
     {:else}
@@ -83,31 +74,7 @@
     .sidebar-container {
         display: grid;
         height: 100%;
-        min-width: 300px;
-        grid-template-columns: 0 1fr;
-        user-select: none;
-    }
-
-    .resize-bar {
-        &::before {
-            content: "";
-            position: absolute;
-            width: 4px;
-            margin-left: -4px;
-            top: 40px;
-            bottom: 24px;
-
-            transition: box-shadow 50ms ease-in-out;
-        }
-
-        &.resizing,
-        &:hover {
-            &::before {
-                box-shadow: inset -2px 0 0 2px var(--light-shadow);
-            }
-        }
-
-        cursor: col-resize;
+        grid-template-columns: 1fr;
     }
 
     .layout {
