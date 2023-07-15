@@ -35,7 +35,13 @@
         bind:value={editingMode}
     />
 </div>
-<div class="sidebar-container" use:resizeX={300}>
+<div
+    class="sidebar-container"
+    use:resizeX={{
+        startWidth: 300,
+        maxWidth: () => Math.round(window.innerWidth * 0.5),
+    }}
+>
     <div class="resize-bar" />
 
     {#if levelMode}
