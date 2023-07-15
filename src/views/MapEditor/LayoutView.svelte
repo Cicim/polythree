@@ -4,8 +4,11 @@
     import LayoutViewArea from "./layout/LayoutViewArea.svelte";
     import LayoutSidebar from "./layout/LayoutSidebar.svelte";
     import ScriptsSidebar from "./scripts/ScriptsSidebar.svelte";
+    import type { Brush } from "./editor/brushes";
 
     const context: MapEditorContext = getContext("context");
+
+    let selection: Brush;
 
     // The currently open tab (layout, level or scripts)
     $: activeTab = context.selectedTab;
@@ -18,7 +21,7 @@
     </div>
     <div class="sidebar">
         {#if $activeTab === "layout" || $activeTab === "level"}
-            <LayoutSidebar levelMode={$activeTab === "level"} />
+            <LayoutSidebar bind:selection levelMode={$activeTab === "level"} />
         {:else if $activeTab === "scripts"}
             <ScriptsSidebar />
         {/if}
@@ -27,15 +30,13 @@
 
 <style lang="scss">
     .editor {
-        --sidebar-width: 300px;
-
         width: 100%;
         height: 100%;
         max-height: 100%;
         overflow: hidden;
 
         display: grid;
-        grid-template-columns: 1fr var(--sidebar-width);
+        grid-template-columns: 1fr min-content;
         grid-template-rows: 36px 1fr;
         grid-template-areas:
             "toolbar sidebar"

@@ -1,9 +1,12 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import Select from "src/components/Select.svelte";
+    import type { Brush } from "../editor/brushes";
+    import { resizeX } from "src/systems/resize";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
+    export let selection: Brush;
 
     let editingMode:
         | "none"
@@ -11,10 +14,14 @@
         | "borders"
         | "brush"
         | "brush-level" = "brush";
-    let multiselecting: false;
+
+    // TODO: Derive from selection
+    $: multiselecting = false;
 
     const context = getContext("context");
 </script>
+
+<svelte:window />
 
 <div class="a">
     <Select
@@ -28,7 +35,8 @@
         bind:value={editingMode}
     />
 </div>
-<div class="sidebar-container">
+<div class="sidebar-container" use:resizeX={300}>
+    <div class="resize-bar" />
 
     {#if levelMode}
         levelMode ON
@@ -61,7 +69,7 @@
     .a {
         position: absolute;
         top: 8px;
-        width: 200px;
+        width: 296px;
         display: flex;
         flex-direction: column;
     }
@@ -69,6 +77,31 @@
     .sidebar-container {
         display: grid;
         height: 100%;
+        min-width: 300px;
+        grid-template-columns: 0 1fr;
+        user-select: none;
+    }
+
+    .resize-bar {
+        &::before {
+            content: "";
+            position: absolute;
+            width: 4px;
+            margin-left: -4px;
+            top: 40px;
+            bottom: 24px;
+
+            transition: box-shadow 50ms ease-in-out;
+        }
+
+        &.resizing,
+        &:hover {
+            &::before {
+                box-shadow: inset -2px 0 0 2px var(--light-shadow);
+            }
+        }
+
+        cursor: col-resize;
     }
 
     .layout {
