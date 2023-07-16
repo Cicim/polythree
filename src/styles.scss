@@ -17,7 +17,7 @@
   font-family: 'Rubik';
   font-style: italic;
   font-weight: 400;
-  src: url('./fonts/Rubik-Italic.ttf') format('truetype'); 
+  src: url('./fonts/Rubik-Italic.ttf') format('truetype');
 }
 
 :root {
@@ -67,7 +67,7 @@ body {
   height: 100%;
 }
 
-/* Common dialog styles */
+// ANCHOR Common dialog styles
 .dialog {
   @media screen and (min-width: 450px) {
     max-width: 400px;
@@ -139,5 +139,162 @@ body {
     .dialog-content {
       min-width: 0;
     }
+  }
+}
+
+// ANCHOR Resize handle styles
+// .resize-handle {
+//   &::before {
+//     content: "";
+//     position: absolute;
+//     transition: box-shadow 50ms ease-in-out;
+//   }
+
+//   &:active::after {
+//     content: "";
+//     position: fixed;
+//     z-index: 1000;
+//     width: 100vw;
+//     height: 100vh;
+//     top: 0;
+//     left: 0;
+//   }
+// }
+
+// .resize-handle.left,
+// .resize-handle.right {
+//   cursor: col-resize;
+//   height: 100%;
+//   width: 0;
+
+//   &::before {
+//     width: 4px;
+//   }
+// }
+
+// .resize-handle.top,
+// .resize-handle.bottom {
+//   cursor: row-resize;
+//   width: 100%;
+//   height: 0;
+
+//   &::before {
+//     height: 4px;
+//   }
+// }
+
+// .resize-handle.left {
+//   cursor: col-resize;
+
+//   &::before {
+//     margin-left: -4px;
+
+//     transition: box-shadow 50ms ease-in-out;
+//   }
+
+//   &:hover::before {
+//     box-shadow: inset -2px 0 0 2px var(--light-shadow);
+//   }
+
+//   &:active::after {
+//     cursor: col-resize;
+//   }
+// }
+
+// .resize-handle.top {
+//   &::before {
+//     margin-top: -4px;
+//   }
+
+//   &:hover::before {
+//     box-shadow: inset 0 -2px 0 2px var(--light-shadow);
+//   }
+// }
+
+
+// .resize-handle.top {
+//   &::before {
+//     content: "";
+//     position: absolute;
+//     width: 100%;
+//     height: 4px;
+//     margin-top: -4px;
+//     cursor: row-resize;
+//     transition: box-shadow 50ms ease-in-out;
+//   }
+
+//   &:hover {
+//     &::before {
+//       box-shadow: inset 0 -2px 0 2px var(--light-shadow);
+//     }
+//   }
+
+//   &:active {
+//     &::after {
+//       content: "";
+//       position: fixed;
+//       cursor: row-resize;
+//       z-index: 1000;
+//       width: 100vw;
+//       height: 100vh;
+//       top: 0;
+//       left: 0;
+//     }
+//   }
+// }
+
+.resize-handle.left {
+  &::before {
+    content: "";
+    position: absolute;
+    width: 4px;
+    margin-left: -4px;
+    height: 100%;
+
+    transition: box-shadow 50ms ease-in-out;
+  }
+
+  &:hover::before {
+    box-shadow: inset -2px 0 0 2px var(--light-shadow);
+  }
+
+  &:active::after {
+    content: "";
+    cursor: col-resize;
+    z-index: 1000;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
+  cursor: col-resize;
+}
+
+.resize-handle.top {
+  &::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    margin-top: -4px;
+    cursor: row-resize;
+    transition: box-shadow 50ms ease-in-out;
+  }
+
+  &:hover::before {
+    box-shadow: inset 0 -2px 0 2px var(--light-shadow);
+  }
+
+  &:active::after {
+    content: "";
+    position: fixed;
+    cursor: row-resize;
+    z-index: 1000;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
   }
 }

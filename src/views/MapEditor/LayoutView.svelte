@@ -28,7 +28,7 @@
             maxWidth: () => Math.round(window.innerWidth * 0.5),
         }}
     >
-        <div class="resize-bar" />
+        <div class="resize-handle left" />
         {#if $activeTab === "layout" || $activeTab === "level"}
             <LayoutSidebar bind:selection levelMode={$activeTab === "level"} />
         {:else if $activeTab === "scripts"}
@@ -66,31 +66,11 @@
     }
 
     .sidebar {
+        position: relative;
         grid-area: sidebar;
         background: var(--medium-bg);
         box-shadow: -1px 0 0 var(--light-shadow);
         z-index: 2;
         grid-template-columns: 0 1fr;
-
-        .resize-bar {
-            &::before {
-                content: "";
-                position: absolute;
-                width: 4px;
-                margin-left: -4px;
-                top: 40px;
-                bottom: 24px;
-
-                transition: box-shadow 50ms ease-in-out;
-            }
-
-            &:hover {
-                &::before {
-                    box-shadow: inset -2px 0 0 2px var(--light-shadow);
-                }
-            }
-
-            cursor: col-resize;
-        }
     }
 </style>
