@@ -46,8 +46,8 @@
         overflow: hidden;
 
         display: grid;
-        grid-template-columns: 1fr min-content;
-        grid-template-rows: 36px 1fr;
+        grid-template-columns: minmax(0, 1fr) min-content;
+        grid-template-rows: 36px minmax(0, 1fr);
         grid-template-areas:
             "toolbar sidebar"
             "area sidebar";

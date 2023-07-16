@@ -33,6 +33,7 @@
         display: flex;
         flex-flow: column-reverse;
         background: var(--tabs-bg);
+        overflow: hidden;
         user-select: none;
         -webkit-user-select: none;
 
