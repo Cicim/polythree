@@ -19,11 +19,11 @@
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         // Draw a gray outline
-        ctx.strokeStyle = "blue";
+        ctx.strokeStyle = "#222F";
         ctx.lineWidth = 10;
         ctx.strokeRect(0, 0, canvasWidth, canvasHeight);
 
@@ -34,7 +34,7 @@
         ctx.font = "36px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "white";
         ctx.fillText(sizeString, canvasWidth / 2, canvasHeight / 2);
     }
 

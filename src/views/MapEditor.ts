@@ -2,7 +2,7 @@ import MapEditor from "./MapEditor.svelte";
 import { TabbedEditorContext } from "../systems/contexts";
 import { openViews } from "src/systems/views";
 import { redefineBindings } from "src/systems/bindings";
-import { get, type Writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 import { spawnDialog } from "src/systems/dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { invoke } from "@tauri-apps/api";
@@ -10,6 +10,7 @@ import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
+import { Brush } from "./MapEditor/editor/brushes";
 
 export interface MapEditorProperties {
     group: number;
@@ -45,6 +46,8 @@ export class MapEditorContext extends TabbedEditorContext {
     declare public identifier: MapEditorProperties;
     declare public component: MapEditor;
     declare public data: Writable<MapEditorData>;
+
+    public brushes: Writable<Brush[]>;
 
     public tabs = {
         "header": {
@@ -178,6 +181,17 @@ export class MapEditorContext extends TabbedEditorContext {
         const allImages: TilesetData = lowImages.map((low, i) => [low, hiImages[i]])
 
         this.data.set({ header: headerData, layout: layoutData, tilesets: allImages });
+
+        this.brushes = writable([
+            new Brush("Grass Path"),
+            new Brush("Mountain"),
+            new Brush("Grass Mountain"),
+            new Brush("Tall Grass"),
+            new Brush("Sand Path"),
+            new Brush(), new Brush(), new Brush(), new Brush(),
+            new Brush(), new Brush(), new Brush(), new Brush(),
+            new Brush(),
+        ]);
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
