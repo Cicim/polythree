@@ -7,6 +7,7 @@
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
     export let selection: Brush;
+    export let hidden: boolean;
 
     let editingMode:
         | "none"
@@ -35,7 +36,7 @@
         bind:value={editingMode}
     />
 </div>
-<div class="sidebar-container">
+<div class="sidebar-container" class:hidden>
     <!-- ANCHOR Level Mode sidebar -->
     <div class="level" class:hidden={!levelMode}>levelMode ON</div>
     <!-- ANCHOR Layout Mode sidebar -->
@@ -90,8 +91,12 @@
             Level
         </div>
         <!-- Palette picker. Always visible -->
-        <div class="palette-view">Palette</div>
-        <div class="footbar-view">Footbar!</div>
+        <div class:hidden={editingMode === "brush-list"} class="palette-view">
+            Palette
+        </div>
+        <div class:hidden={editingMode === "brush-list"} class="footbar-view">
+            Footbar!
+        </div>
     </div>
 </div>
 

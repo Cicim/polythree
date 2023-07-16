@@ -9,7 +9,7 @@
 
     const context: MapEditorContext = getContext("context");
 
-    let selection: Brush;
+    let selection: Brush = null;
 
     // The currently open tab (layout, level or scripts)
     $: activeTab = context.selectedTab;
@@ -29,11 +29,12 @@
         }}
     >
         <div class="resize-handle left" />
-        {#if $activeTab === "layout" || $activeTab === "level"}
-            <LayoutSidebar bind:selection levelMode={$activeTab === "level"} />
-        {:else if $activeTab === "scripts"}
-            <ScriptsSidebar />
-        {/if}
+        <LayoutSidebar
+            hidden={$activeTab !== "layout" && $activeTab !== "level"}
+            bind:selection
+            levelMode={$activeTab === "level"}
+        />
+        <ScriptsSidebar hidden={$activeTab !== "scripts"} />
     </div>
 </div>
 

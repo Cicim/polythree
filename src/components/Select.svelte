@@ -487,6 +487,7 @@
         border: 1px solid var(--sel-border);
 
         transition: outline 0.1s ease-in-out;
+        user-select: none;
 
         &:focus {
             outline: 1px solid var(--accent-fg);
