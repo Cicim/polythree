@@ -185,6 +185,8 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/select_header": new KeyBinding("Select Header", "Ctrl+6", undefined, "active.name === 'Map Editor'"),
     "layout_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", () => console.log("Picked Pencil in layout"), "active.name === 'Map Editor' && active.tab === 'layout'"),
     "permissions_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", () => console.log("Picked Pencil in level"), "active.name === 'Map Editor' && active.tab === 'level'"),
+    "map_editor/zoom_in": new KeyBinding("Zoom In", "Ctrl++", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
+    "map_editor/zoom_out": new KeyBinding("Zoom Out", "Ctrl+-", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
 };
 
 /** The object containing all the existing shortcuts */
@@ -254,9 +256,7 @@ function getShortcutCode(event: KeyboardEvent) {
     if (event.shiftKey) shortcutCode += "Shift+";
     if (event.altKey) shortcutCode += "Alt+";
 
-    if (isAlphanumeric(event)) shortcutCode += event.key.toUpperCase();
-    else shortcutCode += event.code;
-    return shortcutCode;
+    return shortcutCode + event.key.toUpperCase();
 }
 
 /** Returns true if the given event's code is a letter or a number */

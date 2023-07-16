@@ -1,3 +1,5 @@
+<svelte:options accessors />
+
 <script lang="ts">
     import { onMount, setContext } from "svelte";
     import type { MapEditorContext } from "./MapEditor";
@@ -15,26 +17,6 @@
     $: isLoading = context.isLoading;
 
     let activeTab = context.selectedTab;
-
-    // ANCHOR Bindings
-    export function selectLayoutEditor() {
-        context.changeTab("layout");
-    }
-    export function selectLevelEditor() {
-        context.changeTab("level");
-    }
-    export function selectScriptsEditor() {
-        context.changeTab("scripts");
-    }
-    export function selectEncountersEditor() {
-        context.changeTab("encounters");
-    }
-    export function selectConnectionsEditor() {
-        context.changeTab("connections");
-    }
-    export function selectHeaderEditor() {
-        context.changeTab("header");
-    }
 
     onMount(async () => {
         await context.load();

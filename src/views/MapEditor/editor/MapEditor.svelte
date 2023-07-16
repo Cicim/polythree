@@ -1,6 +1,8 @@
 <script lang="ts">
     import { watchResize } from "svelte-watch-resize";
-    import { onMount, tick } from "svelte";
+    import { getContext, onDestroy, onMount, tick } from "svelte";
+    import type { Writable } from "svelte/store";
+    import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
 
     const ZOOMS = [1, 1.5, 2, 3, 4, 5, 6, 8, 16];
 
@@ -21,7 +23,7 @@
     let canvasHeight: number;
 
     /** Zoom index */
-    let zoomIndex: number = 0;
+    let zoomIndex: number = 3;
     /** Zoom factor */
     let zoom: number = ZOOMS[zoomIndex];
     /** Canvas offset */
@@ -36,6 +38,16 @@
     let mousePanStart: Point = point();
     /** Canvas offset when the pan starts */
     let mapPanStart: Point = point();
+
+    let context: MapEditorContext = getContext("context");
+    let data: Writable<MapEditorData> = getContext("data");
+
+    let tilesetImages = $data.tilesets;
+    let mapData = $data.layout.map_data;
+
+    const unsubscribeFromData = data.subscribe((value) => {
+        tilesetImages = value.tilesets;
+    });
 
     // ANCHOR Draw
     /**
@@ -60,16 +72,13 @@
                 j < Math.ceil(y / 16 + height / 16);
                 j++
             ) {
-                // Compute a gradient for the color
-                const gradient = Math.floor(i + j);
+                const tile = mapData[j]?.[i];
 
-                let redChannel = 0;
-                if ((i + j) % 2 === 0) redChannel = gradient;
+                // If the tile is undefined, it's an empty tile
+                if (tile === undefined) continue;
 
-                // Construct a color string
-                const color = `rgb(${redChannel}, ${gradient}, ${gradient})`;
-                // Draw a square
-                drawSquare(i * 16, j * 16, 16, 16, color);
+                // Draw the tile
+                drawTile(tile, i, j);
             }
         }
 
@@ -121,6 +130,29 @@
 
         ctx.fillStyle = color;
         ctx.fillRect(x, y, width * zoom, height * zoom);
+    }
+
+    function drawTile(tile: number, x: number, y: number) {
+        // FIXME Get the right mask for the job
+        // Get the image pair
+        const tileIndex = tile & 0x3ff;
+
+        if (
+            tilesetImages[tileIndex] === undefined ||
+            tilesetImages[tileIndex].length !== 2
+        )
+            return;
+
+        const [bottomImage, topImage] = tilesetImages[tileIndex];
+
+        // Compute the actual coordinates
+        ({ x, y } = mapToCanvas({ x: x * 16, y: y * 16 }));
+
+        // Draw the bottom image
+        ctx.drawImage(bottomImage, x, y, 16 * zoom, 16 * zoom);
+
+        // Draw the top image
+        ctx.drawImage(topImage, x, y, 16 * zoom, 16 * zoom);
     }
 
     function drawCircle(x: number, y: number, radius: number, color: string) {
@@ -233,9 +265,29 @@
         draw();
     }
 
-    onMount(() => {
+    // ANCHOR Exported actions
+    export function zoomIn() {
+        zoomIndex = Math.min(zoomIndex + 1, ZOOMS.length - 1);
+        zoom = ZOOMS[zoomIndex];
+        draw();
+    }
+    export function zoomOut() {
+        zoomIndex = Math.max(zoomIndex - 1, 0);
+        zoom = ZOOMS[zoomIndex];
+        draw();
+    }
+
+    onMount(async () => {
         ctx = canvas.getContext("2d");
+        await tick();
         updateSize();
+
+        // Add the zoomIn and zoomOut function to the context
+        context.zoomIn = zoomIn;
+        context.zoomOut = zoomOut;
+    });
+    onDestroy(() => {
+        unsubscribeFromData();
     });
 </script>
 

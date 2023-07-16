@@ -263,26 +263,54 @@ export class MapEditorContext extends TabbedEditorContext {
         this.subtitle.set(id.group + "." + id.index);
         this.selectedTab.set("layout");
     }
+
+
+    // ANCHOR Editor Actions
+    public selectLayoutEditor() {
+        this.changeTab("layout");
+    }
+    public selectLevelEditor() {
+        this.changeTab("level");
+    }
+    public selectScriptsEditor() {
+        this.changeTab("scripts");
+    }
+    public selectEncountersEditor() {
+        this.changeTab("encounters");
+    }
+    public selectConnectionsEditor() {
+        this.changeTab("connections");
+    }
+    public selectHeaderEditor() {
+        this.changeTab("header");
+    }
+    public zoomIn: () => void = () => { };
+    public zoomOut: () => void = () => { };
 }
 
 redefineBindings({
     "map_editor/select_layout": (view: MapEditorContext) => {
-        view.component.selectLayoutEditor();
+        view.selectLayoutEditor();
     },
     "map_editor/select_level": (view: MapEditorContext) => {
-        view.component.selectLevelEditor();
+        view.selectLevelEditor();
     },
     "map_editor/select_scripts": (view: MapEditorContext) => {
-        view.component.selectScriptsEditor();
+        view.selectScriptsEditor();
     },
     "map_editor/select_encounters": (view: MapEditorContext) => {
-        view.component.selectEncountersEditor();
+        view.selectEncountersEditor();
     },
     "map_editor/select_connections": (view: MapEditorContext) => {
-        view.component.selectConnectionsEditor();
+        view.selectConnectionsEditor();
     },
     "map_editor/select_header": (view: MapEditorContext) => {
-        view.component.selectHeaderEditor();
+        view.selectHeaderEditor();
     },
-
+    "map_editor/zoom_in": (view: MapEditorContext) => {
+        view.zoomIn();
+    },
+    "map_editor/zoom_out": (view: MapEditorContext) => {
+        view.zoomOut();
+    },
 });
