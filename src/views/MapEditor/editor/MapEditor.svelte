@@ -90,68 +90,78 @@
         ctx.imageSmoothingEnabled = false;
 
         // Find how many squares of size 16x16 can fit in the canvas
-        const [start, end] = visibleBlocks();
+        drawLayer(true);
 
-        let drawnImages = 0;
+        // Draw a circle in the middle
+        ctx.beginPath();
+        ctx.globalAlpha = 0.7;
+        ctx.arc(mousePosition.x, mousePosition.y, 100 * zoom, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        drawLayer(false);
+
+        const frameTime = performance.now() - frameStart;
+        debugValues({ frameTime });
+    }
+
+    /**
+     * Draws the bottom layer of the map if bottomLayer is true,
+     * otherwise it draws the top layer
+     */
+    function drawLayer(bottomLayer: boolean) {
+        const [start, end] = visibleBlocks();
         // If caching is disabled, draw the whole map
         if (chunkSize === 0) {
-            for (let x = start.x; x < end.x; x++) {
-                for (let y = start.y; y < end.y; y++) {
-                    const tile = mapData[y]?.[x];
-
-                    // If the tile is undefined, it's an empty tile
-                    if (tile === undefined) continue;
-
+            for (let x = start.x; x < end.x; x++)
+                for (let y = start.y; y < end.y; y++)
                     // Draw the tile
-                    drawTile(x, y);
-                    drawnImages++;
-                }
-            }
-        } else {
-            // Compute the chunk coordinates that are visible in the map
-            const chunkStart = point(
-                Math.floor(start.x / chunkSize),
-                Math.floor(start.y / chunkSize)
-            );
+                    drawTile(x, y, bottomLayer);
 
-            const chunkEnd = point(
-                Math.ceil(end.x / chunkSize),
-                Math.ceil(end.y / chunkSize)
-            );
+            return;
+        }
 
-            // Draw the chunks
-            for (let x = chunkStart.x; x < chunkEnd.x; x++) {
-                for (let y = chunkStart.y; y < chunkEnd.y; y++) {
-                    const chunk = cachedChunks[y]?.[x];
-                    // If the chunk is undefined, it's an empty chunk
-                    if (chunk === undefined) continue;
-                    const [bottom, top] = chunk;
+        // Compute the chunk coordinates that are visible in the map
+        const chunkStart = point(
+            Math.floor(start.x / chunkSize),
+            Math.floor(start.y / chunkSize)
+        );
 
-                    // Draw the chunk
-                    const drawPosition = mapToCanvas(
-                        point(x * chunkSize * 16, y * chunkSize * 16)
-                    );
+        const chunkEnd = point(
+            Math.ceil(end.x / chunkSize),
+            Math.ceil(end.y / chunkSize)
+        );
+
+        // Draw the chunks
+        for (let x = chunkStart.x; x < chunkEnd.x; x++) {
+            for (let y = chunkStart.y; y < chunkEnd.y; y++) {
+                const chunk = cachedChunks[y]?.[x];
+                // If the chunk is undefined, it's an empty chunk
+                if (chunk === undefined) continue;
+                const [bottom, top] = chunk;
+
+                // Draw the chunk
+                const pos = mapToCanvas(
+                    point(x * chunkSize * 16, y * chunkSize * 16)
+                );
+                if (bottomLayer)
                     ctx.drawImage(
                         bottom,
-                        drawPosition.x,
-                        drawPosition.y,
+                        pos.x,
+                        pos.y,
                         bottom.width * zoom,
                         bottom.height * zoom
                     );
+                else
                     ctx.drawImage(
                         top,
-                        drawPosition.x,
-                        drawPosition.y,
+                        pos.x,
+                        pos.y,
                         top.width * zoom,
                         top.height * zoom
                     );
-                    drawnImages++;
-                }
             }
         }
-
-        const frameTime = performance.now() - frameStart;
-        debugValues({ frameTime, drawnImages });
     }
 
     /**
@@ -178,7 +188,7 @@
         return [point(x0, y0), point(x1, y1)];
     }
 
-    function drawTile(x: number, y: number) {
+    function drawTile(x: number, y: number, bottomLayer: boolean) {
         const images = getTileImagesAt(x, y);
         if (images === null) return;
 
@@ -187,11 +197,8 @@
         // Compute the actual coordinates
         ({ x, y } = mapToCanvas({ x: x * 16, y: y * 16 }));
 
-        // Draw the bottom image
-        ctx.drawImage(bottomImage, x, y, 16 * zoom, 16 * zoom);
-
-        // Draw the top image
-        ctx.drawImage(topImage, x, y, 16 * zoom, 16 * zoom);
+        if (bottomLayer) ctx.drawImage(bottomImage, x, y, 16 * zoom, 16 * zoom);
+        else ctx.drawImage(topImage, x, y, 16 * zoom, 16 * zoom);
     }
 
     /**
@@ -354,7 +361,6 @@
             mapPanStart.y = offset.y;
         }
     }
-
     function onMouseUp(event: MouseEvent) {
         if (event.button === 1 && isPanning) {
             isPanning = false;
@@ -366,6 +372,7 @@
         mousePosition.y = event.offsetY;
 
         if (isPanning) pan(event.offsetX, event.offsetY);
+        else draw();
     }
     function onMouseWheel(event: WheelEvent) {
         if (isPanning) return;
