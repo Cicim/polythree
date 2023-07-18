@@ -1,8 +1,11 @@
-export type BlockData = number;
-type BlockHash = `${number},${number}`;
+/** Information about a single block (metatile and level) */
+export type BlockData = [metatile: number, level: number];
 
 /** Methods offered by the MapEditor for painting */
 export interface PainterMethods {
+    /** Whether null levels are allowed */
+    nullLevels: boolean;
+
     /** Returns whether the given block is in bounds */
     inBounds(x: number, y: number): boolean;
     /** Set a block at the given coordinates */
@@ -12,6 +15,8 @@ export interface PainterMethods {
     /** Update the screen */
     update(): void;
 }
+
+type BlockHash = `${number},${number}`;
 
 export class PainterState {
     /** Old value of the blocks from before that were modified */
@@ -27,7 +32,21 @@ export class PainterState {
     public set(x: number, y: number, data: BlockData) {
         if (!this.methods.inBounds(x, y)) return;
 
-        if (this.get(x, y) === data) return;
+        let oldData = this.get(x, y);
+
+        // If null levels are not allowed, change the level value to
+        // the one in the old block
+        if (!this.methods.nullLevels && data[1] === null)
+            data = [data[0], oldData[1]];
+
+        // Storing null tiles is never supported, therefore if a
+        // brush wants to set a null tile, it will be set to
+        // the one in the old block
+        if (data[0] === null)
+            data = [oldData[0], data[1]];
+
+        // If after all this, the new block is the same, don't do anything
+        if (oldData[0] === data[0] && oldData[1] == data[1]) return;
 
         const hash = `${x},${y}`;
 
@@ -58,7 +77,7 @@ export class PainterState {
     /** Removes all changes that didn't do anything */
     public clean() {
         for (const [hash, data] of Object.entries(this.newBlocks)) {
-            if (data === this.oldBlocks[hash]) {
+            if (data[0] === this.oldBlocks[hash][0] && data[1] === this.oldBlocks[hash][1]) {
                 delete this.newBlocks[hash];
                 delete this.oldBlocks[hash];
             }
@@ -67,36 +86,23 @@ export class PainterState {
 }
 
 
-export class Brush {
+export abstract class Brush {
     public name = "Untitled Brush #";
 
     constructor(name?: string) {
         this.name = name ?? this.name;
     }
 
-    public startStroke(state: PainterState, x: number, y: number) {
-        // Set the 0 stuff here
-        state.set(x, y, 0);
-        state.update();
-    }
-
-    public moveStroke(state: PainterState, x: number, y: number) {
-        // Set the 0 stuff here
-        state.set(x, y, 0);
-        state.update();
-    }
-
-    public endStroke(state: PainterState, x: number, y: number) {
-        // Set the 0 stuff here
-        state.clean();
-    }
+    public startStroke(state: PainterState, x: number, y: number) { }
+    public moveStroke(state: PainterState, x: number, y: number) { }
+    public endStroke(state: PainterState, x: number, y: number) { }
 }
 
 export class PencilBrush extends Brush {
     public name = "Pencil";
-    public block: number;
+    public block: BlockData;
 
-    constructor(block: number) {
+    constructor(block: BlockData) {
         super();
         this.block = block;
     }
@@ -117,12 +123,12 @@ export class PencilBrush extends Brush {
         const dy = y - this.lastY;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const steps = Math.ceil(dist);
-        for (let i = 0; i < steps; i++) {
+        for (let i = 0; i <= steps; i++) {
             const stepX = this.lastX + dx * (i / steps);
             const stepY = this.lastY + dy * (i / steps);
             state.set(Math.round(stepX), Math.round(stepY), this.block);
         }
-        if (steps) state.update();
+        state.update();
         this.lastX = x;
         this.lastY = y;
     }

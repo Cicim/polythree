@@ -8,20 +8,32 @@
         Brush,
         type PainterMethods,
         PencilBrush,
+        type BlockData,
     } from "./brushes";
 
+    /** Blocks to edit */
+    export let blocks: BlockData[][];
     /**
      * The size of the chunks in which to divide the map for caching.
-     * `0` means no caching.
+     * Caching is always enabled as supporting it being disabled would be
+     * more work than it's worth.
      */
     export let chunkSize: number = 32;
     /** Whether or not to print the levels on top of the tiles */
     export let editLevels: boolean = false;
     $: editLevels, draw();
+    /** Whether or not this map allows having null levels */
+    export let nullLevels: boolean = false;
 
+    // Update the size when the blocks update
+    let blocksWidth: number = blocks[0].length;
+    let blocksHeight: number = blocks.length;
+    $: blocksWidth = blocks[0].length;
+    $: blocksHeight = blocks.length;
+
+    // ANCHOR Constants
     /** Zoom levels the user can scroll through */
     const ZOOM_LEVELS = [1, 1.5, 2, 3, 4, 5, 6, 8, 16];
-
     /**
      * The RGB color for each level. Since there are patches to change the bitsize
      * of a level, we split it in layer (8 bits) and obstacle (1 bit).
@@ -62,6 +74,7 @@
         [0x00f]: "#20DFDF",
         [0x10f]: "#E920E9",
     };
+    const LAYER_CHARS = "⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛";
 
     // ANCHOR Helpers
     type ChunkData = HTMLCanvasElement;
@@ -103,11 +116,8 @@
         return point(tileX, tileY);
     };
     /** Returns whether the current tile is in bounds */
-    const isInBounds = (x: number, y: number): boolean => {
-        const mapWidth = mapData[0].length;
-        const mapHeight = mapData.length;
-        return x >= 0 && x < mapWidth && y >= 0 && y < mapHeight;
-    };
+    const isInBounds = (x: number, y: number): boolean =>
+        x >= 0 && x < blocksWidth && y >= 0 && y < blocksHeight;
 
     // ANCHOR Properties
     let containerEl: HTMLDivElement;
@@ -140,7 +150,7 @@
 
     // Painting with brushes
     /** Selected brush */
-    let brush: Brush = new PencilBrush(1);
+    let brush: Brush = new PencilBrush([null, 0x106]);
     /** Whether you are painting */
     let isPainting: boolean = false;
     /** The painting state for reverting and committing */
@@ -151,21 +161,18 @@
 
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
-
     let tilesetImages = $data.tilesets;
-    let mapData = $data.layout.map_data;
 
     const unsubscribeFromData = data.subscribe((value) => {
         initialized = false;
         tilesetImages = value.tilesets;
         buildChunks();
+        draw();
         initialized = true;
     });
 
     // ANCHOR Draw
-    /**
-     * Draw a full frame of the canvas from scratch.
-     */
+    /** Draw a full frame of the canvas from scratch. */
     function draw() {
         if (!initialized || canvasWidth === null || canvasHeight === null)
             return;
@@ -190,21 +197,13 @@
             isPainting,
             brushName: `${brush?.name}`,
             position: `${hovered.x}, ${hovered.y}`,
+            zoom,
         });
     }
 
     // ANCHOR Draw tiles
     function drawTileLayer(bottomLayer: boolean) {
         const [start, end] = visibleBlocks();
-        // If caching is disabled, draw the whole map
-        if (chunkSize === 0) {
-            for (let x = start.x; x < end.x; x++)
-                for (let y = start.y; y < end.y; y++)
-                    // Draw the tile
-                    drawTile(x, y, bottomLayer);
-
-            return;
-        }
 
         // Compute the chunk coordinates that are visible in the map
         const chunkStart = point(
@@ -262,52 +261,32 @@
         const topLeft = canvasToMap(point(0, 0));
         const bottomRight = canvasToMap(point(canvasWidth, canvasHeight));
 
-        // Get the map size in blocks
-        const mapWidth = mapData[0].length;
-        const mapHeight = mapData.length;
-
         // Get the lower bound tile-wise
-        let x0 = clamp(Math.floor(topLeft.x / 16), 0, mapWidth);
-        let y0 = clamp(Math.floor(topLeft.y / 16), 0, mapHeight);
+        let x0 = clamp(Math.floor(topLeft.x / 16), 0, blocksWidth);
+        let y0 = clamp(Math.floor(topLeft.y / 16), 0, blocksHeight);
 
         // Get the upper bound tile-wise
-        let x1 = clamp(Math.ceil(bottomRight.x / 16), 0, mapWidth);
-        let y1 = clamp(Math.ceil(bottomRight.y / 16), 0, mapHeight);
+        let x1 = clamp(Math.ceil(bottomRight.x / 16), 0, blocksWidth);
+        let y1 = clamp(Math.ceil(bottomRight.y / 16), 0, blocksHeight);
 
         return [point(x0, y0), point(x1, y1)];
-    }
-
-    function drawTile(x: number, y: number, bottomLayer: boolean) {
-        const images = getTileImagesAt(x, y);
-        if (images === null) return;
-
-        const [bottomImage, topImage] = images;
-
-        // Compute the actual coordinates
-        ({ x, y } = mapToCanvas({ x: x * 16, y: y * 16 }));
-
-        if (bottomLayer) ctx.drawImage(bottomImage, x, y, 16 * zoom, 16 * zoom);
-        else ctx.drawImage(topImage, x, y, 16 * zoom, 16 * zoom);
     }
 
     /**
      * Retuns [top, bottom] images for the metatile at a given block
      * coordinates, or null if it is wrong.
      */
-    function getTileImagesAt(x: number, y: number): HTMLImageElement[] {
-        const block = mapData[y]?.[x];
-        if (block === undefined) return null;
-
-        // FIXME Get the right mask for the job
-        const tileIndex = block & 0x3ff;
+    function getMetatileImagesAt(x: number, y: number): HTMLImageElement[] {
+        const metatile = blocks[y]?.[x]?.[0];
+        if (metatile === undefined) return null;
 
         if (
-            tilesetImages[tileIndex] === undefined ||
-            tilesetImages[tileIndex].length !== 2
+            tilesetImages[metatile] === undefined ||
+            tilesetImages[metatile].length !== 2
         )
             return null;
 
-        return tilesetImages[tileIndex];
+        return tilesetImages[metatile];
     }
 
     // ANCHOR Draw levels
@@ -329,19 +308,19 @@
 
     function drawTileLevel(x: number, y: number) {
         // Get the level
-        const data = mapData[y]?.[x];
-        if (data === undefined) return;
-        const level = data >> 10;
+        const level = blocks[y]?.[x]?.[1];
+        if (level === undefined) return;
+
         const [color, text] = levelToColorAndString(level);
 
         // Draw a rectangle
         const [tx, ty, tw, th] = tileToDrawArgs(x, y);
         ctx.fillStyle = color;
-        if (zoom > 2) ctx.globalAlpha = 0.5;
+        if (zoom >= 2) ctx.globalAlpha = 0.5;
         ctx.fillRect(tx, ty, tw, th);
         ctx.strokeRect(tx, ty, tw, th);
 
-        if (zoom > 2) {
+        if (zoom >= 2) {
             ctx.fillStyle = "white";
             const coords = tileToDrawArgs(x, y);
             ctx.globalAlpha = 0.8;
@@ -350,19 +329,17 @@
     }
 
     /** Convert a level information to its color and text */
-    const levelToColorAndString = (level: number): [string, string] => {
-        const layer = (level >> 1) & 0x1f;
-        const obstacle = level & 0x1;
-        const index = (obstacle << 8) | layer;
+    const levelToColorAndString = (index: number): [string, string] => {
+        if (index === null) return ["#888888", ""];
+
         const color = LEVEL_COLORS[index];
+        const layer = index & 0xff;
+        const obstacle = index >> 8;
 
         if (obstacle === 0) return [color, layer.toString()];
 
         // Obtain the boxed variant of the layer number
-        return [
-            color,
-            String.fromCharCode(layer < 10 ? 0x2460 + layer : 0x3251 + layer),
-        ];
+        return [color, LAYER_CHARS[layer]];
     };
 
     // ANCHOR Debug drawing functions
@@ -412,36 +389,31 @@
     }
 
     // ANCHOR Chunking
-    /**
-     * Build the chunks from the map data.
-     */
+    /** Build the chunks from the blocks data. */
     function buildChunks() {
         if (chunkSize === 0) return;
 
-        // Get the map size in blocks
-        const mapWidth = mapData[0].length;
-        const mapHeight = mapData.length;
-
         // Get the number of chunks in each direction
-        const chunksX = Math.ceil(mapWidth / chunkSize);
-        const chunksY = Math.ceil(mapHeight / chunkSize);
+        const chunksX = Math.ceil(blocksWidth / chunkSize);
+        const chunksY = Math.ceil(blocksHeight / chunkSize);
 
         // Create the chunks
         cachedChunks = new Array(chunksY);
 
         // Fill the chunks
-        for (let y = 0; y < chunksY; y++) {
-            cachedChunks[y] = new Array(chunksX);
-            for (let x = 0; x < chunksX; x++) {
+        for (let cy = 0; cy < chunksY; cy++) {
+            cachedChunks[cy] = new Array(chunksX);
+            for (let cx = 0; cx < chunksX; cx++) {
                 // Get the chunk data
-                const chunk = getChunk(x, y);
+                const chunk = getChunk(cx, cy);
                 // Save the chunk
-                cachedChunks[y][x] = chunk;
+                cachedChunks[cy][cx] = chunk;
             }
         }
     }
 
-    function getChunk(x: number, y: number): [ChunkData, ChunkData] {
+    /** Renders the chunk at the given chunk coordinates */
+    function getChunk(cx: number, cy: number): [ChunkData, ChunkData] {
         // Create the canvases for this chunk
         const botCanvas = document.createElement("canvas");
         const topCanvas = document.createElement("canvas");
@@ -460,9 +432,9 @@
         for (let j = 0; j < chunkSize; j++) {
             for (let i = 0; i < chunkSize; i++) {
                 // Get the tile images
-                const images = getTileImagesAt(
-                    x * chunkSize + i,
-                    y * chunkSize + j
+                const images = getMetatileImagesAt(
+                    cx * chunkSize + i,
+                    cy * chunkSize + j
                 );
                 if (images === null) continue;
                 const [bottomImage, topImage] = images;
@@ -490,11 +462,11 @@
     }
 
     // ANCHOR Painting with brushes
-    const painterMethods: PainterMethods = {
+    const PAINTER_METHODS: PainterMethods = {
+        nullLevels,
         update: () => draw(),
         inBounds: (x, y) => isInBounds(x, y),
-        get: (x, y) => mapData[y][x],
-
+        get: (x, y) => blocks[y][x],
         set(x, y, value) {
             // Get the correct chunk to update
             const cx = Math.floor(x / chunkSize);
@@ -512,8 +484,8 @@
             const topCtx = chunk[1].getContext("2d");
 
             // Get the tile images
-            mapData[y][x] = value;
-            const images = getTileImagesAt(x, y);
+            blocks[y][x] = value;
+            const images = getMetatileImagesAt(x, y);
             if (images === null) return;
             const [bottomImage, topImage] = images;
 
@@ -539,7 +511,7 @@
             isPainting = true;
 
             // Create the painting state
-            paintingState = new PainterState(painterMethods, brush);
+            paintingState = new PainterState(PAINTER_METHODS, brush);
             brush.startStroke(paintingState, x, y);
         }
 
@@ -570,9 +542,7 @@
         }
     }
     function onMouseUp(event: MouseEvent) {
-        if (event.button === 1 && isPanning) {
-            isPanning = false;
-        }
+        if (event.button === 1 && isPanning) isPanning = false;
 
         if (event.button === 0 && isPainting) {
             // Get the current tile coordinates
@@ -618,8 +588,6 @@
     function updateSize() {
         canvasWidth = containerEl.clientWidth;
         canvasHeight = containerEl.clientHeight;
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
         draw();
     }
 
