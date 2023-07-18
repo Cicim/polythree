@@ -9,9 +9,53 @@
      * `0` means no caching.
      */
     export let chunkSize: number = 32;
+    /** Whether or not to print the levels on top of the tiles */
+    export let editLevels: boolean = false;
+    $: editLevels, draw();
 
     /** Zoom levels the user can scroll through */
     const ZOOM_LEVELS = [1, 1.5, 2, 3, 4, 5, 6, 8, 16];
+
+    /**
+     * The RGB color for each level. Since there are patches to change the bitsize
+     * of a level, we split it in layer (8 bits) and obstacle (1 bit).
+     *
+     * The format is [0x0OLL]: "#RRGGBB"
+     */
+    const LEVEL_COLORS: Record<number, string> = {
+        [0x000]: "#2076DF",
+        [0x100]: "#DF2020",
+        [0x001]: "#20DFBE",
+        [0x101]: "#DF6820",
+        [0x002]: "#C7DF20",
+        [0x102]: "#2071DF",
+        [0x003]: "#20DF50",
+        [0x103]: "#A620DF",
+        [0x004]: "#2050DF",
+        [0x104]: "#DF4620",
+        [0x005]: "#DF2068",
+        [0x105]: "#20DF2E",
+        [0x006]: "#38DF20",
+        [0x106]: "#5E20DF",
+        [0x007]: "#7F20DF",
+        [0x107]: "#DFD620",
+        [0x008]: "#80DF20",
+        [0x108]: "#2029DF",
+        [0x009]: "#C720DF",
+        [0x109]: "#A1DF20",
+        [0x00a]: "#20DF97",
+        [0x10a]: "#DF20D1",
+        [0x00b]: "#DFAF20",
+        [0x10b]: "#20B9DF",
+        [0x00c]: "#DF20AF",
+        [0x10c]: "#59DF20",
+        [0x00d]: "#3820DF",
+        [0x10d]: "#DF8E20",
+        [0x00e]: "#2097DF",
+        [0x10e]: "#DF2041",
+        [0x00f]: "#20DFDF",
+        [0x10f]: "#E920E9",
+    };
 
     // ANCHOR Helpers
     type ChunkData = HTMLCanvasElement;
@@ -21,7 +65,6 @@
     }
     /** Function to easily construct a point */
     const point = (x: number = 0, y: number = 0): Point => ({ x, y });
-
     /** Function for clamping a value between two extremes */
     const clamp = (value: number, min: number, max: number): number =>
         Math.min(Math.max(value, min), max);
@@ -31,12 +74,28 @@
         x: x * zoom + offset.x,
         y: y * zoom + offset.y,
     });
-
     /** Converts a point on a canvas to map coordinates */
     const canvasToMap = ({ x, y }: Point): Point => ({
         x: (x - offset.x) / zoom,
         y: (y - offset.y) / zoom,
     });
+
+    /** Converts the given tile coordinates to the arguments for a draw function */
+    const tileToDrawArgs = (
+        x: number,
+        y: number
+    ): [number, number, number, number] => {
+        const pt = mapToCanvas(point(x * 16, y * 16));
+        return [pt.x, pt.y, 16 * zoom, 16 * zoom];
+    };
+
+    /** Get the coordinates of the tile you're hovering over */
+    const hoveredTile = () => {
+        const mouseMapPos = canvasToMap(mousePosition);
+        const tileX = Math.floor(mouseMapPos.x / 16);
+        const tileY = Math.floor(mouseMapPos.y / 16);
+        return point(tileX, tileY);
+    };
 
     // ANCHOR Properties
     let containerEl: HTMLDivElement;
@@ -44,9 +103,12 @@
     let ctx: CanvasRenderingContext2D;
 
     /** Width of the canvas in pixels */
-    let canvasWidth: number;
+    let canvasWidth: number = null;
     /** Height of the canvas in pixels */
-    let canvasHeight: number;
+    let canvasHeight: number = null;
+
+    /** `true` if everything is ready to draw. */
+    let initialized: boolean = false;
 
     // Zooming and panning
     /** Zoom index */
@@ -74,8 +136,10 @@
     let mapData = $data.layout.map_data;
 
     const unsubscribeFromData = data.subscribe((value) => {
+        initialized = false;
         tilesetImages = value.tilesets;
         buildChunks();
+        initialized = true;
     });
 
     // ANCHOR Draw
@@ -83,6 +147,9 @@
      * Draw a full frame of the canvas from scratch.
      */
     function draw() {
+        if (!initialized || canvasWidth === null || canvasHeight === null)
+            return;
+
         const frameStart = performance.now();
 
         canvas.width = canvasWidth;
@@ -90,26 +157,16 @@
         ctx.imageSmoothingEnabled = false;
 
         // Find how many squares of size 16x16 can fit in the canvas
-        drawLayer(true);
-
-        // Draw a circle in the middle
-        ctx.beginPath();
-        ctx.globalAlpha = 0.7;
-        ctx.arc(mousePosition.x, mousePosition.y, 100 * zoom, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-
-        drawLayer(false);
+        drawBottomLayer();
+        drawTopLayer();
+        if (editLevels) drawLevels();
 
         const frameTime = performance.now() - frameStart;
         debugValues({ frameTime });
     }
 
-    /**
-     * Draws the bottom layer of the map if bottomLayer is true,
-     * otherwise it draws the top layer
-     */
-    function drawLayer(bottomLayer: boolean) {
+    // ANCHOR Draw tiles
+    function drawTileLayer(bottomLayer: boolean) {
         const [start, end] = visibleBlocks();
         // If caching is disabled, draw the whole map
         if (chunkSize === 0) {
@@ -163,6 +220,10 @@
             }
         }
     }
+    /** Draws the bottom layer of the blocks */
+    const drawBottomLayer = () => drawTileLayer(true);
+    /** Draws the top layer of the blocks */
+    const drawTopLayer = () => drawTileLayer(false);
 
     /**
      * Return the coordinates (in blocks) of the topleft and bottomright block
@@ -220,6 +281,61 @@
 
         return tilesetImages[tileIndex];
     }
+
+    // ANCHOR Draw levels
+    function drawLevels() {
+        // Get the visible map
+        const [start, end] = visibleBlocks();
+
+        // Draw the text
+        ctx.font = `${12 * zoom}px Rubik`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.globalAlpha = 0.5;
+        // Draw the level
+        for (let x = start.x; x < end.x; x++)
+            for (let y = start.y; y < end.y; y++) drawTileLevel(x, y);
+
+        ctx.globalAlpha = 1;
+    }
+
+    function drawTileLevel(x: number, y: number) {
+        // Get the level
+        const data = mapData[y]?.[x];
+        if (data === undefined) return;
+        const level = data >> 10;
+        const [color, text] = levelToColorAndString(level);
+
+        // Draw a rectangle
+        const [tx, ty, tw, th] = tileToDrawArgs(x, y);
+        ctx.fillStyle = color;
+        if (zoom > 2) ctx.globalAlpha = 0.5;
+        ctx.fillRect(tx, ty, tw, th);
+        ctx.strokeRect(tx, ty, tw, th);
+
+        if (zoom > 2) {
+            ctx.fillStyle = "white";
+            const coords = tileToDrawArgs(x, y);
+            ctx.globalAlpha = 0.8;
+            ctx.fillText(text, tx + 8 * zoom, ty + 8 * zoom);
+        }
+    }
+
+    /** Convert a level information to its color and text */
+    const levelToColorAndString = (level: number): [string, string] => {
+        const layer = (level >> 1) & 0x1f;
+        const obstacle = level & 0x1;
+        const index = (obstacle << 8) | layer;
+        const color = LEVEL_COLORS[index];
+
+        if (obstacle === 0) return [color, layer.toString()];
+
+        // Obtain the boxed variant of the layer number
+        return [
+            color,
+            String.fromCharCode(layer < 10 ? 0x2460 + layer : 0x3251 + layer),
+        ];
+    };
 
     // ANCHOR Debug drawing functions
     /** Function to draw some values in the top-right corner for debugging */

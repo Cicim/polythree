@@ -18,7 +18,7 @@
 <div class="editor">
     <div class="toolbar">Toolbar</div>
     <div class="area">
-        <LayoutViewArea />
+        <LayoutViewArea editLevels={$activeTab === "level"} />
     </div>
     <div
         class="sidebar"
