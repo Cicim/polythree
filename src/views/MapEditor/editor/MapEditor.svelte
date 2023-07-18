@@ -3,6 +3,12 @@
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import type { Writable } from "svelte/store";
     import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
+    import {
+        PainterState,
+        Brush,
+        type PainterMethods,
+        PencilBrush,
+    } from "./brushes";
 
     /**
      * The size of the chunks in which to divide the map for caching.
@@ -96,6 +102,12 @@
         const tileY = Math.floor(mouseMapPos.y / 16);
         return point(tileX, tileY);
     };
+    /** Returns whether the current tile is in bounds */
+    const isInBounds = (x: number, y: number): boolean => {
+        const mapWidth = mapData[0].length;
+        const mapHeight = mapData.length;
+        return x >= 0 && x < mapWidth && y >= 0 && y < mapHeight;
+    };
 
     // ANCHOR Properties
     let containerEl: HTMLDivElement;
@@ -125,6 +137,14 @@
     let mousePanStart: Point = point();
     /** Canvas offset when the pan starts */
     let mapPanStart: Point = point();
+
+    // Painting with brushes
+    /** Selected brush */
+    let brush: Brush = new PencilBrush(1);
+    /** Whether you are painting */
+    let isPainting: boolean = false;
+    /** The painting state for reverting and committing */
+    let paintingState: PainterState = null;
 
     /** Canvases containing the chunks in which the map is divided */
     let cachedChunks: [ChunkData, ChunkData][][] = null;
@@ -162,7 +182,15 @@
         if (editLevels) drawLevels();
 
         const frameTime = performance.now() - frameStart;
-        debugValues({ frameTime });
+        const hovered = hoveredTile();
+
+        debugValues({
+            frameTime,
+            isPanning,
+            isPainting,
+            brushName: `${brush?.name}`,
+            position: `${hovered.x}, ${hovered.y}`,
+        });
     }
 
     // ANCHOR Draw tiles
@@ -461,10 +489,59 @@
         draw();
     }
 
+    // ANCHOR Painting with brushes
+    const painterMethods: PainterMethods = {
+        update: () => draw(),
+        inBounds: (x, y) => isInBounds(x, y),
+        get: (x, y) => mapData[y][x],
+
+        set(x, y, value) {
+            // Get the correct chunk to update
+            const cx = Math.floor(x / chunkSize);
+            const cy = Math.floor(y / chunkSize);
+
+            // Update the chunk
+            const chunk = cachedChunks[cy][cx];
+
+            // Update the chunk
+            const chunkX = x % chunkSize;
+            const chunkY = y % chunkSize;
+
+            // Update the chunk
+            const botCtx = chunk[0].getContext("2d");
+            const topCtx = chunk[1].getContext("2d");
+
+            // Get the tile images
+            mapData[y][x] = value;
+            const images = getTileImagesAt(x, y);
+            if (images === null) return;
+            const [bottomImage, topImage] = images;
+
+            // Compute the actual coordinates
+            botCtx.drawImage(bottomImage, chunkX * 16, chunkY * 16, 16, 16);
+            // Clear the top canvas, since it is transparent
+            topCtx.clearRect(chunkX * 16, chunkY * 16, 16, 16);
+            topCtx.drawImage(topImage, chunkX * 16, chunkY * 16, 16, 16);
+        },
+    };
+
     // ANCHOR Mouse Event handlers
     function onMouseDown(event: MouseEvent) {
         // If the user is already panning, ignore this event, even for other buttons
         if (isPanning) return;
+
+        // Painting starts with the left mouse button (0)
+        if (event.button === 0 && !isPanning && brush !== null) {
+            // Get the current tile coordinates
+            const { x, y } = hoveredTile();
+            // If the tile are not in bounds, don't start anything
+            if (!isInBounds(x, y)) return;
+            isPainting = true;
+
+            // Create the painting state
+            paintingState = new PainterState(painterMethods, brush);
+            brush.startStroke(paintingState, x, y);
+        }
 
         // Panning starts with the middle mouse button (1)
         if (event.button === 1) {
@@ -477,18 +554,37 @@
             mapPanStart.y = offset.y;
         }
     }
-    function onMouseUp(event: MouseEvent) {
-        if (event.button === 1 && isPanning) {
-            isPanning = false;
-        }
-    }
     function onMouseMove(event: MouseEvent) {
         // Save the mouse position for the next frame
         mousePosition.x = event.offsetX;
         mousePosition.y = event.offsetY;
 
         if (isPanning) pan(event.offsetX, event.offsetY);
-        else draw();
+        else if (isPainting) {
+            // Get the current tile coordinates
+            const { x, y } = hoveredTile();
+            // If the tile are not in bounds, don't do anything
+            if (!isInBounds(x, y)) return;
+
+            brush.moveStroke(paintingState, x, y);
+        }
+    }
+    function onMouseUp(event: MouseEvent) {
+        if (event.button === 1 && isPanning) {
+            isPanning = false;
+        }
+
+        if (event.button === 0 && isPainting) {
+            // Get the current tile coordinates
+            const { x, y } = hoveredTile();
+            // If the tile are not in bounds, don't do anything
+            if (!isInBounds(x, y)) return;
+
+            isPainting = false;
+            brush.endStroke(paintingState, x, y);
+
+            // TODO Save the state somewhere
+        }
     }
     function onMouseWheel(event: WheelEvent) {
         if (isPanning) return;
