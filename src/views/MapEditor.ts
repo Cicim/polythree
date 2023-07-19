@@ -40,6 +40,13 @@ export interface MapEditorData {
     tilesets?: TilesetData,
 }
 
+export enum EditorTool {
+    Pencil = "pencil",
+    Fill = "fill",
+    Rectangle = "rectangle",
+    Replace = "replace",
+}
+
 export class MapEditorContext extends TabbedEditorContext {
     public name = "Map Editor";
     public singularTab = true;
@@ -50,6 +57,7 @@ export class MapEditorContext extends TabbedEditorContext {
     public brush: Writable<Brush>;
     public brushes: Writable<Brush[]>;
     public tilesetBlocks: Writable<BlockData[][]>;
+    public selectedTool: Writable<EditorTool>;
 
     public tabs = {
         "header": {
@@ -201,6 +209,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
         this.brush = writable(new PencilBrush(tilesetBlocks[0][0]));
 
+        this.selectedTool = writable(EditorTool.Pencil);
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;

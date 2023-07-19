@@ -1,19 +1,46 @@
 <script lang="ts">
     import { getContext } from "svelte";
-    import type { MapEditorContext } from "../MapEditor";
+    import { EditorTool, type MapEditorContext } from "../MapEditor";
     import LayoutViewArea from "./layout/LayoutViewArea.svelte";
     import LayoutSidebar from "./layout/LayoutSidebar.svelte";
     import ScriptsSidebar from "./scripts/ScriptsSidebar.svelte";
     import { resizeX } from "src/systems/resize";
+    import ToolButton from "./ToolButton.svelte";
 
     const context: MapEditorContext = getContext("context");
+    let selectedToolStore = context.selectedTool;
 
     // The currently open tab (layout, level or scripts)
     $: activeTab = context.selectedTab;
 </script>
 
 <div class="editor">
-    <div class="toolbar">Toolbar</div>
+    <div class="toolbar">
+        <ToolButton
+            bind:group={$selectedToolStore}
+            value={EditorTool.Pencil}
+            icon="mdi:pencil"
+            title={"Pencil"}
+        />
+        <ToolButton
+            bind:group={$selectedToolStore}
+            value={EditorTool.Fill}
+            icon="mdi:bucket"
+            title={"Bucket"}
+        />
+        <ToolButton
+            bind:group={$selectedToolStore}
+            value={EditorTool.Rectangle}
+            icon="mdi:square"
+            title={"Rectangle"}
+        />
+        <ToolButton
+            bind:group={$selectedToolStore}
+            value={EditorTool.Replace}
+            icon="mdi:wand"
+            title={"Replace"}
+        />
+    </div>
     <div class="area">
         <LayoutViewArea editLevels={$activeTab === "level"} />
     </div>
@@ -54,10 +81,24 @@
     }
 
     .toolbar {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+
+        padding: 0 2px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 2px;
+
         grid-area: toolbar;
         background: var(--main-bg);
         box-shadow: 0 1px 0 var(--light-shadow);
         z-index: 1;
+
+        &::-webkit-scrollbar {
+            -webkit-appearance: none;
+            display: none;
+        }
     }
 
     .sidebar {
