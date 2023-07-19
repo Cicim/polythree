@@ -1,7 +1,4 @@
-import { Change, EditorChanges } from "src/systems/changes";
-import r from "src/systems/navigate";
-import { get, type Writable } from "svelte/store";
-
+import { Change } from "src/systems/changes";
 
 /** Information about a single block (metatile and level) */
 export type BlockData = [metatile: number, level: number];

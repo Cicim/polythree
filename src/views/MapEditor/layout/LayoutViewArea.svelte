@@ -1,7 +1,6 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
-    import MapEditor from "../editor/MapEditor.svelte";
-    import type { BlockData } from "../editor/brushes";
+    import MapCanvas from "../editor/MapCanvas.svelte";
     import type { MapEditorData } from "src/views/MapEditor";
     import type { Writable } from "svelte/store";
 
@@ -9,11 +8,10 @@
 
     let data: Writable<MapEditorData> = getContext("data");
     let blocks = $data.layout.map_data;
-    console.log($data);
 </script>
 
 <div class="container">
-    <MapEditor {editLevels} {blocks} />
+    <MapCanvas {editLevels} {blocks} />
 </div>
 
 <style lang="scss">

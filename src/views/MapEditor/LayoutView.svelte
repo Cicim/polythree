@@ -4,12 +4,9 @@
     import LayoutViewArea from "./layout/LayoutViewArea.svelte";
     import LayoutSidebar from "./layout/LayoutSidebar.svelte";
     import ScriptsSidebar from "./scripts/ScriptsSidebar.svelte";
-    import type { Brush } from "./editor/brushes";
     import { resizeX } from "src/systems/resize";
 
     const context: MapEditorContext = getContext("context");
-
-    let selection: Brush = null;
 
     // The currently open tab (layout, level or scripts)
     $: activeTab = context.selectedTab;
@@ -31,7 +28,6 @@
         <div class="resize-handle left" />
         <LayoutSidebar
             hidden={$activeTab !== "layout" && $activeTab !== "level"}
-            bind:selection
             levelMode={$activeTab === "level"}
         />
         <ScriptsSidebar hidden={$activeTab !== "scripts"} />

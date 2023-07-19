@@ -1,9 +1,21 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
+
     export let icon: string;
     export let title: string;
+
+    export let value: string;
+    export let group: string;
+
+    function onClick(event: MouseEvent) {
+        group = value;
+        dispatch("click", event);
+    }
 </script>
 
-<button on:click {title} class="toolbar-button">
+<button on:click={onClick} {title} class="toolbar-button">
     <iconify-icon {icon} />
 </button>
 
