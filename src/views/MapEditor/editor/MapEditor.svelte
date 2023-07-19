@@ -9,6 +9,7 @@
         type PainterMethods,
         PencilBrush,
         type BlockData,
+        ReplaceBrush,
     } from "./brushes";
 
     /** Blocks to edit */
@@ -155,7 +156,7 @@
 
     // Painting with brushes
     /** Selected brush */
-    let brush: Brush = new PencilBrush([1, 1]);
+    let brush: Brush = new ReplaceBrush([1, 1]);
     /** Whether you are painting */
     let isPainting: boolean = false;
     /** The painting state for reverting and committing */
@@ -585,8 +586,15 @@
         nullLevels,
         update: () => draw(),
         inBounds: (x, y) => isInBounds(x, y),
-        get: (x, y) => blocks[y][x],
-        set(x, y, value) {
+        get: (x: number, y: number) => blocks[y][x],
+
+        forEach(callback) {
+            for (let y = 0; y < blocksHeight; y++)
+                for (let x = 0; x < blocksWidth; x++)
+                    callback(x, y, blocks[y][x]);
+        },
+
+        set(x: number, y: number, value: BlockData) {
             // Get the old value and for maximum efficiency, draw only what changes
             const [oldMetatile, oldLevel] = blocks[y][x];
             // Update the data with the new value

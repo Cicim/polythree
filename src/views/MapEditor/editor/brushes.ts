@@ -1,3 +1,6 @@
+import AlertDialog from "src/components/dialog/AlertDialog.svelte";
+import { spawnDialog } from "src/systems/dialogs";
+
 /** Information about a single block (metatile and level) */
 export type BlockData = [metatile: number, level: number];
 
@@ -6,6 +9,8 @@ export interface PainterMethods {
     /** Whether null levels are allowed */
     nullLevels: boolean;
 
+    /** Loop over all blocks in the map */
+    forEach(callback: (x: number, y: number, data: BlockData) => void): void;
     /** Returns whether the given block is in bounds */
     inBounds(x: number, y: number): boolean;
     /** Set a block at the given coordinates */
@@ -72,6 +77,13 @@ export class PainterState {
         return this.methods.get(x, y);
     }
 
+    /**
+     * Loops over each block in the map with the callback function.
+     */
+    public forEach(callback: (x: number, y: number, data: BlockData) => void) {
+        this.methods.forEach(callback);
+    }
+
     /** Redraws the map editor with the new updates */
     public update() {
         if (this.drawn)
@@ -80,6 +92,11 @@ export class PainterState {
 
     /** Removes all changes that didn't do anything */
     public clean() {
+        spawnDialog(AlertDialog, {
+            "title": "This was called?",
+            "message": "Cleaned the changes that didn't do anything.",
+        });
+
         for (const [hash, data] of Object.entries(this.newBlocks)) {
             if (data[0] === this.oldBlocks[hash][0] && data[1] === this.oldBlocks[hash][1]) {
                 delete this.newBlocks[hash];
@@ -205,6 +222,37 @@ export class FillBucketBrush extends Brush {
             queue.push([x, y + 1]);
 
         }
+
+        state.update();
+    }
+}
+
+export class ReplaceBrush extends Brush {
+    public name = "Replace";
+    public replacement: BlockData;
+
+    constructor(metatile: BlockData) {
+        super();
+        this.replacement = metatile;
+    }
+
+    canReplace(block1: BlockData, block2: BlockData) {
+        // If working on level, only replace levels.
+        if (this.replacement[0] === null)
+            return block1[1] === block2[1];
+
+        // In any other case, replace the tile.
+        return block1[0] === block2[0];
+    }
+
+    public startStroke(state: PainterState, x: number, y: number) {
+        const current = state.get(x, y);
+        if (this.canReplace(current, this.replacement)) return;
+
+        state.forEach((x, y, data) => {
+            if (this.canReplace(data, current))
+                state.set(x, y, this.replacement);
+        });
 
         state.update();
     }
