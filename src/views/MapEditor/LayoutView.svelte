@@ -1,11 +1,12 @@
 <script lang="ts">
     import { getContext } from "svelte";
-    import { EditorTool, type MapEditorContext } from "../MapEditor";
     import LayoutViewArea from "./layout/LayoutViewArea.svelte";
     import LayoutSidebar from "./layout/LayoutSidebar.svelte";
     import ScriptsSidebar from "./scripts/ScriptsSidebar.svelte";
     import { resizeX } from "src/systems/resize";
     import ToolButton from "./ToolButton.svelte";
+    import { EditorTool } from "./editor/tools";
+    import type { MapEditorContext } from "../MapEditor";
 
     const context: MapEditorContext = getContext("context");
     let selectedToolStore = context.selectedTool;

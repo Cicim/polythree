@@ -2,7 +2,7 @@
     import type { MapEditorContext, TilesetData } from "src/views/MapEditor";
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
-    import { MultiBrush, PencilBrush } from "../editor/brushes";
+    import { PaintingMaterial, PaletteMaterial } from "../editor/materials";
 
     interface Selection extends Point {
         width: number;
@@ -12,7 +12,7 @@
     const context: MapEditorContext = getContext("context");
     // Get the data
     const data = context.data;
-    const brush = context.brush;
+    const brush = context.material;
     // Get the tilesets
     const tilesets: TilesetData = $data.tilesets;
     // Get the block data for this map
@@ -77,19 +77,15 @@
         const tilesetBlocks = $tilesetBlocksStore;
 
         // See if the brush is a single tile
-        if (width * height === 1) {
-            $brush = new PencilBrush(tilesetBlocks[y][x]);
-        } else {
-            const blocks = [];
-            for (let i = 0; i < height; i++) {
-                const row = [];
-                for (let j = 0; j < width; j++) {
-                    row.push(tilesetBlocks[y + i][x + j]);
-                }
-                blocks.push(row);
+        const blocks = [];
+        for (let i = 0; i < height; i++) {
+            const row = [];
+            for (let j = 0; j < width; j++) {
+                row.push(tilesetBlocks[y + i][x + j]);
             }
-            $brush = new MultiBrush(blocks);
+            blocks.push(row);
         }
+        $brush = new PaletteMaterial(blocks);
     }
 
     /** Gets the coordinates of the clicked tile on the canvas */

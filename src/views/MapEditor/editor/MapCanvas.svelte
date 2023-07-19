@@ -3,15 +3,13 @@
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import type { Writable } from "svelte/store";
     import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
+    import type { PaintingMaterial } from "./materials";
     import {
         PainterState,
-        Brush,
         type PainterMethods,
-        PencilBrush,
-        type BlockData,
-        ReplaceBrush,
-        BrushChange,
-    } from "./brushes";
+        PaintChange,
+    } from "./painter_state";
+    import type { Tool } from "./tools";
 
     /** Blocks to edit */
     export let blocks: BlockData[][];
@@ -158,7 +156,10 @@
 
     // Painting with brushes
     /** Selected brush */
-    let brush: Writable<Brush> = context.brush;
+    let material: Writable<PaintingMaterial> = context.material;
+    /** Instance of the tool with which you're drawing */
+    let tool: Tool = null;
+
     /** Whether you are painting */
     let isPainting: boolean = false;
     /** The painting state for reverting and committing */
@@ -202,7 +203,7 @@
             frameTime,
             isPanning,
             isPainting,
-            brushName: `${$brush?.name}`,
+            brushName: `${$material?.name}`,
             position: `${hovered.x}, ${hovered.y}`,
             zoom,
         });
@@ -646,7 +647,7 @@
         if (isPanning) return;
 
         // Painting starts with the left mouse button (0)
-        if (event.button === 0 && !isPanning && brush !== null) {
+        if (event.button === 0 && !isPanning && material !== null) {
             // Get the current tile coordinates
             const { x, y } = hoveredTile();
             // If the tile are not in bounds, don't start anything
@@ -654,8 +655,9 @@
             isPainting = true;
 
             // Create the painting state
-            paintingState = new PainterState(PAINTER_METHODS, $brush);
-            $brush.startStroke(paintingState, x, y);
+            paintingState = new PainterState(PAINTER_METHODS);
+            tool = new context.toolClass(paintingState, $material);
+            tool.startStroke(x, y);
         }
 
         // Panning starts with the middle mouse button (1)
@@ -681,7 +683,7 @@
             // If the tile are not in bounds, don't do anything
             if (!isInBounds(x, y)) return;
 
-            $brush.moveStroke(paintingState, x, y);
+            tool.moveStroke(x, y);
         }
     }
     function onMouseUp(event: MouseEvent) {
@@ -694,11 +696,10 @@
             if (!isInBounds(x, y)) return;
 
             isPainting = false;
-            $brush.endStroke(paintingState, x, y);
+            tool.endStroke(x, y);
 
             // Create a brush edit
-            const edit = new BrushChange(paintingState);
-            context.changes.push(edit);
+            context.changes.push(new PaintChange(paintingState));
         }
     }
     function onMouseWheel(event: WheelEvent) {

@@ -10,7 +10,8 @@ import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
-import { PencilBrush, type BlockData, type Brush } from "./MapEditor/editor/brushes";
+import { PaletteMaterial, type CustomMaterial } from "./MapEditor/editor/materials";
+import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 
 export interface MapEditorProperties {
     group: number;
@@ -40,13 +41,6 @@ export interface MapEditorData {
     tilesets?: TilesetData,
 }
 
-export enum EditorTool {
-    Pencil = "pencil",
-    Fill = "fill",
-    Rectangle = "rectangle",
-    Replace = "replace",
-}
-
 export class MapEditorContext extends TabbedEditorContext {
     public name = "Map Editor";
     public singularTab = true;
@@ -54,8 +48,8 @@ export class MapEditorContext extends TabbedEditorContext {
     declare public component: MapEditor;
     declare public data: Writable<MapEditorData>;
 
-    public brush: Writable<Brush>;
-    public brushes: Writable<Brush[]>;
+    public material: Writable<CustomMaterial>;
+    public brushes: Writable<CustomMaterial[]>;
     public tilesetBlocks: Writable<BlockData[][]>;
     public selectedTool: Writable<EditorTool>;
 
@@ -197,7 +191,6 @@ export class MapEditorContext extends TabbedEditorContext {
 
         // TODO Get from configs
         const tilesetBlocks = new Array(allImages.length);
-        console.log(tilesetBlocks);
         for (let y = 0; y < Math.ceil(allImages.length / 8); y++) {
             let tilesetRow = [];
             for (let x = 0; x < 8; x++)
@@ -207,8 +200,7 @@ export class MapEditorContext extends TabbedEditorContext {
         }
         this.tilesetBlocks = writable(tilesetBlocks);
 
-        this.brush = writable(new PencilBrush(tilesetBlocks[0][0]));
-
+        this.material = writable(new PaletteMaterial([[tilesetBlocks[0][0]]]));
         this.selectedTool = writable(EditorTool.Pencil);
 
         // Update the cosmetics
@@ -280,6 +272,11 @@ export class MapEditorContext extends TabbedEditorContext {
         super(MapEditor, { ...id });
         this.subtitle.set(id.group + "." + id.index);
         this.selectedTab.set("layout");
+    }
+
+    // ANCHOR Editor Methods
+    public get toolClass(): typeof Tool {
+        return toolFunctions[get(this.selectedTool)];
     }
 
 

@@ -32,3 +32,6 @@ interface Point {
     x: number;
     y: number;
 }
+
+/** Information about a single block (metatile and level) */
+type BlockData = [metatile: number, level: number];
