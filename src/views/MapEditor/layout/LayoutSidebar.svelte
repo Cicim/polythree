@@ -10,7 +10,6 @@
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
-    export let selection: Brush;
     export let hidden: boolean;
 
     let editingMode:
@@ -22,7 +21,6 @@
 
     const context: MapEditorContext = getContext("context");
     const brushesStore = context.brushes;
-    const brushStore = context.brush;
 
     // TODO: Derive from selection
     $: multiselecting = false;

@@ -27,8 +27,8 @@ export interface MapHeaderData {
 export interface MapLayoutData {
     index: number;
     bits_per_block: number;
-    map_data: number[][];
-    border_data: number[][];
+    map_data: BlockData[][];
+    border_data: BlockData[][];
     header: MapLayout;
 }
 

@@ -126,17 +126,9 @@ export abstract class Change {
         return this.uid++;
     }
 
-    protected edits: string[];
     protected timestamp: number = Date.now();
     protected uid: number = Change.getUID();
     public tab: string;
-
-    public constructor(
-        /** The path to the data that was changed */
-        edits: NavigatePath
-    ) {
-        this.edits = r.getPath(edits);
-    }
 
     /** Updates the before value of this change
      * returns true if the change is invalid
@@ -149,13 +141,15 @@ export abstract class Change {
 }
 
 export class ValueChange extends Change {
+    protected edits: string[];
     public prevValue: any;
 
     public constructor(
         edits: NavigatePath,
         public nextValue: any,
     ) {
-        super(edits);
+        super();
+        this.edits = r.getPath(edits);
     }
 
     public updatePrev(changes: EditorChanges): boolean {

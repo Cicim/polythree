@@ -10,6 +10,7 @@
         PencilBrush,
         type BlockData,
         ReplaceBrush,
+        BrushChange,
     } from "./brushes";
 
     /** Blocks to edit */
@@ -695,7 +696,9 @@
             isPainting = false;
             $brush.endStroke(paintingState, x, y);
 
-            // TODO Save the state somewhere
+            // Create a brush edit
+            const edit = new BrushChange(paintingState);
+            context.changes.push(edit);
         }
     }
     function onMouseWheel(event: WheelEvent) {

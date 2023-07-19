@@ -8,31 +8,8 @@
     export let editLevels: boolean = false;
 
     let data: Writable<MapEditorData> = getContext("data");
-    let mapData = $data.layout.map_data;
-
-    let blocks: BlockData[][] = new Array(mapData.length);
-
-    // Convert blocks from mapData
-    for (let y = 0; y < mapData.length; y++) {
-        blocks[y] = new Array(mapData[y].length);
-
-        for (let x = 0; x < mapData[y].length; x++) {
-            const block = mapData[y][x];
-
-            // Extract the tile and level data with bitwise operations
-            const tileBits = block & 0x3ff;
-            const levelBits = (block >> 10) & 0x3f;
-
-            // Extract the level and obstacle bits from the level to reformat it
-            const level = levelBits >> 1;
-            const obstacle = levelBits & 0x1;
-
-            // Push the block data to the blocks array
-            blocks[y][x] = [tileBits, (obstacle << 8) | level];
-        }
-    }
-
-    blocks = blocks;
+    let blocks = $data.layout.map_data;
+    console.log($data);
 </script>
 
 <div class="container">

@@ -1,3 +1,8 @@
+import { Change, EditorChanges } from "src/systems/changes";
+import r from "src/systems/navigate";
+import { get, type Writable } from "svelte/store";
+
+
 /** Information about a single block (metatile and level) */
 export type BlockData = [metatile: number, level: number];
 
@@ -22,13 +27,13 @@ type BlockHash = `${number},${number}`;
 
 export class PainterState {
     /** Old value of the blocks from before that were modified */
-    private oldBlocks: Record<BlockHash, BlockData> = {};
+    public oldBlocks: Record<BlockHash, BlockData> = {};
     /** New value of the blocks after they've been modified */
-    private newBlocks: Record<BlockHash, BlockData> = {};
+    public newBlocks: Record<BlockHash, BlockData> = {};
     /** If something was drawn during a movement */
     private drawn: boolean = false;
 
-    public constructor(private methods: PainterMethods, private brush: Brush) { }
+    public constructor(public methods: PainterMethods, private brush: Brush) { }
 
     /** Sets the given block and updates the chunk */
     public set(x: number, y: number, data: BlockData) {
@@ -275,5 +280,38 @@ export class MultiBrush extends Brush {
 
     public endStroke(state: PainterState, x: number, y: number) {
         state.clean();
+    }
+}
+
+export class BrushChange extends Change {
+    protected state: PainterState;
+
+    /**
+     * @param blocks The blocks in the mapEditor that was changed.
+     * @param changedBlocks The blocks that were changed.
+     */
+    constructor(state: PainterState) {
+        super();
+        this.state = state;
+    }
+
+    public updatePrev(): boolean {
+        return Object.values(this.state.newBlocks).length === 0;
+    }
+
+    public async apply() {
+        for (const [hash, data] of Object.entries(this.state.newBlocks)) {
+            const [x, y] = hash.split(",").map(Number);
+            this.state.methods.set(x, y, data);
+        }
+        this.state.update();
+    }
+
+    public async revert() {
+        for (const [hash, data] of Object.entries(this.state.oldBlocks)) {
+            const [x, y] = hash.split(",").map(Number);
+            this.state.methods.set(x, y, data);
+        }
+        this.state.update();
     }
 }
