@@ -27,3 +27,8 @@ interface MapLayout {
     border_width: number;
     border_height: number;
 }
+
+interface Point {
+    x: number;
+    y: number;
+}

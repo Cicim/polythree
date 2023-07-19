@@ -94,10 +94,7 @@
 
     // ANCHOR Helpers
     type ChunkData = CanvasRenderingContext2D;
-    interface Point {
-        x: number;
-        y: number;
-    }
+
     /** Function to easily construct a point */
     const point = (x: number = 0, y: number = 0): Point => ({ x, y });
     /** Function for clamping a value between two extremes */
@@ -130,6 +127,10 @@
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D;
 
+    let context: MapEditorContext = getContext("context");
+    let data: Writable<MapEditorData> = getContext("data");
+    let tilesetImages = $data.tilesets;
+
     /** Width of the canvas in pixels */
     let canvasWidth: number = null;
     /** Height of the canvas in pixels */
@@ -156,7 +157,7 @@
 
     // Painting with brushes
     /** Selected brush */
-    let brush: Brush = new ReplaceBrush([1, 1]);
+    let brush: Writable<Brush> = context.brush;
     /** Whether you are painting */
     let isPainting: boolean = false;
     /** The painting state for reverting and committing */
@@ -168,10 +169,6 @@
     let textLevelChunks: ChunkData[][] = null;
     /** Canvases containing the chunks for rendering the level data with colors only. */
     let colorLevelMap: CanvasRenderingContext2D = null;
-
-    let context: MapEditorContext = getContext("context");
-    let data: Writable<MapEditorData> = getContext("data");
-    let tilesetImages = $data.tilesets;
 
     const unsubscribeFromData = data.subscribe((value) => {
         initialized = false;
@@ -204,7 +201,7 @@
             frameTime,
             isPanning,
             isPainting,
-            brushName: `${brush?.name}`,
+            brushName: `${$brush?.name}`,
             position: `${hovered.x}, ${hovered.y}`,
             zoom,
         });
@@ -656,8 +653,8 @@
             isPainting = true;
 
             // Create the painting state
-            paintingState = new PainterState(PAINTER_METHODS, brush);
-            brush.startStroke(paintingState, x, y);
+            paintingState = new PainterState(PAINTER_METHODS, $brush);
+            $brush.startStroke(paintingState, x, y);
         }
 
         // Panning starts with the middle mouse button (1)
@@ -683,7 +680,7 @@
             // If the tile are not in bounds, don't do anything
             if (!isInBounds(x, y)) return;
 
-            brush.moveStroke(paintingState, x, y);
+            $brush.moveStroke(paintingState, x, y);
         }
     }
     function onMouseUp(event: MouseEvent) {
@@ -696,7 +693,7 @@
             if (!isInBounds(x, y)) return;
 
             isPainting = false;
-            brush.endStroke(paintingState, x, y);
+            $brush.endStroke(paintingState, x, y);
 
             // TODO Save the state somewhere
         }

@@ -1,6 +1,3 @@
-import AlertDialog from "src/components/dialog/AlertDialog.svelte";
-import { spawnDialog } from "src/systems/dialogs";
-
 /** Information about a single block (metatile and level) */
 export type BlockData = [metatile: number, level: number];
 
@@ -92,11 +89,6 @@ export class PainterState {
 
     /** Removes all changes that didn't do anything */
     public clean() {
-        spawnDialog(AlertDialog, {
-            "title": "This was called?",
-            "message": "Cleaned the changes that didn't do anything.",
-        });
-
         for (const [hash, data] of Object.entries(this.newBlocks)) {
             if (data[0] === this.oldBlocks[hash][0] && data[1] === this.oldBlocks[hash][1]) {
                 delete this.newBlocks[hash];
@@ -255,5 +247,33 @@ export class ReplaceBrush extends Brush {
         });
 
         state.update();
+    }
+}
+
+export class MultiBrush extends Brush {
+    public name = "Multi";
+    public blocks: BlockData[][];
+
+    constructor(blocks: BlockData[][]) {
+        super();
+        this.blocks = blocks;
+    }
+
+    public startStroke(state: PainterState, x: number, y: number) {
+        for (let i = 0; i < this.blocks.length; i++) {
+            for (let j = 0; j < this.blocks[i].length; j++) {
+                const block = this.blocks[i][j];
+                state.set(x + j, y + i, block);
+            }
+        }
+        state.update();
+    }
+
+    public moveStroke(state: PainterState, x: number, y: number) {
+        this.startStroke(state, x, y);
+    }
+
+    public endStroke(state: PainterState, x: number, y: number) {
+        state.clean();
     }
 }

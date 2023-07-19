@@ -1,7 +1,6 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import Select from "src/components/Select.svelte";
-    import type { Brush } from "../editor/brushes";
     import { resizeY } from "src/systems/resize";
     import type { MapEditorContext } from "src/views/MapEditor";
     import BrushCard from "./BrushCard.svelte";
@@ -21,11 +20,12 @@
         | "brush"
         | "brush-level" = "none";
 
-    // TODO: Derive from selection
-    $: multiselecting = false;
-
     const context: MapEditorContext = getContext("context");
     const brushesStore = context.brushes;
+    const brushStore = context.brush;
+
+    // TODO: Derive from selection
+    $: multiselecting = false;
 </script>
 
 <svelte:window />

@@ -10,7 +10,7 @@ import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
-import { Brush } from "./MapEditor/editor/brushes";
+import { PencilBrush, type BlockData, type Brush } from "./MapEditor/editor/brushes";
 
 export interface MapEditorProperties {
     group: number;
@@ -47,7 +47,9 @@ export class MapEditorContext extends TabbedEditorContext {
     declare public component: MapEditor;
     declare public data: Writable<MapEditorData>;
 
+    public brush: Writable<Brush>;
     public brushes: Writable<Brush[]>;
+    public tilesetBlocks: Writable<BlockData[][]>;
 
     public tabs = {
         "header": {
@@ -182,16 +184,23 @@ export class MapEditorContext extends TabbedEditorContext {
 
         this.data.set({ header: headerData, layout: layoutData, tilesets: allImages });
 
-        this.brushes = writable([
-            new Brush("Grass Path"),
-            new Brush("Mountain"),
-            new Brush("Grass Mountain"),
-            new Brush("Tall Grass"),
-            new Brush("Sand Path"),
-            new Brush(), new Brush(), new Brush(), new Brush(),
-            new Brush(), new Brush(), new Brush(), new Brush(),
-            new Brush(),
-        ]);
+        // TODO Get from configs
+        this.brushes = writable([]);
+
+        // TODO Get from configs
+        const tilesetBlocks = new Array(allImages.length);
+        console.log(tilesetBlocks);
+        for (let y = 0; y < Math.ceil(allImages.length / 8); y++) {
+            let tilesetRow = [];
+            for (let x = 0; x < 8; x++)
+                tilesetRow[x] = [y * 8 + x, null];
+
+            tilesetBlocks[y] = tilesetRow;
+        }
+        this.tilesetBlocks = writable(tilesetBlocks);
+
+        this.brush = writable(new PencilBrush(tilesetBlocks[0][0]));
+
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;

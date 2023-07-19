@@ -2,21 +2,31 @@
     import type { MapEditorContext, TilesetData } from "src/views/MapEditor";
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
+    import { MultiBrush, PencilBrush } from "../editor/brushes";
+
+    interface Selection extends Point {
+        width: number;
+        height: number;
+    }
 
     const context: MapEditorContext = getContext("context");
     // Get the data
     const data = context.data;
+    const brush = context.brush;
     // Get the tilesets
     const tilesets: TilesetData = $data.tilesets;
+    // Get the block data for this map
+    const tilesetBlocksStore = context.tilesetBlocks;
 
     // Get the canvas
     let paletteCanvas: HTMLCanvasElement;
     let selectionDiv: HTMLDivElement;
 
     // Currently selected tile
-    let selectedTile = 0;
-
-    $: selectedTile;
+    let selectionStart: Point = { x: 0, y: 0 },
+        selectionEnd: Point = { x: 0, y: 0 },
+        // If you are multi selecting
+        rightClicking: boolean = false;
 
     /** Compose the canvas image for the palette */
     function drawPalette() {
@@ -36,19 +46,54 @@
         }
     }
 
-    function updateSelection() {
-        const x = selectedTile % 8;
+    function sortSelection(): Selection {
+        let minx = Math.min(selectionStart.x, selectionEnd.x);
+        let miny = Math.min(selectionStart.y, selectionEnd.y);
+        let dx = selectionStart.x - selectionEnd.x;
+        let dy = selectionStart.y - selectionEnd.y;
+
+        const width = Math.abs(dx) + 1;
+        const height = Math.abs(dy) + 1;
+        const x = minx;
+        const y = miny;
+        return { x, y, width, height };
+    }
+
+    function drawSelection() {
+        if (!selectionDiv) return;
+
+        const { x, y, width, height } = sortSelection();
+
         selectionDiv.style.setProperty("--x", `${x}`);
-        const y = Math.floor(selectedTile / 8);
         selectionDiv.style.setProperty("--y", `${y}`);
-        const width = 1;
         selectionDiv.style.setProperty("--width", `${width}`);
-        const height = 1;
         selectionDiv.style.setProperty("--height", `${height}`);
     }
 
-    /** Handles selection of tiles */
-    function onClick(event: MouseEvent) {
+    /** Creates the brush from the current selection */
+    function buildBrush() {
+        const { x, y, width, height } = sortSelection();
+
+        const tilesetBlocks = $tilesetBlocksStore;
+
+        // See if the brush is a single tile
+        if (width * height === 1) {
+            $brush = new PencilBrush(tilesetBlocks[y][x]);
+        } else {
+            const blocks = [];
+            for (let i = 0; i < height; i++) {
+                const row = [];
+                for (let j = 0; j < width; j++) {
+                    row.push(tilesetBlocks[y + i][x + j]);
+                }
+                blocks.push(row);
+            }
+            $brush = new MultiBrush(blocks);
+        }
+    }
+
+    /** Gets the coordinates of the clicked tile on the canvas */
+    function getTile(event: MouseEvent): Point {
         // Get the pixel coordinates
         const x = Math.floor(event.offsetX);
         const y = Math.floor(event.offsetY);
@@ -59,11 +104,31 @@
         // Get the tile index
         const tileX = Math.floor((x / width) * 8);
         const tileY = Math.floor((y / height) * Math.ceil(tilesets.length / 8));
-        const tileIndex = tileX + tileY * 8;
 
-        // Set the current tile
-        selectedTile = tileIndex;
-        updateSelection();
+        return {
+            x: tileX,
+            y: tileY,
+        };
+    }
+
+    function onMouseDown(event: MouseEvent) {
+        selectionStart = getTile(event);
+        selectionEnd = { ...selectionStart };
+        drawSelection();
+
+        if (event.buttons === 2) {
+            rightClicking = true;
+        }
+    }
+    function onMouseMove(event: MouseEvent) {
+        if (rightClicking) {
+            selectionEnd = getTile(event);
+            drawSelection();
+        }
+    }
+    function onMouseUp(event: MouseEvent) {
+        rightClicking = false;
+        buildBrush();
     }
 
     function onResized() {
@@ -75,11 +140,13 @@
         const tileSize = width / 8;
         // Update the selection's position and size
         selectionDiv.style.setProperty("--size", `${tileSize}px`);
+
+        drawSelection();
     }
 
     onMount(() => {
         drawPalette();
-        updateSelection();
+        drawSelection();
     });
 </script>
 
@@ -89,7 +156,9 @@
         <canvas
             class="palette-canvas"
             bind:this={paletteCanvas}
-            on:click={onClick}
+            on:mousedown={onMouseDown}
+            on:mouseup={onMouseUp}
+            on:mousemove={onMouseMove}
         />
     </div>
 </div>
@@ -97,6 +166,24 @@
 <style lang="scss">
     .palette {
         padding: 18px;
+
+        &:not(:hover) {
+            .selection {
+                animation: pulse 1s infinite;
+
+                @keyframes pulse {
+                    0% {
+                        outline-color: red;
+                    }
+                    50% {
+                        outline-color: white;
+                    }
+                    100% {
+                        outline-color: red;
+                    }
+                }
+            }
+        }
     }
 
     .canvas-container {
