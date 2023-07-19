@@ -61,7 +61,11 @@ export class PainterState {
         this.drawn = true;
     }
 
-    /** Gets the given block */
+    /** 
+     * Gets the block `[metatile, level]` at the given coordinates.
+     * 
+     * Returns `null` if the coordinates are out of bounds.
+     */
     public get(x: number, y: number): BlockData {
         if (!this.methods.inBounds(x, y)) return null;
 
@@ -137,5 +141,71 @@ export class PencilBrush extends Brush {
         this.lastX = null;
         this.lastY = null;
         state.clean();
+    }
+}
+
+export class FillBucketBrush extends Brush {
+    public name = "Fill Bucket";
+    public replacement: BlockData;
+
+    constructor(metatile: BlockData) {
+        super();
+        this.replacement = metatile;
+    }
+
+    /** Decides whether you can replace a block with the replacement */
+    canReplace(block1: BlockData, block2: BlockData) {
+        // If it fills the level only, then it discerns what to replace
+        // based on the level only.
+        if (this.replacement[0] === null)
+            return block1[1] === block2[1];
+
+        // In any other case, it discerns what to replace based on the
+        // metatile only.
+        return block1[0] === block2[0];
+    }
+
+    public startStroke(state: PainterState, x: number, y: number) {
+        const current = state.get(x, y);
+        state.set(x, y, this.replacement);
+        state.update();
+        if (this.canReplace(current, this.replacement)) return;
+
+        const visited: Record<BlockHash, boolean> = {};
+        // We cannot start at the given block, otherwise we'd stop immediately
+        const queue: [number, number][] = [
+            [x - 1, y],
+            [x + 1, y],
+            [x, y - 1],
+            [x, y + 1],
+        ];
+
+        while (queue.length > 0) {
+            // Extract the first element from the queue
+            const [x, y] = queue.shift();
+            const hash = `${x},${y}`;
+
+            // Continue only if it can be replaced
+            const block = state.get(x, y);
+            // Continue if out of bounds
+            if (block === null) continue;
+
+            // If the block has already already visited, skip it
+            if (visited[hash]) continue;
+            visited[hash] = true;
+
+            // Since current is never undefined, this also
+            if (!this.canReplace(block, current)) continue;
+            state.set(x, y, this.replacement);
+
+            // Add the adjacent blocks to the queue
+            queue.push([x - 1, y]);
+            queue.push([x + 1, y]);
+            queue.push([x, y - 1]);
+            queue.push([x, y + 1]);
+
+        }
+
+        state.update();
     }
 }

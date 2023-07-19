@@ -46,7 +46,7 @@
      */
     const LEVEL_CACHE_ZOOM = 8;
     /** Zoom level before which only colors are rendered */
-    const LEVEL_SIMPLIFY_ZOOM = 2;
+    const LEVEL_ZOOM_WITH_TEXT = 2;
     /** Transparency level for the level background */
     const LEVEL_BACKGROUND_ALPHA = 0.5;
     /**
@@ -92,7 +92,7 @@
     const LAYER_CHARS = "⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛";
 
     // ANCHOR Helpers
-    type ChunkData = HTMLCanvasElement;
+    type ChunkData = CanvasRenderingContext2D;
     interface Point {
         x: number;
         y: number;
@@ -163,11 +163,10 @@
 
     /** Canvases containing the chunks in which the metatile map is divided */
     let metatileChunks: [ChunkData, ChunkData][][] = null;
-    /**
-     * Canvases containing the chunks in which the layer map is divided.
-     * Two versions are rendered: one with and one without the text.
-     */
-    let levelChunks: [ChunkData, ChunkData][][] = null;
+    /** Canvases containing the chunks for rendering the level data with colors and text. */
+    let textLevelChunks: ChunkData[][] = null;
+    /** Canvases containing the chunks for rendering the level data with colors only. */
+    let colorLevelMap: CanvasRenderingContext2D = null;
 
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
@@ -178,8 +177,8 @@
         tilesetImages = value.tilesets;
         buildChunks();
         buildLevelChunks();
-        draw();
         initialized = true;
+        draw();
     });
 
     // ANCHOR Draw
@@ -189,10 +188,8 @@
             return;
 
         const frameStart = performance.now();
-
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
         ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         // Find how many squares of size 16x16 can fit in the canvas
         drawBottomLayer();
@@ -212,7 +209,12 @@
         });
     }
 
-    // ANCHOR Draw tiles
+    // ANCHOR Tile and lavel drawing functions
+    /** Draws the bottom layer of the blocks */
+    const drawBottomLayer = () => drawTileLayer(true);
+    /** Draws the top layer of the blocks */
+    const drawTopLayer = () => drawTileLayer(false);
+
     function drawTileLayer(bottomLayer: boolean) {
         const [start, end] = getVisibleBlocks();
 
@@ -241,27 +243,67 @@
                 );
                 if (bottomLayer)
                     ctx.drawImage(
-                        bottom,
+                        bottom.canvas,
                         pos.x,
                         pos.y,
-                        bottom.width * zoom,
-                        bottom.height * zoom
+                        bottom.canvas.width * zoom,
+                        bottom.canvas.height * zoom
                     );
                 else
                     ctx.drawImage(
-                        top,
+                        top.canvas,
                         pos.x,
                         pos.y,
-                        top.width * zoom,
-                        top.height * zoom
+                        top.canvas.width * zoom,
+                        top.canvas.height * zoom
                     );
             }
         }
     }
-    /** Draws the bottom layer of the blocks */
-    const drawBottomLayer = () => drawTileLayer(true);
-    /** Draws the top layer of the blocks */
-    const drawTopLayer = () => drawTileLayer(false);
+
+    /** Draws the level data on top of the canvas. */
+    function drawLevels() {
+        // Get the visible map
+        const [start, end] = getVisibleBlocks();
+
+        // Draw the chunks if the zoom requires it
+        if (zoom >= LEVEL_ZOOM_WITH_TEXT) {
+            const [chunkStart, chunkEnd] = getVisibleChunks(start, end);
+
+            // Draw the chunks
+            for (let x = chunkStart.x; x < chunkEnd.x; x++) {
+                for (let y = chunkStart.y; y < chunkEnd.y; y++) {
+                    // Get the chunk data
+                    const chunk = textLevelChunks[y]?.[x];
+                    if (chunk === undefined) continue;
+
+                    // Draw the chunk
+                    const pos = mapToCanvas(
+                        point(x * chunkSize * 16, y * chunkSize * 16)
+                    );
+                    ctx.drawImage(
+                        chunk.canvas,
+                        pos.x,
+                        pos.y,
+                        chunkSize * 16 * zoom,
+                        chunkSize * 16 * zoom
+                    );
+                }
+            }
+
+            return;
+        }
+
+        // Otherwise just draw the color level map
+        const pos = mapToCanvas(point(0, 0));
+        ctx.drawImage(
+            colorLevelMap.canvas,
+            pos.x,
+            pos.y,
+            blocksWidth * zoom * 16,
+            blocksHeight * zoom * 16
+        );
+    }
 
     /**
      * Return the coordinates (in blocks) of the topleft and bottomright block
@@ -294,53 +336,6 @@
         );
 
         return [chunkStart, chunkEnd];
-    }
-
-    /**
-     * Retuns [top, bottom] images for the metatile at a given block
-     * coordinates, or null if it is wrong.
-     */
-    function getMetatileImagesAt(x: number, y: number): HTMLImageElement[] {
-        const metatile = blocks[y]?.[x]?.[0];
-        if (metatile === undefined) return null;
-
-        if (
-            tilesetImages[metatile] === undefined ||
-            tilesetImages[metatile].length !== 2
-        )
-            return null;
-
-        return tilesetImages[metatile];
-    }
-
-    // ANCHOR Draw levels
-    function drawLevels() {
-        // Get the visible map
-        const [start, end] = getVisibleBlocks();
-        const [chunkStart, chunkEnd] = getVisibleChunks(start, end);
-
-        // Only if you're allowed to print characters, write using the cache
-        // for maximum performance
-        // Draw the chunks
-        for (let x = chunkStart.x; x < chunkEnd.x; x++) {
-            for (let y = chunkStart.y; y < chunkEnd.y; y++) {
-                // Get the chunk data
-                const chunk = levelChunks[y]?.[x];
-                if (chunk === undefined) continue;
-
-                // Draw the chunk
-                const pos = mapToCanvas(
-                    point(x * chunkSize * 16, y * chunkSize * 16)
-                );
-                ctx.drawImage(
-                    chunk[zoom >= LEVEL_SIMPLIFY_ZOOM ? 0 : 1],
-                    pos.x,
-                    pos.y,
-                    chunkSize * 16 * zoom,
-                    chunkSize * 16 * zoom
-                );
-            }
-        }
     }
 
     /** Convert a level information to its color and text */
@@ -462,7 +457,7 @@
             }
         }
 
-        return [botCanvas, topCanvas];
+        return [botCtx, topCtx];
     }
 
     /** Build the chunks for caching the level data. */
@@ -474,35 +469,40 @@
         const chunksY = Math.ceil(blocksHeight / chunkSize);
 
         // Create the chunks
-        levelChunks = new Array(chunksY);
+        textLevelChunks = new Array(chunksY);
 
         // Fill the chunks
         for (let cy = 0; cy < chunksY; cy++) {
-            levelChunks[cy] = new Array(chunksX);
+            textLevelChunks[cy] = new Array(chunksX);
             for (let cx = 0; cx < chunksX; cx++) {
                 // Get the chunk data
                 const chunk = getLevelChunk(cx, cy);
                 // Save the chunk
-                levelChunks[cy][cx] = chunk;
+                textLevelChunks[cy][cx] = chunk;
             }
         }
+
+        // Build the color level map
+        const canvas = document.createElement("canvas");
+        canvas.width = blocksWidth;
+        canvas.height = blocksHeight;
+        colorLevelMap = canvas.getContext("2d");
+        colorLevelMap.globalAlpha = LEVEL_BACKGROUND_ALPHA;
+
+        for (let j = 0; j < blocksHeight; j++)
+            for (let i = 0; i < blocksWidth; i++) updateLevelPixel(i, j);
     }
 
     /** Renders the chunk at the given coordinates containing the render levels */
-    function getLevelChunk(cx: number, cy: number): [ChunkData, ChunkData] {
+    function getLevelChunk(cx: number, cy: number): ChunkData {
         // Build the canvas for the version with text
-        const withText = document.createElement("canvas");
-        withText.width = chunkSize * 16 * LEVEL_CACHE_ZOOM;
-        withText.height = chunkSize * 16 * LEVEL_CACHE_ZOOM;
-        const withCtx = withText.getContext("2d");
-        withCtx.font = `${12 * LEVEL_CACHE_ZOOM}px Rubik`;
-        withCtx.textAlign = "center";
-        withCtx.textBaseline = "middle";
-
-        const withoutText = document.createElement("canvas");
-        withoutText.width = chunkSize * 16 * LEVEL_CACHE_ZOOM;
-        withoutText.height = chunkSize * 16 * LEVEL_CACHE_ZOOM;
-        const withoutCtx = withoutText.getContext("2d");
+        const lvCanvas = document.createElement("canvas");
+        lvCanvas.width = chunkSize * 16 * LEVEL_CACHE_ZOOM;
+        lvCanvas.height = chunkSize * 16 * LEVEL_CACHE_ZOOM;
+        const lvCtx = lvCanvas.getContext("2d");
+        lvCtx.font = `${12 * LEVEL_CACHE_ZOOM}px Rubik`;
+        lvCtx.textAlign = "center";
+        lvCtx.textBaseline = "middle";
 
         // Draw the levels in this chunk
         for (let j = 0; j < chunkSize; j++) {
@@ -513,25 +513,22 @@
                 if (level === undefined) continue;
 
                 // Draw the level with text
-                drawLevel(withCtx, level, i, j);
-                // Draw the level without text
-                drawLevel(withoutCtx, level, i, j, false);
+                drawLevelSquare(lvCtx, level, i, j);
             }
         }
 
-        return [withText, withoutText];
+        return lvCtx;
     }
 
     /**
-     * Draws the given level data to a canvas context with the given offset index.
-     * Can decide whether to draw text on top or not.
+     * Draws the given level data to a canvas context with the given offset,
+     * width a background and a text.
      */
-    function drawLevel(
+    function drawLevelSquare(
         chunkCtx: CanvasRenderingContext2D,
         level: number,
         ox: number,
-        oy: number,
-        drawText: boolean = true
+        oy: number
     ) {
         // Get the coordinates in the chunk
         const x = ox * 16 * LEVEL_CACHE_ZOOM;
@@ -546,15 +543,28 @@
         chunkCtx.fillRect(x, y, 16 * LEVEL_CACHE_ZOOM, 16 * LEVEL_CACHE_ZOOM);
 
         // Draw the text
-        if (drawText) {
-            chunkCtx.globalAlpha = 1;
-            chunkCtx.fillStyle = "white";
-            chunkCtx.fillText(
-                text,
-                x + 8 * LEVEL_CACHE_ZOOM,
-                y + 8 * LEVEL_CACHE_ZOOM
-            );
-        }
+        chunkCtx.globalAlpha = 1;
+        chunkCtx.fillStyle = "white";
+        chunkCtx.fillText(
+            text,
+            x + 8 * LEVEL_CACHE_ZOOM,
+            y + 8 * LEVEL_CACHE_ZOOM
+        );
+    }
+
+    /** Prints a pixel to the colorLevelMap corresponding to the level at the given offset */
+    function updateLevelPixel(x: number, y: number) {
+        // Get the level
+        const level = blocks[y]?.[x]?.[1];
+        if (level === undefined) return;
+
+        // Get the color
+        const [color, _] = levelToColorAndString(level);
+
+        // Draw a rectangle
+        colorLevelMap.fillStyle = color;
+        colorLevelMap.clearRect(x, y, 1, 1);
+        colorLevelMap.fillRect(x, y, 1, 1);
     }
 
     // ANCHOR Panning
@@ -592,8 +602,8 @@
             if (oldMetatile !== metatile) {
                 // Get the metattile chunks
                 const metatileChunk = metatileChunks[cy][cx];
-                const botCtx = metatileChunk[0].getContext("2d");
-                const topCtx = metatileChunk[1].getContext("2d");
+                const botCtx = metatileChunk[0];
+                const topCtx = metatileChunk[1];
 
                 // Get the tile images
                 const images = tilesetImages[metatile];
@@ -609,22 +619,17 @@
 
             if (oldLevel !== level) {
                 // Get the level chunks
-                const levelChunk = levelChunks[cy][cx];
-                const withCtx = levelChunk[0].getContext("2d");
-                const woutCtx = levelChunk[1].getContext("2d");
-
-                // Clear the spot for both of the canvases
-                const x0 = ox * 16 * LEVEL_CACHE_ZOOM;
-                const y0 = oy * 16 * LEVEL_CACHE_ZOOM;
-                const size = 16 * LEVEL_CACHE_ZOOM;
-
-                withCtx.clearRect(x0, y0, size, size);
-                woutCtx.clearRect(x0, y0, size, size);
-
+                const levelChunk = textLevelChunks[cy][cx];
+                levelChunk.clearRect(
+                    ox * 16 * LEVEL_CACHE_ZOOM,
+                    oy * 16 * LEVEL_CACHE_ZOOM,
+                    16 * LEVEL_CACHE_ZOOM,
+                    16 * LEVEL_CACHE_ZOOM
+                );
                 // Draw the layer on the canvas with text
-                drawLevel(withCtx, level, ox, oy);
-                // Draw the layer on the canvas without text
-                drawLevel(woutCtx, level, ox, oy, false);
+                drawLevelSquare(levelChunk, level, ox, oy);
+                // Update the canvas without text
+                updateLevelPixel(x, y);
             }
         },
     };
@@ -720,6 +725,14 @@
     function updateSize() {
         canvasWidth = containerEl.clientWidth;
         canvasHeight = containerEl.clientHeight;
+        // If data was updated to 0, 0, don't bother changing it, but redraw anyways
+        if (canvasWidth === 0 || canvasHeight === 0) {
+            draw();
+            return;
+        }
+
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
         draw();
     }
 
@@ -746,6 +759,23 @@
     });
     onDestroy(() => {
         unsubscribeFromData();
+        initialized = false;
+
+        // Unset all things that could use memory
+        context = null;
+        for (const row of metatileChunks)
+            for (const chunk of row)
+                for (const ctx of chunk) ctx.canvas.remove();
+        metatileChunks = null;
+
+        for (const row of textLevelChunks)
+            for (const ctx of row) ctx.canvas.remove();
+        textLevelChunks = null;
+        colorLevelMap.canvas.remove();
+        colorLevelMap = null;
+        canvas.remove();
+        canvas = null;
+        ctx = null;
     });
 </script>
 
