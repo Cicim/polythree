@@ -7,6 +7,7 @@
     import BrushCard from "./BrushCard.svelte";
     import Button from "src/components/Button.svelte";
     import ToolButton from "../ToolButton.svelte";
+    import TilePalette from "./TilePalette.svelte";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -146,7 +147,7 @@
         <!-- ANCHOR - Palette picker -->
         <div class:hidden={editingMode === "brush-list"} class="palette-view">
             <div class="palette-container">
-                <div class="palette">Palette</div>
+                <TilePalette />
             </div>
         </div>
         <div class:hidden={editingMode === "brush-list"} class="footbar-view">
@@ -258,17 +259,13 @@
     }
     .palette-view {
         display: flex;
-        flex: 1;
+        flex: 4;
         overflow: hidden;
 
         .palette-container {
             width: 100%;
             height: 100%;
             overflow-y: auto;
-
-            .palette {
-                height: 9090px;
-            }
         }
     }
     .multi-selection-view {
