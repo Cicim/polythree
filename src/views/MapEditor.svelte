@@ -67,11 +67,11 @@
         height: 100%;
 
         display: grid;
-        grid-template-columns: 36px 1fr;
+        grid-template-columns: 36px minmax(0, 1fr);
         grid-template-areas: "tabs editor";
     }
     .editor-container {
-        display: flex;
+        height: 100%;
         overflow: hidden;
     }
 </style>

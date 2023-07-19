@@ -18,7 +18,7 @@
         | "brush-list"
         | "borders"
         | "brush"
-        | "brush-level" = "brush-list";
+        | "brush-level" = "none";
 
     // TODO: Derive from selection
     $: multiselecting = false;
@@ -145,7 +145,9 @@
         </div>
         <!-- ANCHOR - Palette picker -->
         <div class:hidden={editingMode === "brush-list"} class="palette-view">
-            Palette
+            <div class="palette-container">
+                <div class="palette">Palette</div>
+            </div>
         </div>
         <div class:hidden={editingMode === "brush-list"} class="footbar-view">
             Footbar!
@@ -164,14 +166,15 @@
     }
 
     .sidebar-container {
-        display: grid;
-        height: 100%;
-        grid-template-columns: 1fr;
         position: relative;
         user-select: none;
+        display: flex;
+        overflow: hidden;
     }
 
     .layout {
+        flex: 1;
+
         display: flex;
         flex-direction: column;
         flex-wrap: wrap;
@@ -254,8 +257,19 @@
         flex: 1;
     }
     .palette-view {
-        flex: 4;
-        flex-shrink: 1;
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+
+        .palette-container {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+
+            .palette {
+                height: 9090px;
+            }
+        }
     }
     .multi-selection-view {
         max-height: 25%;

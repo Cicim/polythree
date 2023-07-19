@@ -40,9 +40,7 @@
 
 <style lang="scss">
     .editor {
-        width: 100%;
         height: 100%;
-        max-height: 100%;
         overflow: hidden;
 
         display: grid;
@@ -72,6 +70,8 @@
         background: var(--medium-bg);
         box-shadow: -1px 0 0 var(--light-shadow);
         z-index: 2;
-        grid-template-columns: 0 1fr;
+        display: grid;
+        grid-template-columns: 0 minmax(0, 1fr);
+        height: 100%;
     }
 </style>
