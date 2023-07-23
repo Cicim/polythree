@@ -692,9 +692,7 @@
         if (event.button === 0 && isPainting) {
             // Get the current tile coordinates
             const { x, y } = hoveredTile();
-            // If the tile are not in bounds, don't do anything
-            if (!isInBounds(x, y)) return;
-
+            // Don't care if the tile is in bounds, the stroke should always end
             isPainting = false;
             tool.endStroke(x, y);
 
