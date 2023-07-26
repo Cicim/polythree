@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    // import { HomePageContext } from "./views/HomePage";
+    import "iconify-icon";
     import TabBar from "./components/app/TopBar.svelte";
     import FootBar from "./components/app/FootBar.svelte";
     import ContextMenu from "./components/app/ContextMenu.svelte";

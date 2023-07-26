@@ -1,5 +1,5 @@
 <script lang="ts">
-    import "iconify-icon";
+    
     import { onMount, onDestroy } from "svelte";
 
     // Pulse the shadow

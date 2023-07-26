@@ -3,12 +3,35 @@
 
 mod config;
 mod handlers;
+mod iconify_server;
 mod state;
 
+use std::path::PathBuf;
+
 use config::{get_config, set_config};
+use iconify_server::spawn_iconify_server_thread;
 use state::PolythreeState;
+use tauri::App;
 
 use crate::handlers::{map_editor::*, map_list::*, rom::*};
+
+fn setup_function(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+    // If you are in development
+    let path = if !cfg!(debug_assertions) {
+        app.handle()
+            .path_resolver()
+            .resolve_resource("iconify-icons/")
+            .ok_or("Could not resolve iconify-icons path")
+            .unwrap()
+    } else {
+        PathBuf::from("./iconify-icons/")
+    };
+
+    // Run an http server in a separate thread
+    spawn_iconify_server_thread(path);
+
+    Ok(())
+}
 
 fn main() {
     tauri::Builder::default()
@@ -36,6 +59,7 @@ fn main() {
             update_map_header,
             update_layout_header,
         ])
+        .setup(setup_function)
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

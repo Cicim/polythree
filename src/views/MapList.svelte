@@ -1,5 +1,5 @@
 <script lang="ts">
-    import "iconify-icon";
+    
     import { onMount, setContext, tick } from "svelte";
     import {
         GroupCriteria,

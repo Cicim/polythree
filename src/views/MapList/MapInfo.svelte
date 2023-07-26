@@ -4,7 +4,7 @@
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
     import Button from "src/components/Button.svelte";
-    import "iconify-icon";
+    
     import { MapEditorContext } from "../MapEditor";
     import OffsetLabel from "src/components/OffsetLabel.svelte";
     import { config } from "src/systems/global";

@@ -43,7 +43,8 @@
       "targets": "all",
       "identifier": "com.polythree.editor",
       "resources": [
-        "configs/*"
+        "configs/*",
+        "iconify-icons/*"
       ],
       "icon": [
         "icons/32x32.png",

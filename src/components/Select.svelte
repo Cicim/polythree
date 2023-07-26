@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    import "iconify-icon";
+    
     import Option from "./Option.svelte";
     import {
         createEventDispatcher,

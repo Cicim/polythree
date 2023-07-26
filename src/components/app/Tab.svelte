@@ -1,5 +1,5 @@
 <script lang="ts">
-    import "iconify-icon";
+    
     import type { ViewContext, EditorContext } from "src/systems/contexts";
     import { draggingId, openViews } from "src/systems/views";
 

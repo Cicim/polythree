@@ -1,5 +1,4 @@
 <script lang="ts">
-    import "iconify-icon";
     import { openViews } from "src/systems/views";
 </script>
 
