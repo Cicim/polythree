@@ -13,6 +13,7 @@
         type PaintingMaterial,
     } from "../editor/materials";
     import SelectionPreview from "./SelectionPreview.svelte";
+    import LevelPalette from "./LevelPalette.svelte";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -51,23 +52,6 @@
 </div>
 <div class="sidebar-container" class:hidden>
     <div class="sidebar-content">
-        <!-- ANCHOR View -->
-        <div
-            class="level-palette-view"
-            class:hidden={!levelMode}
-            use:resizeY={{
-                maxHeight: () => window.innerHeight * 0.33,
-                minHeight: () => window.innerHeight * 0.1,
-                startHeight: 200,
-            }}
-        >
-            <div class="level-palette-container">Level Palette</div>
-            <div class="resize-handle top" />
-        </div>
-        <!-- ANCHOR - Palette Permissions Editing -->
-        <div class="tileset-level-editor-view" class:hidden={!levelMode}>
-            Tileset Level Editor
-        </div>
         <!-- ANCHOR - Brush List -->
         <div
             class:hidden={levelMode || state !== LayoutState.BrushList}
@@ -159,16 +143,31 @@
             Brush
             <div class="resize-handle top" />
         </div>
-        <!-- ANCHOR - Level picker for brush editing -->
+        <!-- ANCHOR View -->
         <div
-            class:hidden={levelMode || state !== LayoutState.BrushLevel}
-            class="level-view"
+            class="level-palette-view"
+            class:flexed={state === LayoutState.BrushLevel}
+            class:hidden={!levelMode && state !== LayoutState.BrushLevel}
+            use:resizeY={{
+                maxHeight: () => Math.min(310, window.innerHeight * 0.33),
+                minHeight: () => window.innerHeight * 0.1,
+                startHeight: 310,
+            }}
         >
-            Level
+            <div class="level-palette-container">
+                <LevelPalette />
+            </div>
+            {#if levelMode && state !== LayoutState.BrushLevel}
+                <div class="resize-handle top" />
+            {:else}
+                <div />
+            {/if}
         </div>
         <!-- ANCHOR - Tile palette view -->
         <div
-            class:hidden={levelMode || state === LayoutState.BrushList}
+            class:hidden={levelMode ||
+                state === LayoutState.BrushList ||
+                state === LayoutState.BrushLevel}
             class="tile-palette-view"
         >
             <div class="palette-container">
@@ -176,14 +175,21 @@
             </div>
         </div>
         <div
-            class:hidden={levelMode || state === LayoutState.BrushList}
+            class:hidden={levelMode ||
+                state === LayoutState.BrushList ||
+                state === LayoutState.BrushLevel}
             class="footbar-view"
         >
             Footbar!
         </div>
+        <!-- ANCHOR - Palette Permissions Editing -->
+        <div class="tileset-level-editor-view" class:hidden={!levelMode}>
+            Tileset Level Editor
+        </div>
         <!-- ANCHOR - Mutliselect preview -->
         <div
-            class:hidden={selection === null || state === LayoutState.BrushList}
+            class:hidden={selection === null ||
+                (!levelMode && state === LayoutState.BrushList)}
             class="multi-selection-view"
         >
             {#key selection}
@@ -294,9 +300,6 @@
         display: grid;
         grid-template-rows: minmax(0, 1fr) 0;
     }
-    .level-view {
-        flex: 1;
-    }
     .tile-palette-view {
         display: flex;
         flex: 4;
@@ -351,6 +354,15 @@
     .level-palette-view {
         display: grid;
         grid-template-rows: minmax(0, 1fr) 0;
+        overflow: hidden;
+
+        &.flexed {
+            flex: 1;
+        }
+
+        .level-palette-container {
+            overflow-y: auto;
+        }
     }
 
     .tileset-level-editor-view {
