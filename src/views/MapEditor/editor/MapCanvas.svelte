@@ -3,7 +3,7 @@
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import type { Writable } from "svelte/store";
     import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
-    import type { PaintingMaterial } from "./materials";
+    import { SelectionMaterial, type PaintingMaterial } from "./materials";
     import {
         PainterState,
         type PainterMethods,
@@ -169,8 +169,8 @@
     /** Actual selection rectangle */
     let selection: TileSelection = null;
 
-    // Painting with brushes
-    /** Selected brush */
+    // Painting tiles
+    /** Selected material */
     let material: Writable<PaintingMaterial> = context.material;
     /** Instance of the tool with which you're drawing */
     let tool: Tool = null;
@@ -610,6 +610,8 @@
     // ANCHOR Selection
     /** Computes the selection rectangle */
     function computeSelectionRectangle() {
+        const oldSelection = selection;
+
         let { x: sx, y: sy } = selectionStart;
         let { x: ex, y: ey } = hoveredTile();
 
@@ -626,12 +628,81 @@
             height: Math.abs(sy - ey) + 1,
         };
 
+        // If nothing changed since last time
+        if (
+            oldSelection !== null &&
+            oldSelection.x == selection.x &&
+            oldSelection.y == selection.y &&
+            oldSelection.width == selection.width &&
+            oldSelection.height == selection.height
+        )
+            return;
+
         // TODO Change for event selection
         createSelectionMaterial(selection);
     }
     /** Creates a material based on the selection rectangle */
     function createSelectionMaterial(selection: TileSelection) {
-        // TODO
+        const selCanvas = document.createElement("canvas");
+        selCanvas.width = selection.width * 16;
+        selCanvas.height = selection.height * 16;
+        const ctx = selCanvas.getContext("2d");
+
+        // Draw the blocks on this ctx
+        const csx = Math.floor(selection.x / chunkSize);
+        const csy = Math.floor(selection.y / chunkSize);
+        const cex = csx + Math.ceil(selection.width / chunkSize);
+        const cey = csy + Math.ceil(selection.height / chunkSize);
+
+        // Get the offset in the first chunk
+        const ox = selection.x % chunkSize;
+        const oy = selection.y % chunkSize;
+
+        // Build the metatile canvas
+        for (let cy = 0; cy <= cey - csy; cy++) {
+            for (let cx = 0; cx <= cex - csx; cx++) {
+                // Get the chunk
+                const chunk = metatileChunks[csy + cy]?.[csx + cx];
+                if (chunk === undefined) continue;
+
+                // Draw the chunk (subtracting the offset)
+                const rx = cx * chunkSize * 16 - ox * 16;
+                const ry = cy * chunkSize * 16 - oy * 16;
+                ctx.drawImage(chunk[0].canvas, rx, ry);
+                ctx.drawImage(chunk[1].canvas, rx, ry);
+            }
+        }
+
+        // Build the levels canvas
+        const lvCanvas = document.createElement("canvas");
+        lvCanvas.width = selection.width;
+        lvCanvas.height = selection.height;
+        const lvCtx = lvCanvas.getContext("2d");
+        lvCtx.drawImage(
+            colorLevelMap.canvas,
+            selection.x,
+            selection.y,
+            selection.width,
+            selection.height,
+            0,
+            0,
+            selection.width,
+            selection.height
+        );
+
+        // Copy the selection
+        const selBlockData = [];
+        for (let y = 0; y < selection.height; y++) {
+            selBlockData[y] = [];
+            for (let x = 0; x < selection.width; x++) {
+                const block = blocks[selection.y + y]?.[selection.x + x];
+                if (block === undefined) continue;
+                selBlockData[y][x] = [...block];
+            }
+        }
+
+        // Save the material
+        $material = new SelectionMaterial(selBlockData, selCanvas, lvCanvas);
     }
 
     // ANCHOR Painting with brushes
@@ -678,7 +749,7 @@
                 topCtx.drawImage(topImage, ox * 16, oy * 16, 16, 16);
             }
 
-            if (oldLevel !== level && editLevels) {
+            if (oldLevel !== level) {
                 // Get the level chunks
                 const levelChunk = textLevelChunks[cy][cx];
                 levelChunk.clearRect(

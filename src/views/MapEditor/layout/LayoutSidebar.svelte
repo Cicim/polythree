@@ -1,5 +1,6 @@
 <script lang="ts">
     import { getContext } from "svelte";
+    import type { Writable } from "svelte/store";
     import Select from "src/components/Select.svelte";
     import { resizeY } from "src/systems/resize";
     import type { MapEditorContext } from "src/views/MapEditor";
@@ -7,6 +8,12 @@
     import Button from "src/components/Button.svelte";
     import ToolButton from "../ToolButton.svelte";
     import TilePalette from "./TilePalette.svelte";
+    import {
+        SelectionMaterial,
+        type PaintingMaterial,
+    } from "../editor/materials";
+    import MapPreview from "src/views/MapList/MapPreview.svelte";
+    import SelectionPreview from "./SelectionPreview.svelte";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -22,11 +29,11 @@
 
     const context: MapEditorContext = getContext("context");
     const brushesStore = context.brushes;
+    const material: Writable<PaintingMaterial> = context.material;
 
     let state: LayoutState = LayoutState.None;
 
-    // TODO: Derive from selection
-    $: multiselecting = false;
+    $: selection = $material instanceof SelectionMaterial ? $material : null;
 </script>
 
 <svelte:window />
@@ -69,10 +76,14 @@
         </div>
         <!-- ANCHOR - Mutliselect preview -->
         <div
-            class:hidden={!multiselecting || state === LayoutState.BrushList}
+            class:hidden={selection === null || state === LayoutState.BrushList}
             class="multi-selection-view"
         >
-            Multi Selection
+            {#key selection}
+                {#if selection !== null}
+                    <SelectionPreview {selection} />
+                {/if}
+            {/key}
         </div>
         <!-- ANCHOR - Top bar -->
         <div class:hidden={state !== LayoutState.None} class="topbar-view">
@@ -278,7 +289,7 @@
     }
     .multi-selection-view {
         max-height: 25%;
-        min-height: 40px;
+        min-height: 20px;
     }
     .brush-list-view {
         display: grid;

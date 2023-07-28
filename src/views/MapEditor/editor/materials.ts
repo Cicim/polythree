@@ -30,3 +30,15 @@ export class PaletteMaterial extends PaintingMaterial {
         }
     }
 }
+
+export class SelectionMaterial extends PaletteMaterial {
+    public name = "Selection Material";
+
+    constructor(
+        tiles: BlockData[][],
+        public metatileCanvas: HTMLCanvasElement,
+        public levelCanvas: HTMLCanvasElement
+    ) {
+        super(tiles);
+    }
+}

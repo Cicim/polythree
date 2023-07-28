@@ -10,7 +10,7 @@ import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
-import { PaletteMaterial, type CustomMaterial } from "./MapEditor/editor/materials";
+import { PaintingMaterial, PaletteMaterial, type CustomMaterial } from "./MapEditor/editor/materials";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 
 export interface MapEditorProperties {
@@ -48,7 +48,7 @@ export class MapEditorContext extends TabbedEditorContext {
     declare public component: MapEditor;
     declare public data: Writable<MapEditorData>;
 
-    public material: Writable<CustomMaterial>;
+    public material: Writable<PaintingMaterial>;
     public brushes: Writable<CustomMaterial[]>;
     public tilesetBlocks: Writable<BlockData[][]>;
     public selectedTool: Writable<EditorTool>;
