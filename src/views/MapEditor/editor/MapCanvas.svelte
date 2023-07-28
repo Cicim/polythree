@@ -63,7 +63,7 @@
     /** Zoom level before which only colors are rendered */
     const LEVEL_ZOOM_WITH_TEXT = 2;
     /** Transparency level for the level background */
-    const LEVEL_BACKGROUND_ALPHA = 0.5;
+    const LEVEL_BACKGROUND_ALPHA = 0.33;
 
     // ANCHOR Helpers
     type ChunkData = CanvasRenderingContext2D;
@@ -549,6 +549,7 @@
         // Draw the text
         chunkCtx.globalAlpha = 1;
         chunkCtx.fillStyle = "white";
+        chunkCtx.font = `200 ${12 * LEVEL_CACHE_ZOOM}px Rubik`;
         chunkCtx.fillText(
             text,
             x + 8 * LEVEL_CACHE_ZOOM,
