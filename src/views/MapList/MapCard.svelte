@@ -7,7 +7,7 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import { MapEditorContext } from "../MapEditor";
-    import { showTooltip } from "src/systems/tooltip";
+    import { showPreviewWindow } from "src/components/app/PreviewWindow.svelte";
 
     import intersection from "src/systems/intersection";
 
@@ -24,7 +24,7 @@
     export let offset: number;
     export let selected = false;
     export let lastSelected = false;
-    
+
     $: selected === true && cardEl?.focus();
 
     const dispatch = createEventDispatcher();
@@ -51,7 +51,9 @@
 
     let ctxMenu = [
         // new IconOption("Duplicate", "mdi:content-copy", () => {}),
-        new IconOption("New in Group", "mdi:plus", () => {context.component.createMap({group})}),
+        new IconOption("New in Group", "mdi:plus", () => {
+            context.component.createMap({ group });
+        }),
         new IconOption("Delete", "mdi:delete", () => {
             context.component.deleteCard(group, index);
         }),
@@ -88,7 +90,7 @@
     ];
 
     function openTooltip() {
-        showTooltip({
+        showPreviewWindow({
             target: cardEl,
             width: 400,
             height: 400,

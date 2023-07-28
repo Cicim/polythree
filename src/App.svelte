@@ -5,7 +5,7 @@
     import FootBar from "./components/app/FootBar.svelte";
     import ContextMenu from "./components/app/ContextMenu.svelte";
     import { handleKeydown } from "./systems/bindings";
-    import Tooltip from "./components/app/Tooltip.svelte";
+    import PreviewWindow from "./components/app/PreviewWindow.svelte";
     import { HomePageContext } from "./views/HomePage";
 
     onMount(() => {
@@ -28,7 +28,7 @@
     </footer>
 </main>
 <ContextMenu />
-<Tooltip />
+<PreviewWindow />
 
 <style lang="scss">
     #container {
