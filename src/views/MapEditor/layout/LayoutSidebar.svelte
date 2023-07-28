@@ -13,6 +13,7 @@
         type PaintingMaterial,
     } from "../editor/materials";
     import SelectionPreview from "./SelectionPreview.svelte";
+    import TilesetLevelEditor from "./TilesetLevelEditor.svelte";
     import LevelPalette from "./LevelPalette.svelte";
 
     /** Set this to true if you are editing the levels */
@@ -184,7 +185,7 @@
         </div>
         <!-- ANCHOR - Palette Permissions Editing -->
         <div class="tileset-level-editor-view" class:hidden={!levelMode}>
-            Tileset Level Editor
+            <TilesetLevelEditor />
         </div>
         <!-- ANCHOR - Mutliselect preview -->
         <div
@@ -366,7 +367,9 @@
     }
 
     .tileset-level-editor-view {
+        display: grid;
         flex: 4;
         border-bottom: none !important;
+        overflow: hidden;
     }
 </style>

@@ -26,6 +26,20 @@
     /** Whether or not this map allows having null levels */
     export let nullLevels: boolean = false;
 
+    /** Whether zooming is allowed */
+    export let allowZoom: boolean = true;
+    /** Whether panning is allowed */
+    export let allowPan: boolean = true;
+
+    /** Debug mode */
+    export let debug: boolean = false;
+
+    /**
+     * The width the canvas should always have.
+     * If set to anything but null, automatic resizing will be disabled.
+     */
+    export let constantWidth: number = null;
+
     // Update the size when the blocks update
     let blocksWidth: number = blocks[0].length;
     let blocksHeight: number = blocks.length;
@@ -161,6 +175,7 @@
             return;
 
         const frameStart = performance.now();
+
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -179,6 +194,8 @@
             ctx.lineWidth = zoom;
             ctx.strokeRect(px, py, width * 16 * zoom, height * 16 * zoom);
         }
+
+        if (!debug) return;
 
         const frameTime = performance.now() - frameStart;
         const hovered = hoveredTile();
@@ -747,7 +764,7 @@
         }
 
         // Panning starts with the middle mouse button (1)
-        if (event.button === 1) {
+        if (event.button === 1 && allowPan) {
             state = State.Panning;
             // Save the mouse coordinates for computing the offset
             mousePanStart.x = event.offsetX;
@@ -757,7 +774,7 @@
             mapPanStart.y = offset.y;
         }
 
-        // Selection start
+        // Selection starts with the right mouse button (2)
         if (event.button === 2) {
             const { x, y } = hoveredTile();
             if (!isInBounds(x, y)) return;
@@ -775,6 +792,14 @@
         // Save the mouse position for the next frame
         mousePosition.x = event.offsetX;
         mousePosition.y = event.offsetY;
+
+        // If there is another factor involved
+        if (constantWidth !== null) {
+            const rect = canvas.getBoundingClientRect();
+            const factor = constantWidth / rect.width;
+            mousePosition.x = Math.floor(mousePosition.x * factor);
+            mousePosition.y = Math.floor(mousePosition.y * factor);
+        }
 
         switch (state) {
             case State.Panning:
@@ -821,7 +846,7 @@
         }
     }
     function onMouseWheel(event: WheelEvent) {
-        if (state !== State.Idle) return;
+        if (!allowZoom || state !== State.Idle) return;
 
         let scroll = event.deltaY;
         if (scroll === 0) return;
@@ -850,14 +875,24 @@
 
     // ANCHOR Other Event handlers
     function updateSize() {
-        canvasWidth = containerEl.clientWidth;
-        canvasHeight = containerEl.clientHeight;
+        if (constantWidth === null) {
+            canvasWidth = containerEl.clientWidth;
+            canvasHeight = containerEl.clientHeight;
+        } else {
+            canvasWidth = constantWidth;
+            // Compute the height based on the width
+            canvasHeight = (canvasWidth / blocksWidth) * blocksHeight;
+
+            // Change the zoom so that the whole map width fits in the canvas
+            zoomIndex = null;
+            zoom = canvasWidth / (blocksWidth * 16);
+        }
+
         // If data was updated to 0, 0, don't bother changing it, but redraw anyways
         if (canvasWidth === 0 || canvasHeight === 0) {
             draw();
             return;
         }
-
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
         draw();
@@ -865,11 +900,15 @@
 
     // ANCHOR Exported actions
     export function zoomIn() {
+        if (!allowZoom) return;
+
         zoomIndex = Math.min(zoomIndex + 1, ZOOM_LEVELS.length - 1);
         zoom = ZOOM_LEVELS[zoomIndex];
         draw();
     }
     export function zoomOut() {
+        if (!allowZoom) return;
+
         zoomIndex = Math.max(zoomIndex - 1, 0);
         zoom = ZOOM_LEVELS[zoomIndex];
         draw();
@@ -912,6 +951,7 @@
     on:blur={() => onMouseUp({ button: 0 })}
 />
 
+<!-- {#if constantWidth === null} -->
 <div
     class="canvas-container"
     bind:this={containerEl}
@@ -925,6 +965,16 @@
         on:wheel={onMouseWheel}
     />
 </div>
+
+<!-- {:else}
+    <canvas
+        bind:this={canvas}
+        on:mousedown={onMouseDown}
+        on:mouseup={onMouseUp}
+        on:mousemove={onMouseMove}
+        on:wheel={onMouseWheel}
+    />
+{/if} -->
 
 <style lang="scss">
     .canvas-container {

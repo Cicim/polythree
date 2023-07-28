@@ -60,6 +60,7 @@
             text-align: center;
 
             :global(canvas) {
+                width: max-content;
                 max-width: 100%;
                 max-height: calc(256px - 4 * $padding - 1em);
                 image-rendering: pixelated;
