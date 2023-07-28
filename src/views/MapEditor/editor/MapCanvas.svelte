@@ -657,6 +657,7 @@
             // Create the painting state
             paintingState = new PainterState(PAINTER_METHODS);
             tool = new context.toolClass(paintingState, $material);
+            context.changes.locked++;
             tool.startStroke(x, y);
         }
 
@@ -686,7 +687,7 @@
             tool.moveStroke(x, y);
         }
     }
-    function onMouseUp(event: MouseEvent) {
+    function onMouseUp(event: MouseEvent | { button: number }) {
         if (event.button === 1 && isPanning) isPanning = false;
 
         if (event.button === 0 && isPainting) {
@@ -694,6 +695,7 @@
             const { x, y } = hoveredTile();
             // Don't care if the tile is in bounds, the stroke should always end
             isPainting = false;
+            context.changes.locked--;
             tool.endStroke(x, y);
 
             // Create a brush edit
@@ -786,7 +788,11 @@
     });
 </script>
 
-<svelte:window on:resize={updateSize} on:mouseup={onMouseUp} />
+<svelte:window
+    on:resize={updateSize}
+    on:mouseup={onMouseUp}
+    on:blur={() => onMouseUp({ button: 0 })}
+/>
 
 <div
     class="canvas-container"

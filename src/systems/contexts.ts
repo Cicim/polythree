@@ -241,7 +241,7 @@ export abstract class EditorContext extends ViewContext {
     public startSaving() {
         if (!this.needsSaveNow) return true;
         this.changes.saving.set(true);
-        this.changes.locked = true;
+        this.changes.locked++;
         return false;
     }
 

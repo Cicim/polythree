@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import MapCanvas from "../editor/MapCanvas.svelte";
-    import type { MapEditorData } from "src/views/MapEditor";
+    import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
+    import type { MapEditorData } from "src/views/MapEditor";
+    import MapCanvas from "../editor/MapCanvas.svelte";
 
-    export let editLevels: boolean = false;
+    export let editLevels: boolean;
 
     let data: Writable<MapEditorData> = getContext("data");
     let blocks = $data.layout.map_data;

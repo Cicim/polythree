@@ -16,7 +16,7 @@ export class EditorChanges {
     /** The change stack */
     public stack: Change[] = [];
     /** Whether you can accept undos/redos at the moment */
-    public locked: boolean;
+    public locked: number;
     /** The index of the top of the stack */
     public top: number = 0;
     /** The last time the editor was saved */
@@ -29,6 +29,7 @@ export class EditorChanges {
         this.currentTab = tabStore ?? null;
         this.unsaved = writable(false);
         this.saving = writable(false);
+        this.locked = 0;
     }
 
     /** Pushes the change into the stack and applies it */
@@ -90,7 +91,7 @@ export class EditorChanges {
         // Reset the loading icon
         this.saving.set(false);
         // Lock the editor
-        this.locked = false;
+        this.locked--;
         // Update the last saved
         this.lastSaved = this.current();
         // Parse the queue
