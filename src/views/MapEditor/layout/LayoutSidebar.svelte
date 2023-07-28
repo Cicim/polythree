@@ -12,7 +12,6 @@
         SelectionMaterial,
         type PaintingMaterial,
     } from "../editor/materials";
-    import MapPreview from "src/views/MapList/MapPreview.svelte";
     import SelectionPreview from "./SelectionPreview.svelte";
 
     /** Set this to true if you are editing the levels */
@@ -20,7 +19,7 @@
     export let hidden: boolean;
 
     enum LayoutState {
-        None,
+        Palette,
         BrushList,
         Borders,
         Brush,
@@ -31,7 +30,7 @@
     const brushesStore = context.brushes;
     const material: Writable<PaintingMaterial> = context.material;
 
-    let state: LayoutState = LayoutState.None;
+    let state: LayoutState = LayoutState.Palette;
 
     $: selection = $material instanceof SelectionMaterial ? $material : null;
 </script>
@@ -41,7 +40,7 @@
 <div class="a">
     <Select
         options={[
-            [LayoutState.None, "None"],
+            [LayoutState.Palette, "Palette"],
             [LayoutState.BrushList, "Brush List"],
             [LayoutState.Borders, "Borders"],
             [LayoutState.Brush, "Brush"],
@@ -51,20 +50,34 @@
     />
 </div>
 <div class="sidebar-container" class:hidden>
-    <!-- ANCHOR Level Mode sidebar -->
-    <div class="level" class:hidden={!levelMode}>levelMode ON</div>
-    <!-- ANCHOR Layout Mode sidebar -->
-    <div class="layout" class:hidden={levelMode}>
+    <div class="sidebar-content">
+        <!-- ANCHOR View -->
+        <div
+            class="level-palette-view"
+            class:hidden={!levelMode}
+            use:resizeY={{
+                maxHeight: () => window.innerHeight * 0.33,
+                minHeight: () => window.innerHeight * 0.1,
+                startHeight: 200,
+            }}
+        >
+            <div class="level-palette-container">Level Palette</div>
+            <div class="resize-handle top" />
+        </div>
+        <!-- ANCHOR - Palette Permissions Editing -->
+        <div class="tileset-level-editor-view" class:hidden={!levelMode}>
+            Tileset Level Editor
+        </div>
         <!-- ANCHOR - Brush List -->
         <div
-            class:hidden={state !== LayoutState.BrushList}
+            class:hidden={levelMode || state !== LayoutState.BrushList}
             class="brush-list-view"
         >
             <div class="topbar">
                 <ToolButton
                     icon="mdi:close"
                     title="Close"
-                    on:click={() => (state = LayoutState.None)}
+                    on:click={() => (state = LayoutState.Palette)}
                     theme="transparent"
                 />
             </div>
@@ -74,19 +87,11 @@
                 {/each}
             </div>
         </div>
-        <!-- ANCHOR - Mutliselect preview -->
-        <div
-            class:hidden={selection === null || state === LayoutState.BrushList}
-            class="multi-selection-view"
-        >
-            {#key selection}
-                {#if selection !== null}
-                    <SelectionPreview {selection} />
-                {/if}
-            {/key}
-        </div>
         <!-- ANCHOR - Top bar -->
-        <div class:hidden={state !== LayoutState.None} class="topbar-view">
+        <div
+            class:hidden={levelMode || state !== LayoutState.Palette}
+            class="topbar-view"
+        >
             <Button on:click={() => (state = LayoutState.Borders)}>
                 <iconify-icon icon="mdi:border-all" width="1.5em" />
                 Borders
@@ -103,7 +108,7 @@
         <!-- ANCHOR - Brushes Container -->
         <div
             class="brushes-container"
-            class:hidden={state !== LayoutState.None}
+            class:hidden={levelMode || state !== LayoutState.Palette}
             use:resizeY={{
                 minHeight: () => Math.max(100, window.innerHeight * 0.1),
                 maxHeight: () => Math.min(288, window.innerHeight * 0.33),
@@ -129,7 +134,7 @@
         <!-- ANCHOR - Borders editing view -->
         <div
             class="borders-view"
-            class:hidden={state !== LayoutState.Borders}
+            class:hidden={levelMode || state !== LayoutState.Borders}
             use:resizeY={{
                 minHeight: () => window.innerHeight * 0.1,
                 maxHeight: () => window.innerHeight * 0.33,
@@ -142,8 +147,9 @@
         <!-- ANCHOR - Brush editing view -->
         <div
             class="brush-view"
-            class:hidden={state !== LayoutState.Brush &&
-                state !== LayoutState.BrushLevel}
+            class:hidden={levelMode ||
+                (state !== LayoutState.Brush &&
+                    state !== LayoutState.BrushLevel)}
             use:resizeY={{
                 minHeight: () => Math.min(100, window.innerHeight * 0.2),
                 maxHeight: () => window.innerHeight * 0.5,
@@ -154,23 +160,37 @@
             <div class="resize-handle top" />
         </div>
         <!-- ANCHOR - Level picker for brush editing -->
-        <div class:hidden={state !== LayoutState.BrushLevel} class="level-view">
+        <div
+            class:hidden={levelMode || state !== LayoutState.BrushLevel}
+            class="level-view"
+        >
             Level
         </div>
-        <!-- ANCHOR - Palette picker -->
+        <!-- ANCHOR - Tile palette view -->
         <div
-            class:hidden={state === LayoutState.BrushList}
-            class="palette-view"
+            class:hidden={levelMode || state === LayoutState.BrushList}
+            class="tile-palette-view"
         >
             <div class="palette-container">
                 <TilePalette />
             </div>
         </div>
         <div
-            class:hidden={state === LayoutState.BrushList}
+            class:hidden={levelMode || state === LayoutState.BrushList}
             class="footbar-view"
         >
             Footbar!
+        </div>
+        <!-- ANCHOR - Mutliselect preview -->
+        <div
+            class:hidden={selection === null || state === LayoutState.BrushList}
+            class="multi-selection-view"
+        >
+            {#key selection}
+                {#if selection !== null}
+                    <SelectionPreview {selection} showLevels={levelMode} />
+                {/if}
+            {/key}
         </div>
     </div>
 </div>
@@ -192,7 +212,7 @@
         overflow: hidden;
     }
 
-    .layout {
+    .sidebar-content {
         flex: 1;
 
         display: flex;
@@ -200,10 +220,10 @@
         flex-wrap: wrap;
         align-items: stretch;
         position: relative;
-    }
 
-    .layout > div:not(:first-child):not(.resize-) {
-        border-top: 1px solid var(--light-shadow);
+        & > div:not(.resize) {
+            border-bottom: 1px solid var(--light-shadow);
+        }
     }
 
     // ANCHOR Topbar Style
@@ -264,6 +284,7 @@
     .footbar-view {
         height: 20px;
         background: var(--tabs-bg);
+        border-bottom: none !important;
     }
     .borders-view {
         display: grid;
@@ -276,7 +297,7 @@
     .level-view {
         flex: 1;
     }
-    .palette-view {
+    .tile-palette-view {
         display: flex;
         flex: 4;
         overflow: hidden;
@@ -294,6 +315,7 @@
     .brush-list-view {
         display: grid;
         grid-template-rows: max-content calc(100vh - 104px);
+        border-bottom: none !important;
         container-type: inline-size;
 
         .topbar {
@@ -325,5 +347,14 @@
                 grid-template-columns: 1fr 1fr 1fr;
             }
         }
+    }
+    .level-palette-view {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) 0;
+    }
+
+    .tileset-level-editor-view {
+        flex: 4;
+        border-bottom: none !important;
     }
 </style>

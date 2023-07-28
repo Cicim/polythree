@@ -2,6 +2,7 @@
     import type { EditorSubTab } from "src/systems/contexts";
     import { getContext } from "svelte";
     import type { MapEditorContext } from "../MapEditor";
+    import { tooltip } from "src/systems/tooltip";
 
     export let tabs: Record<string, EditorSubTab> = {};
     const context: MapEditorContext = getContext("context");
@@ -15,6 +16,8 @@
             on:click={() => context.changeTab(id)}
             class:active={$activeTab === id}
             class="tab"
+            use:tooltip
+            tooltip={tab.title}
             {id}
         >
             <span class="icon">

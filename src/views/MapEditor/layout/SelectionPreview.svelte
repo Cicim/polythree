@@ -5,9 +5,13 @@
     export let selection: SelectionMaterial;
     export let showLevels: boolean = false;
 
+    $: showLevels, redraw();
+
     let canvas: HTMLCanvasElement;
 
-    onMount(() => {
+    function redraw() {
+        if (!canvas) return;
+
         const { width, height } = selection.metatileCanvas;
         canvas.width = width * 2;
         canvas.height = height * 2;
@@ -17,7 +21,9 @@
 
         if (showLevels)
             ctx.drawImage(selection.levelCanvas, 0, 0, width * 2, height * 2);
-    });
+    }
+
+    onMount(redraw);
 </script>
 
 <div class="selection-preview">
