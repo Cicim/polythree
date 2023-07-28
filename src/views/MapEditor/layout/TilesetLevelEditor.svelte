@@ -35,6 +35,7 @@
         <MapCanvas
             {blocks}
             editLevels={true}
+            nullLevels={true}
             chunkSize={8}
             allowPan={false}
             allowZoom={false}

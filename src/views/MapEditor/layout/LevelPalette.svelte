@@ -1,11 +1,19 @@
 <script lang="ts">
+    import { getContext } from "svelte";
     import { LEVEL_COLORS, LAYER_CHARS } from "../editor/consts";
+    import type { MapEditorContext } from "src/views/MapEditor";
+    import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
+    import { tooltip } from "src/systems/tooltip";
+
+    const context: MapEditorContext = getContext("context");
+    const material = context.material;
 
     interface LevelCard {
-        name: string;
+        text: string;
         obstacle: boolean;
         color: string;
-        value: number;
+        level: number;
+        layer: number;
     }
 
     let levels: LevelCard[] = [];
@@ -15,13 +23,35 @@
     for (let i = 0; i < levelCount; i++) {
         const layer = (i / 2) | 0;
         const obstacle = i % 2 === 1;
+        const value = layer + (obstacle ? 256 : 0);
         levels.push({
-            value: i,
-            name: obstacle ? LAYER_CHARS[layer] : layer.toString(),
+            level: value,
+            layer,
+            text: obstacle ? LAYER_CHARS[layer] : layer.toString(),
             obstacle: i % 2 === 1,
-            color: LEVEL_COLORS[layer],
+            color: LEVEL_COLORS[value],
         });
     }
+
+    function selectLevel(level: number) {
+        selected = level;
+        buildMaterial();
+    }
+
+    function buildMaterial() {
+        $material = new PaletteMaterial([[[null, selected]]]);
+    }
+
+    $: $material,
+        (() => {
+            if (
+                $material instanceof SelectionMaterial &&
+                $material.isSingular
+            ) {
+                console.log($material.blocks[0][0][1]);
+                selected = $material.blocks[0][0][1];
+            }
+        })();
 </script>
 
 <div class="palette">
@@ -29,18 +59,24 @@
     <div
         class="none-card any-level-card"
         class:selected={selected === null}
-        on:click={() => (selected = null)}
+        on:click={() => selectLevel(null)}
+        use:tooltip
+        tooltip="Does not change the level"
     />
-    {#each levels as { name, color, value, obstacle }, i (value)}
+    {#each levels as { text, layer, color, level, obstacle } (level)}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
             class="level-card any-level-card"
             class:obstacle
-            class:selected={i === selected}
+            class:selected={level === selected}
             style="background-color: {color}"
-            on:mousedown={() => (selected = value)}
+            on:mousedown={() => selectLevel(level)}
+            use:tooltip
+            tooltip={`${layer === 0 ? "Junction Level" : `Level ${layer}`}, ${
+                obstacle ? "Obstacle" : "Traversable"
+            }`}
         >
-            {name}
+            {text}
         </div>
     {/each}
 </div>
@@ -59,7 +95,6 @@
 
     .any-level-card {
         cursor: pointer;
-        transition: 0.2s;
 
         &:not(.selected) {
             color: white;

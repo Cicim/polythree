@@ -11,7 +11,6 @@
     import {
         SelectionMaterial,
         type PaintingMaterial,
-        PaletteMaterial,
     } from "../editor/materials";
     import SelectionPreview from "./SelectionPreview.svelte";
     import TilesetLevelEditor from "./TilesetLevelEditor.svelte";
