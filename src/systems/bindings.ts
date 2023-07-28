@@ -256,7 +256,14 @@ function getShortcutCode(event: KeyboardEvent) {
     if (event.shiftKey) shortcutCode += "Shift+";
     if (event.altKey) shortcutCode += "Alt+";
 
-    return shortcutCode + event.key.toUpperCase();
+    switch (event.key) {
+        case "Control":
+        case "Shift":
+        case "Alt":
+            return shortcutCode.slice(0, -1);
+    }
+
+    return shortcutCode + event.key[0].toUpperCase() + event.key.slice(1);
 }
 
 /** Returns true if the given event's code is a letter or a number */
