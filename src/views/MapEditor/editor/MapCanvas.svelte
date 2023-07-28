@@ -94,6 +94,13 @@
     // ANCHOR Helpers
     type ChunkData = CanvasRenderingContext2D;
 
+    enum State {
+        Idle,
+        Panning,
+        Painting,
+        Selecting,
+    }
+
     /** Function to easily construct a point */
     const point = (x: number = 0, y: number = 0): Point => ({ x, y });
     /** Function for clamping a value between two extremes */
@@ -138,6 +145,12 @@
     /** `true` if everything is ready to draw. */
     let initialized: boolean = false;
 
+    // Mouse state
+    /** Action the user is performing with the mouse */
+    let state: State = State.Idle;
+    /** Mouse position before the start of the frame */
+    let mousePosition: Point = point();
+
     // Zooming and panning
     /** Zoom index */
     let zoomIndex: number = 3;
@@ -145,14 +158,16 @@
     let zoom: number = ZOOM_LEVELS[zoomIndex];
     /** Canvas offset (in map coordinates) */
     let offset: Point = point();
-    /** Mouse position before the start of the frame */
-    let mousePosition: Point = point();
-    /** If the user is panning */
-    let isPanning: boolean = false;
     /** Mouse coordinates when the pan starts */
     let mousePanStart: Point = point();
     /** Canvas offset when the pan starts */
     let mapPanStart: Point = point();
+
+    // Selection
+    /** The tile where the selection starts */
+    let selectionStart: Point = point();
+    /** Actual selection rectangle */
+    let selection: TileSelection = null;
 
     // Painting with brushes
     /** Selected brush */
@@ -160,8 +175,6 @@
     /** Instance of the tool with which you're drawing */
     let tool: Tool = null;
 
-    /** Whether you are painting */
-    let isPainting: boolean = false;
     /** The painting state for reverting and committing */
     let paintingState: PainterState = null;
 
@@ -196,16 +209,30 @@
         drawTopLayer();
         if (editLevels) drawLevels();
 
+        if (selection !== null) {
+            const { x, y, width, height } = selection;
+
+            // Find the position on the canvas
+            const { x: px, y: py } = mapToCanvas({ x: x * 16, y: y * 16 });
+            // Draw the rectangle
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = zoom;
+            ctx.strokeRect(px, py, width * 16 * zoom, height * 16 * zoom);
+        }
+
         const frameTime = performance.now() - frameStart;
         const hovered = hoveredTile();
 
         debugValues({
             frameTime,
-            isPanning,
-            isPainting,
+            state: State[state],
             brushName: `${$material?.name}`,
             position: `${hovered.x}, ${hovered.y}`,
             zoom,
+            selection:
+                selection === null
+                    ? "null"
+                    : `${selection.x}:${selection.y}-${selection.width}x${selection.height}`,
         });
     }
 
@@ -580,6 +607,33 @@
         draw();
     }
 
+    // ANCHOR Selection
+    /** Computes the selection rectangle */
+    function computeSelectionRectangle() {
+        let { x: sx, y: sy } = selectionStart;
+        let { x: ex, y: ey } = hoveredTile();
+
+        // Modify both all elements so that they are in bounds
+        sx = clamp(sx, 0, blocksWidth - 1);
+        sy = clamp(sy, 0, blocksHeight - 1);
+        ex = clamp(ex, 0, blocksWidth - 1);
+        ey = clamp(ey, 0, blocksHeight - 1);
+
+        selection = {
+            x: Math.min(sx, ex),
+            y: Math.min(sy, ey),
+            width: Math.abs(sx - ex) + 1,
+            height: Math.abs(sy - ey) + 1,
+        };
+
+        // TODO Change for event selection
+        createSelectionMaterial(selection);
+    }
+    /** Creates a material based on the selection rectangle */
+    function createSelectionMaterial(selection: TileSelection) {
+        // TODO
+    }
+
     // ANCHOR Painting with brushes
     const PAINTER_METHODS: PainterMethods = {
         nullLevels,
@@ -606,7 +660,7 @@
             const ox = x % chunkSize;
             const oy = y % chunkSize;
 
-            if (oldMetatile !== metatile) {
+            if (oldMetatile !== metatile && !editLevels) {
                 // Get the metattile chunks
                 const metatileChunk = metatileChunks[cy][cx];
                 const botCtx = metatileChunk[0];
@@ -624,7 +678,7 @@
                 topCtx.drawImage(topImage, ox * 16, oy * 16, 16, 16);
             }
 
-            if (oldLevel !== level) {
+            if (oldLevel !== level && editLevels) {
                 // Get the level chunks
                 const levelChunk = textLevelChunks[cy][cx];
                 levelChunk.clearRect(
@@ -643,16 +697,16 @@
 
     // ANCHOR Mouse Event handlers
     function onMouseDown(event: MouseEvent) {
-        // If the user is already panning, ignore this event, even for other buttons
-        if (isPanning) return;
+        // If the user is already doing something, ignore this event
+        if (state !== State.Idle) return;
 
         // Painting starts with the left mouse button (0)
-        if (event.button === 0 && !isPanning && material !== null) {
+        if (event.button === 0 && material !== null) {
             // Get the current tile coordinates
             const { x, y } = hoveredTile();
             // If the tile are not in bounds, don't start anything
             if (!isInBounds(x, y)) return;
-            isPainting = true;
+            state = State.Painting;
 
             // Create the painting state
             paintingState = new PainterState(PAINTER_METHODS);
@@ -663,7 +717,7 @@
 
         // Panning starts with the middle mouse button (1)
         if (event.button === 1) {
-            isPanning = true;
+            state = State.Panning;
             // Save the mouse coordinates for computing the offset
             mousePanStart.x = event.offsetX;
             mousePanStart.y = event.offsetY;
@@ -671,39 +725,72 @@
             mapPanStart.x = offset.x;
             mapPanStart.y = offset.y;
         }
+
+        // Selection start
+        if (event.button === 2) {
+            const { x, y } = hoveredTile();
+            if (!isInBounds(x, y)) return;
+
+            state = State.Selecting;
+            // Save the tile where the selection starts
+            selectionStart.x = x;
+            selectionStart.y = y;
+            context.changes.locked++;
+            // Compute the selection without drawing it
+            computeSelectionRectangle();
+        }
     }
     function onMouseMove(event: MouseEvent) {
         // Save the mouse position for the next frame
         mousePosition.x = event.offsetX;
         mousePosition.y = event.offsetY;
 
-        if (isPanning) pan(event.offsetX, event.offsetY);
-        else if (isPainting) {
-            // Get the current tile coordinates
-            const { x, y } = hoveredTile();
-            // If the tile are not in bounds, don't do anything
-            if (!isInBounds(x, y)) return;
+        switch (state) {
+            case State.Panning:
+                pan(event.offsetX, event.offsetY);
+                break;
+            case State.Selecting:
+                // Compute the selection
+                computeSelectionRectangle();
+                draw();
+                break;
+            case State.Painting:
+                // Get the current tile coordinates
+                const { x, y } = hoveredTile();
+                // If the tile are not in bounds, don't do anything
+                if (!isInBounds(x, y)) return;
 
-            tool.moveStroke(x, y);
+                tool.moveStroke(x, y);
+                break;
+            case State.Idle:
+                break;
         }
     }
     function onMouseUp(event: MouseEvent | { button: number }) {
-        if (event.button === 1 && isPanning) isPanning = false;
-
-        if (event.button === 0 && isPainting) {
+        if (event.button === 0 && state === State.Painting) {
             // Get the current tile coordinates
             const { x, y } = hoveredTile();
             // Don't care if the tile is in bounds, the stroke should always end
-            isPainting = false;
             context.changes.locked--;
             tool.endStroke(x, y);
 
             // Create a brush edit
             context.changes.push(new PaintChange(paintingState));
+
+            state = State.Idle;
+        } else if (event.button === 1 && state === State.Panning) {
+            state = State.Idle;
+        } else if (event.button === 2 && state === State.Selecting) {
+            // Do not show the selection
+            selection = null;
+            draw();
+            context.changes.locked--;
+
+            state = State.Idle;
         }
     }
     function onMouseWheel(event: WheelEvent) {
-        if (isPanning) return;
+        if (state !== State.Idle) return;
 
         let scroll = event.deltaY;
         if (scroll === 0) return;

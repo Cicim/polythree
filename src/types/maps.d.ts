@@ -33,5 +33,10 @@ interface Point {
     y: number;
 }
 
+interface TileSelection extends Point {
+    width: number;
+    height: number;
+}
+
 /** Information about a single block (metatile and level) */
 type BlockData = [metatile: number, level: number];

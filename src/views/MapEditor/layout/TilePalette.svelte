@@ -4,11 +4,6 @@
     import { watchResize } from "svelte-watch-resize";
     import { PaintingMaterial, PaletteMaterial } from "../editor/materials";
 
-    interface Selection extends Point {
-        width: number;
-        height: number;
-    }
-
     const context: MapEditorContext = getContext("context");
     // Get the data
     const data = context.data;
@@ -46,7 +41,7 @@
         }
     }
 
-    function sortSelection(): Selection {
+    function sortSelection(): TileSelection {
         let minx = Math.min(selectionStart.x, selectionEnd.x);
         let miny = Math.min(selectionStart.y, selectionEnd.y);
         let dx = selectionStart.x - selectionEnd.x;
