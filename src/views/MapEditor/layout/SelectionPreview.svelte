@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
     import type { SelectionMaterial } from "../editor/materials";
 
     export let selection: SelectionMaterial;
@@ -9,13 +9,14 @@
 
     onMount(() => {
         const { width, height } = selection.metatileCanvas;
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width * 2;
+        canvas.height = height * 2;
         const ctx = canvas.getContext("2d");
-        ctx.drawImage(selection.metatileCanvas, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(selection.metatileCanvas, 0, 0, width * 2, height * 2);
 
         if (showLevels)
-            ctx.drawImage(selection.levelCanvas, 0, 0, width, height);
+            ctx.drawImage(selection.levelCanvas, 0, 0, width * 2, height * 2);
     });
 </script>
 
@@ -33,11 +34,18 @@
         width: 100%;
         display: grid;
         grid-template-columns: 1fr;
-        grid-template-rows: 1em 1fr;
+        grid-template-rows: calc(1em + 4px) 1fr;
 
         .title {
-            padding-left: $padding;
-            font-size: 1rem;
+            padding: 2px;
+
+            font-size: 14px;
+            text-align: center;
+            text-transform: uppercase;
+
+            color: var(--weak-fg);
+            background: var(--main-bg);
+            border-bottom: 1px solid var(--light-shadow);
         }
 
         .container {
@@ -48,6 +56,7 @@
             :global(canvas) {
                 max-width: 100%;
                 max-height: calc(256px - 4 * $padding - 1em);
+                image-rendering: pixelated;
             }
         }
     }
