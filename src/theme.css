@@ -127,9 +127,13 @@
     --dialog-shadow: #00000080;
 
     /* Tooltip */
-    --tooltip-bg: #1f1f22;
+    --tooltip-bg: #141314;
     --tooltip-fg: var(--main-fg);
-    --tooltip-border: #39393d;
+    --tooltip-border: rgb(143, 143, 143);
+
+    --preview-bg: #1f1f22;
+    --preview-fg: var(--main-fg);
+    --preview-border: #39393d;
 
     --light-shadow: #f2f2f040;
     --medium-shadow: #f2f2f080;

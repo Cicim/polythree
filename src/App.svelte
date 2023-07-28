@@ -1,12 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import "iconify-icon";
+    import { handleKeydown } from "./systems/bindings";
+    import { HomePageContext } from "./views/HomePage";
+
     import TabBar from "./components/app/TopBar.svelte";
     import FootBar from "./components/app/FootBar.svelte";
     import ContextMenu from "./components/app/ContextMenu.svelte";
-    import { handleKeydown } from "./systems/bindings";
     import PreviewWindow from "./components/app/PreviewWindow.svelte";
-    import { HomePageContext } from "./views/HomePage";
+    import Tooltip from "./components/app/Tooltip.svelte";
 
     onMount(() => {
         new HomePageContext().create().select();
@@ -29,6 +30,7 @@
 </main>
 <ContextMenu />
 <PreviewWindow />
+<Tooltip />
 
 <style lang="scss">
     #container {

@@ -226,10 +226,10 @@
         margin: 0;
         border-radius: 8px;
 
-        background: var(--tooltip-bg);
-        color: var(--tooltip-fg);
-        border: 1px solid var(--tooltip-border);
-        box-shadow: 0 0 5px var(--tooltip-border);
+        background: var(--preview-bg);
+        color: var(--preview-fg);
+        border: 1px solid var(--preview-border);
+        box-shadow: 0 0 5px var(--preview-border);
 
         overflow: auto;
         grid-template-columns: 1fr;
