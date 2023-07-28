@@ -11,6 +11,7 @@
     import {
         SelectionMaterial,
         type PaintingMaterial,
+        PaletteMaterial,
     } from "../editor/materials";
     import SelectionPreview from "./SelectionPreview.svelte";
     import TilesetLevelEditor from "./TilesetLevelEditor.svelte";
@@ -34,7 +35,12 @@
 
     let state: LayoutState = LayoutState.Palette;
 
-    $: selection = $material instanceof SelectionMaterial ? $material : null;
+    $: selection =
+        $material instanceof SelectionMaterial
+            ? $material.isSingular
+                ? null
+                : $material
+            : null;
 </script>
 
 <svelte:window />

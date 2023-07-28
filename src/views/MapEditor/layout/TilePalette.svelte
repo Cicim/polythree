@@ -2,12 +2,12 @@
     import type { MapEditorContext, TilesetData } from "src/views/MapEditor";
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
-    import { PaintingMaterial, PaletteMaterial } from "../editor/materials";
+    import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
 
     const context: MapEditorContext = getContext("context");
     // Get the data
     const data = context.data;
-    const brush = context.material;
+    const material = context.material;
     // Get the tilesets
     const tilesets: TilesetData = $data.tilesets;
     // Get the block data for this map
@@ -22,6 +22,23 @@
         selectionEnd: Point = { x: 0, y: 0 },
         // If you are multi selecting
         rightClicking: boolean = false;
+
+    $: $material,
+        (() => {
+            if (
+                $material instanceof SelectionMaterial &&
+                $material.isSingular
+            ) {
+                // Update the selection
+                const tile = $material.blocks[0][0][0];
+                const x = tile % 8,
+                    y = Math.floor(tile / 8);
+                selectionStart = { x, y };
+                selectionEnd = { x, y };
+                drawSelection();
+                scrollToTile(y);
+            }
+        })();
 
     /** Compose the canvas image for the palette */
     function drawPalette() {
@@ -65,8 +82,23 @@
         selectionDiv.style.setProperty("--height", `${height}`);
     }
 
-    /** Creates the brush from the current selection */
-    function buildBrush() {
+    function scrollToTile(tileY: number) {
+        const scrollableElement =
+            paletteCanvas?.parentElement?.parentElement?.parentElement;
+        if (!scrollableElement) return;
+
+        const rect = paletteCanvas.getBoundingClientRect();
+        const height = rect.height;
+        const tileSize = height / Math.ceil(tilesets.length / 8);
+        const scrollY = tileY * tileSize;
+        scrollableElement.scrollTo({
+            top: scrollY,
+            behavior: "smooth",
+        });
+    }
+
+    /** Creates the material from the current selection */
+    function buildMaterial() {
         const { x, y, width, height } = sortSelection();
 
         const tilesetBlocks = $tilesetBlocksStore;
@@ -80,7 +112,7 @@
             }
             blocks.push(row);
         }
-        $brush = new PaletteMaterial(blocks);
+        $material = new PaletteMaterial(blocks);
     }
 
     /** Gets the coordinates of the clicked tile on the canvas */
@@ -119,7 +151,7 @@
     }
     function onMouseUp(event: MouseEvent) {
         rightClicking = false;
-        buildBrush();
+        buildMaterial();
     }
 
     function onResized() {

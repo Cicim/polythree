@@ -17,17 +17,21 @@ export class CustomMaterial extends PaintingMaterial {
 export class PaletteMaterial extends PaintingMaterial {
     public name = "Palette Material";
 
-    constructor(private tiles: BlockData[][]) {
+    constructor(public blocks: BlockData[][]) {
         super();
-        this.tiles = tiles;
+        this.blocks = blocks;
     }
 
     public apply(state: PainterState, x: number, y: number): void {
-        for (let j = 0; j < this.tiles.length; j++) {
-            for (let i = 0; i < this.tiles[j].length; i++) {
-                state.set(x + i, y + j, this.tiles[j][i]);
+        for (let j = 0; j < this.blocks.length; j++) {
+            for (let i = 0; i < this.blocks[j].length; i++) {
+                state.set(x + i, y + j, this.blocks[j][i]);
             }
         }
+    }
+
+    public get isSingular(): boolean {
+        return this.blocks.length === 1 && this.blocks[0].length === 1;
     }
 }
 
