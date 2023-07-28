@@ -10,6 +10,7 @@
   import MapPreview from "./MapPreview.svelte";
   import { invoke } from "@tauri-apps/api";
   import { config } from "src/systems/global";
+  import { tooltip } from "src/systems/tooltip";
 
   // Dialog options
   export let noOutsideClose = false;
@@ -25,7 +26,7 @@
 
   /** Valid actions to be done to the layout (an passed to the backend on deletion) */
   type Action = "Nothing" | "Clear" | "Delete" | "Change";
-  
+
   /** List for showing the action cards */
   let actionableLayoutToMap: Record<
     string,
@@ -243,7 +244,7 @@
               >
                 {#each o.maps as map}
                   {#if map?.name}
-                    <span class="map" title={map?.name ?? ""}>
+                    <span class="map" tooltip={map?.name ?? ""} use:tooltip>
                       {map.group}.{map.index}
                     </span>
                   {/if}

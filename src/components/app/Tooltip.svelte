@@ -1,7 +1,5 @@
 <script lang="ts" context="module">
     export interface TooltipOptions {
-        /** The tooltip's text */
-        title: string;
         /** The tooltip's preferred placement relative to the element */
         placement?: "auto" | "top" | "bottom";
     }
@@ -75,13 +73,13 @@
         if (lastTarget) closeTooltip(lastTarget);
         // Updates the lastTarget
         lastTarget = target;
-        // Update the tooltip
-        tooltip.innerText = options.title;
 
         // Start the timeout
         timeout = setTimeout(() => {
             // Show the tooltip
             tooltip.style.display = "block";
+            // Update the tooltip
+            tooltip.innerText = target.getAttribute("tooltip");
             // Place the tooltip
             placeTooltip(target, options.placement);
         }, 500);
@@ -126,6 +124,7 @@
         top: 0;
         left: 0;
 
+        text-align: center;
         background: var(--tooltip-bg);
         color: var(--tooltip-fg);
         border: 1px solid var(--tooltip-border);

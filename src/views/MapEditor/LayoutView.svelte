@@ -21,25 +21,26 @@
             bind:group={$selectedToolStore}
             value={EditorTool.Pencil}
             icon="mdi:pencil"
-            title={"Pencil"}
+            title="Pencil"
+            theme="secondary"
         />
         <ToolButton
             bind:group={$selectedToolStore}
             value={EditorTool.Fill}
             icon="mdi:bucket"
-            title={"Bucket"}
+            title="Fill"
         />
         <ToolButton
             bind:group={$selectedToolStore}
             value={EditorTool.Rectangle}
             icon="mdi:square"
-            title={"Rectangle"}
+            title="Rectangle"
         />
         <ToolButton
             bind:group={$selectedToolStore}
             value={EditorTool.Replace}
             icon="mdi:wand"
-            title={"Replace"}
+            title="Replace"
         />
     </div>
     <div class="area">

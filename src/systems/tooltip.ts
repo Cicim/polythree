@@ -5,7 +5,9 @@ const defaultOptions: Partial<TooltipOptions> = {
     placement: "auto",
 }
 
-export function tooltip(node: Node, options: TooltipOptions) {
+export function tooltip(node: Node, options: TooltipOptions = defaultOptions) {
+    if ((node as HTMLElement).getAttribute("tooltip") === "") return;
+
     const opts = { ...defaultOptions, ...options };
 
     function onMouseEnter() {

@@ -58,6 +58,7 @@
                     icon="mdi:close"
                     title="Close"
                     on:click={() => (state = LayoutState.None)}
+                    theme="transparent"
                 />
             </div>
             <div class="brush-container">

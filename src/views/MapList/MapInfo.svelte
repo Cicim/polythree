@@ -4,10 +4,11 @@
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
     import Button from "src/components/Button.svelte";
-    
+
     import { MapEditorContext } from "../MapEditor";
     import OffsetLabel from "src/components/OffsetLabel.svelte";
     import { config } from "src/systems/global";
+    import { tooltip } from "src/systems/tooltip";
 
     export let selectedMaps: MapId[];
 
@@ -100,7 +101,7 @@
                     {selectedProps.floorNum}F
                 {/if}
 
-                <span class="more" title="Map Section Id">
+                <span class="more" use:tooltip tooltip="Map Section Id">
                     ({selectedProps.mapsec})
                 </span>
             </span>
@@ -115,11 +116,17 @@
             <span class="title">tilesets</span>
             <span class="value">
                 <div class="tileset">
-                    <i>{$config.tileset_names[selectedProps.tileset1] ?? "Unnamed"}</i><br />
+                    <i
+                        >{$config.tileset_names[selectedProps.tileset1] ??
+                            "Unnamed"}</i
+                    ><br />
                     <OffsetLabel offset={selectedProps.tileset1} /><br />
                 </div>
                 <div class="tileset">
-                    <i>{$config.tileset_names[selectedProps.tileset2] ?? "Unnamed"}</i><br />
+                    <i
+                        >{$config.tileset_names[selectedProps.tileset2] ??
+                            "Unnamed"}</i
+                    ><br />
                     <OffsetLabel offset={selectedProps.tileset2} />
                 </div>
             </span>

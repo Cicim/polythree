@@ -3,7 +3,6 @@
 </script>
 
 <script lang="ts">
-    
     import Option from "./Option.svelte";
     import {
         createEventDispatcher,
@@ -15,6 +14,7 @@
     import type { EditorContext } from "src/systems/contexts";
     import { writable, type Unsubscriber, type Writable } from "svelte/store";
     import r from "src/systems/navigate";
+    import { tooltip } from "src/systems/tooltip";
 
     /** The options list as a record of `(value => text)` */
     export let options: [SelectValueType, string][];
@@ -435,8 +435,9 @@
             {O.find((o) => value === o.value).text}
         {:else}
             <span
-                class="invalid"
-                title="This is not a valid value for this Select">{value}</span
+                use:tooltip
+                tooltip="This is not a valid value for this Select"
+                class="invalid">{value}</span
             >
         {/if}
     </span>
