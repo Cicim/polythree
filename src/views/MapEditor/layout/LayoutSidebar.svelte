@@ -12,15 +12,18 @@
     export let levelMode: boolean;
     export let hidden: boolean;
 
-    let editingMode:
-        | "none"
-        | "brush-list"
-        | "borders"
-        | "brush"
-        | "brush-level" = "none";
+    enum LayoutState {
+        None,
+        BrushList,
+        Borders,
+        Brush,
+        BrushLevel,
+    }
 
     const context: MapEditorContext = getContext("context");
     const brushesStore = context.brushes;
+
+    let state: LayoutState = LayoutState.None;
 
     // TODO: Derive from selection
     $: multiselecting = false;
@@ -31,13 +34,13 @@
 <div class="a">
     <Select
         options={[
-            ["none", "None"],
-            ["brush-list", "Brush List"],
-            ["borders", "Borders"],
-            ["brush", "Brush"],
-            ["brush-level", "Brush Level"],
+            [LayoutState.None, "None"],
+            [LayoutState.BrushList, "Brush List"],
+            [LayoutState.Borders, "Borders"],
+            [LayoutState.Brush, "Brush"],
+            [LayoutState.BrushLevel, "Brush Level"],
         ]}
-        bind:value={editingMode}
+        bind:value={state}
     />
 </div>
 <div class="sidebar-container" class:hidden>
@@ -47,14 +50,14 @@
     <div class="layout" class:hidden={levelMode}>
         <!-- ANCHOR - Brush List -->
         <div
-            class:hidden={editingMode !== "brush-list"}
+            class:hidden={state !== LayoutState.BrushList}
             class="brush-list-view"
         >
             <div class="topbar">
                 <ToolButton
                     icon="mdi:close"
                     title="Close"
-                    on:click={() => (editingMode = "none")}
+                    on:click={() => (state = LayoutState.None)}
                 />
             </div>
             <div class="brush-container">
@@ -65,18 +68,18 @@
         </div>
         <!-- ANCHOR - Mutliselect preview -->
         <div
-            class:hidden={!multiselecting || editingMode === "brush-list"}
+            class:hidden={!multiselecting || state === LayoutState.BrushList}
             class="multi-selection-view"
         >
             Multi Selection
         </div>
         <!-- ANCHOR - Top bar -->
-        <div class:hidden={editingMode !== "none"} class="topbar-view">
-            <Button on:click={() => (editingMode = "borders")}>
+        <div class:hidden={state !== LayoutState.None} class="topbar-view">
+            <Button on:click={() => (state = LayoutState.Borders)}>
                 <iconify-icon icon="mdi:border-all" width="1.5em" />
                 Borders
             </Button>
-            <Button on:click={() => (editingMode = "brush-list")}>
+            <Button on:click={() => (state = LayoutState.BrushList)}>
                 <iconify-icon icon="mdi:format-list-bulleted" width="1.5em" />
                 Brush List
             </Button>
@@ -88,7 +91,7 @@
         <!-- ANCHOR - Brushes Container -->
         <div
             class="brushes-container"
-            class:hidden={editingMode !== "none"}
+            class:hidden={state !== LayoutState.None}
             use:resizeY={{
                 minHeight: () => Math.max(100, window.innerHeight * 0.1),
                 maxHeight: () => Math.min(288, window.innerHeight * 0.33),
@@ -102,7 +105,7 @@
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
                     class="view-all"
-                    on:click={() => (editingMode = "brush-list")}
+                    on:click={() => (state = LayoutState.BrushList)}
                 >
                     <iconify-icon icon="material-symbols:list" width="2em" />
                     <br />
@@ -114,7 +117,7 @@
         <!-- ANCHOR - Borders editing view -->
         <div
             class="borders-view"
-            class:hidden={editingMode !== "borders"}
+            class:hidden={state !== LayoutState.Borders}
             use:resizeY={{
                 minHeight: () => window.innerHeight * 0.1,
                 maxHeight: () => window.innerHeight * 0.33,
@@ -127,8 +130,8 @@
         <!-- ANCHOR - Brush editing view -->
         <div
             class="brush-view"
-            class:hidden={editingMode !== "brush" &&
-                editingMode !== "brush-level"}
+            class:hidden={state !== LayoutState.Brush &&
+                state !== LayoutState.BrushLevel}
             use:resizeY={{
                 minHeight: () => Math.min(100, window.innerHeight * 0.2),
                 maxHeight: () => window.innerHeight * 0.5,
@@ -139,16 +142,22 @@
             <div class="resize-handle top" />
         </div>
         <!-- ANCHOR - Level picker for brush editing -->
-        <div class:hidden={editingMode !== "brush-level"} class="level-view">
+        <div class:hidden={state !== LayoutState.BrushLevel} class="level-view">
             Level
         </div>
         <!-- ANCHOR - Palette picker -->
-        <div class:hidden={editingMode === "brush-list"} class="palette-view">
+        <div
+            class:hidden={state === LayoutState.BrushList}
+            class="palette-view"
+        >
             <div class="palette-container">
                 <TilePalette />
             </div>
         </div>
-        <div class:hidden={editingMode === "brush-list"} class="footbar-view">
+        <div
+            class:hidden={state === LayoutState.BrushList}
+            class="footbar-view"
+        >
             Footbar!
         </div>
     </div>
