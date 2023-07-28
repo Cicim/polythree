@@ -58,6 +58,9 @@
     }
 
     .any-level-card {
+        cursor: pointer;
+        transition: 0.2s;
+
         &:not(.selected) {
             color: white;
 
@@ -74,6 +77,7 @@
             outline: 2px solid var(--accent-fg);
             box-shadow: 0px 0px 30px var(--hard-shadow);
             z-index: 100;
+            cursor: default;
         }
     }
 

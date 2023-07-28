@@ -147,7 +147,7 @@
         <!-- ANCHOR View -->
         <div
             class="level-palette-view"
-            class:flexed={state === LayoutState.BrushLevel}
+            class:flexed={!levelMode}
             class:hidden={!levelMode && state !== LayoutState.BrushLevel}
             use:resizeY={{
                 maxHeight: () => Math.min(310, window.innerHeight * 0.33),
@@ -158,11 +158,7 @@
             <div class="level-palette-container">
                 <LevelPalette />
             </div>
-            {#if levelMode && state !== LayoutState.BrushLevel}
-                <div class="resize-handle top" />
-            {:else}
-                <div />
-            {/if}
+            <div class="resize-handle top" class:hidden={!levelMode} />
         </div>
         <!-- ANCHOR - Tile palette view -->
         <div
