@@ -15,6 +15,7 @@
     import SelectionPreview from "./SelectionPreview.svelte";
     import TilesetLevelEditor from "./TilesetLevelEditor.svelte";
     import LevelPalette from "./LevelPalette.svelte";
+    import MapCanvas from "../editor/MapCanvas.svelte";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -29,8 +30,11 @@
     }
 
     const context: MapEditorContext = getContext("context");
+    const data = context.data;
     const brushesStore = context.brushes;
     const material: Writable<PaintingMaterial> = context.material;
+
+    let borders = $data.layout.border_data;
 
     let state: LayoutState = LayoutState.Palette;
 
@@ -131,7 +135,23 @@
                 startHeight: 200,
             }}
         >
-            Borders
+            <div class="topbar">
+                Map Border
+                <ToolButton
+                    icon="mdi:close"
+                    title="Close"
+                    on:click={() => (state = LayoutState.Palette)}
+                    theme="transparent"
+                />
+            </div>
+            <div class="borders-container">
+                <MapCanvas
+                    blocks={borders}
+                    centerOnResize={true}
+                    allowPan={false}
+                    allowZoom={false}
+                />
+            </div>
             <div class="resize-handle top" />
         </div>
         <!-- ANCHOR - Brush editing view -->
@@ -296,7 +316,15 @@
     }
     .borders-view {
         display: grid;
-        grid-template-rows: minmax(0, 1fr) 0;
+        grid-template-rows: max-content minmax(0, 1fr) 0;
+
+        .borders-container {
+            display: grid;
+            position: relative;
+            padding: 16px;
+            width: calc(100% - 32px);
+            height: calc(100% - 32px);
+        }
     }
     .brush-view {
         display: grid;
@@ -323,18 +351,6 @@
         border-bottom: none !important;
         container-type: inline-size;
 
-        .topbar {
-            height: 36px;
-            display: flex;
-            flex-flow: row nowrap;
-            padding: 0 2px;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 2px;
-            box-shadow: 0 0 2px 0 var(--hard-shadow);
-            z-index: 4;
-        }
-
         .brush-container {
             display: grid;
             align-content: flex-start;
@@ -352,6 +368,17 @@
                 grid-template-columns: 1fr 1fr 1fr;
             }
         }
+    }
+    .topbar {
+        height: 36px;
+        display: flex;
+        flex-flow: row nowrap;
+        padding: 0 2px;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 2px;
+        box-shadow: 0 0 2px 0 var(--hard-shadow);
+        z-index: 4;
     }
     .level-palette-view {
         display: grid;

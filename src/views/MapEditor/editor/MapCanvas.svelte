@@ -30,6 +30,8 @@
     export let allowZoom: boolean = true;
     /** Whether panning is allowed */
     export let allowPan: boolean = true;
+    /** Center and zoom the map when the canvas is resized */
+    export let centerOnResize: boolean = false;
 
     /** Debug mode */
     export let debug: boolean = false;
@@ -884,7 +886,27 @@
         canvasHeight = containerEl.clientHeight;
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
-        // Redraw (always)
+
+        if (centerOnResize) {
+            const mapWidth = blocksWidth * 16;
+            const mapHeight = blocksHeight * 16;
+
+            // Compute the biggest zoom that will make the whole map fit
+            const biggestZoom = Math.min(
+                canvasWidth / mapWidth,
+                canvasHeight / mapHeight
+            );
+            // Set the zoom to the closest one to biggestZoom
+            zoomIndex = ZOOM_LEVELS.findIndex((zoom) => zoom > biggestZoom);
+            if (zoomIndex === -1) zoomIndex = ZOOM_LEVELS.length - 1;
+            else zoomIndex--;
+            if (zoomIndex < 0) zoomIndex = 0;
+            zoom = ZOOM_LEVELS[zoomIndex];
+            // Center the map
+            offset.x = Math.round((canvasWidth - mapWidth * zoom) / 2);
+            offset.y = Math.round((canvasHeight - mapHeight * zoom) / 2);
+        }
+
         draw();
     }
 
