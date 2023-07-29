@@ -348,7 +348,7 @@ export class MapEditorContext extends TabbedEditorContext {
                 const char = levelChars[i];
                 if (char === "=") data[i] = null;
                 else {
-                    if (char === "\\") data[i] = 29;
+                    if (char === "/") data[i] = 29;
                     else data[i] = levelChars.charCodeAt(i) - 63;
 
                     // Convert it back to the original format
@@ -385,7 +385,7 @@ export class MapEditorContext extends TabbedEditorContext {
                 if (level === null)
                     compressedLevel = null;
 
-                if (compressedLevel === 29) levelChars += "\\";
+                if (compressedLevel === 29) levelChars += "/";
                 else levelChars += String.fromCharCode(compressedLevel + 63);
             }
         }
