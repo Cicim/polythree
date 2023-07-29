@@ -85,16 +85,6 @@ export class PainterState {
         if (this.drawn)
             this.methods.update();
     }
-
-    /** Removes all changes that didn't do anything */
-    public clean() {
-        for (const [hash, data] of Object.entries(this.newBlocks)) {
-            if (data[0] === this.oldBlocks[hash][0] && data[1] === this.oldBlocks[hash][1]) {
-                delete this.newBlocks[hash];
-                delete this.oldBlocks[hash];
-            }
-        }
-    }
 }
 
 export class PaintChange extends Change {

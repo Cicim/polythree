@@ -17,17 +17,31 @@
         canvas.height = height * 2;
         const ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(selection.metatileCanvas, 0, 0, width * 2, height * 2);
 
-        if (showLevels)
+        if (showLevels) {
             ctx.drawImage(selection.levelCanvas, 0, 0, width * 2, height * 2);
+        } else {
+            ctx.drawImage(
+                selection.metatileCanvas,
+                0,
+                0,
+                width * 2,
+                height * 2
+            );
+        }
     }
 
     onMount(redraw);
 </script>
 
 <div class="selection-preview">
-    <div class="title">Selected Blocks</div>
+    <div class="title">
+        {#if showLevels}
+            Selected Levels
+        {:else}
+            Selected Blocks
+        {/if}
+    </div>
     <div class="container">
         <canvas bind:this={canvas} />
     </div>

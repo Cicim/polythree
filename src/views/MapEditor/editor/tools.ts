@@ -48,7 +48,6 @@ export class PencilTool extends Tool {
     public endStroke(x: number, y: number) {
         this.lastX = null;
         this.lastY = null;
-        this.state.clean();
     }
 }
 

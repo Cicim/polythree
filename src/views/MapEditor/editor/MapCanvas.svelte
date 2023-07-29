@@ -659,20 +659,30 @@
 
         // Build the levels canvas
         const lvCanvas = document.createElement("canvas");
-        lvCanvas.width = selection.width;
-        lvCanvas.height = selection.height;
+        lvCanvas.width = selection.width * 32;
+        lvCanvas.height = selection.height * 32;
         const lvCtx = lvCanvas.getContext("2d");
-        lvCtx.drawImage(
-            colorLevelMap.canvas,
-            selection.x,
-            selection.y,
-            selection.width,
-            selection.height,
-            0,
-            0,
-            selection.width,
-            selection.height
-        );
+
+        // Build the levels canvas
+        for (let cy = 0; cy <= cey - csy; cy++) {
+            for (let cx = 0; cx <= cex - csx; cx++) {
+                // Get the chunk
+                const chunk = textLevelChunks[csy + cy]?.[csx + cx];
+                if (chunk === undefined) continue;
+
+                // Draw the chunk (subtracting the offset)
+                const rx = cx * chunkSize * 16 - ox * 16;
+                const ry = cy * chunkSize * 16 - oy * 16;
+
+                lvCtx.drawImage(
+                    chunk.canvas,
+                    rx * 2,
+                    ry * 2,
+                    chunkSize * 32,
+                    chunkSize * 32
+                );
+            }
+        }
 
         // Copy the selection
         const selBlockData = [];
@@ -707,7 +717,7 @@
             const [oldMetatile, oldLevel] = blocks[y][x];
             // Update the data with the new value
             const [metatile, level] = value;
-            blocks[y][x] = value;
+            blocks[y][x] = [oldMetatile, oldLevel];
 
             // Get the correct chunk to update
             const cx = Math.floor(x / chunkSize);
@@ -715,7 +725,11 @@
             const ox = x % chunkSize;
             const oy = y % chunkSize;
 
-            if (oldMetatile !== metatile && !editLevels) {
+            if (
+                oldMetatile !== metatile &&
+                !(editLevels && state === State.Painting)
+            ) {
+                blocks[y][x][0] = metatile;
                 // Get the metattile chunks
                 const metatileChunk = metatileChunks[cy][cx];
                 const botCtx = metatileChunk[0];
@@ -734,6 +748,7 @@
             }
 
             if (oldLevel !== level) {
+                blocks[y][x][1] = level;
                 // Get the level chunks
                 const levelChunk = textLevelChunks[cy][cx];
                 levelChunk.clearRect(

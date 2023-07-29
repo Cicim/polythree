@@ -37,6 +37,15 @@
                 selectionEnd = { x, y };
                 drawSelection();
                 scrollToTile(y);
+            } else if (
+                $material instanceof PaletteMaterial &&
+                $material.isSingular &&
+                $material.blocks[0][0][0] === null
+            ) {
+                // Update the selection
+                selectionStart = { x: -10, y: 0 };
+                selectionEnd = { x: -10, y: 0 };
+                drawSelection();
             }
         })();
 

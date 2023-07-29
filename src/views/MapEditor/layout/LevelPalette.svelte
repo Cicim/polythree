@@ -2,7 +2,7 @@
     import { getContext } from "svelte";
     import { LEVEL_COLORS, LAYER_CHARS } from "../editor/consts";
     import type { MapEditorContext } from "src/views/MapEditor";
-    import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
+    import { PaletteMaterial } from "../editor/materials";
     import { tooltip } from "src/systems/tooltip";
 
     const context: MapEditorContext = getContext("context");
@@ -44,10 +44,7 @@
 
     $: $material,
         (() => {
-            if (
-                $material instanceof SelectionMaterial &&
-                $material.isSingular
-            ) {
+            if ($material instanceof PaletteMaterial && $material.isSingular) {
                 selected = $material.blocks[0][0][1];
             }
         })();
