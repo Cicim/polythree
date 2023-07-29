@@ -70,7 +70,7 @@
 
     export function openTooltip(target: HTMLElement, options: TooltipOptions) {
         // Close the tooltip if it's already open
-        if (lastTarget) closeTooltip(lastTarget);
+        if (lastTarget) closeTooltip();
         // Updates the lastTarget
         lastTarget = target;
 
@@ -85,13 +85,17 @@
         }, 500);
     }
 
-    export function closeTooltip(target: HTMLElement) {
+    export function closeTooltip() {
         // Clear the lastTarget
         lastTarget = null;
         // Clear the interval
         clearTimeout(timeout);
         // Hide the tooltip
         tooltip.style.display = "none";
+    }
+
+    export function closeTooltipIfTarget(target: HTMLElement) {
+        if (lastTarget === target) closeTooltip();
     }
 </script>
 

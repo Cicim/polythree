@@ -1,4 +1,4 @@
-import { closeTooltip, openTooltip, type TooltipOptions } from "src/components/app/Tooltip.svelte";
+import { closeTooltip, closeTooltipIfTarget, openTooltip, type TooltipOptions } from "src/components/app/Tooltip.svelte";
 
 const defaultOptions: Partial<TooltipOptions> = {
     /** By default it's chosen depending on the node's position on the window */
@@ -14,7 +14,7 @@ export function tooltip(node: Node, options: TooltipOptions = defaultOptions) {
         openTooltip(node as HTMLElement, opts);
     }
     function onMouseLeave() {
-        closeTooltip(node as HTMLElement);
+        closeTooltip();
     }
 
     // Add event listeners
@@ -23,6 +23,8 @@ export function tooltip(node: Node, options: TooltipOptions = defaultOptions) {
 
     return {
         destroy() {
+            // Close the tooltip if it's open
+            closeTooltipIfTarget(node as HTMLElement);
             node.removeEventListener('mouseenter', onMouseEnter);
             node.removeEventListener('mouseleave', onMouseLeave);
         }

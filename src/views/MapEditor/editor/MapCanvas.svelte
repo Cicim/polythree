@@ -880,10 +880,27 @@
         draw();
     }
 
+    // ANCHOR Cursor Updating
+    let cursorStyle = "default";
+    /** Returns a cursor based on the state */
+    function getCursor(): string {
+        switch (state) {
+            case State.Panning:
+                return "grabbing";
+            case State.Selecting:
+                return "crosshair";
+            default:
+                return "default";
+        }
+    }
+    $: state, (cursorStyle = getCursor());
+
     // ANCHOR Other Event handlers
     /** Updates the canvas size and redraws the canvas. */
     function updateSize() {
         if (constantWidth !== null) return;
+        // Stop updating if the containerEl was destroyed
+        if (!containerEl) return;
 
         // Set it to the container size
         canvasWidth = containerEl.clientWidth;
@@ -987,6 +1004,7 @@
     class="canvas-container"
     bind:this={containerEl}
     use:watchResize={updateSize}
+    style="cursor: {cursorStyle}"
 >
     <canvas
         bind:this={canvas}

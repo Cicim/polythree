@@ -98,7 +98,8 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     public async close(): Promise<boolean> {
-        this.exportTilesetsLevels();
+        if (!get(this.isLoading))
+            this.exportTilesetsLevels();
         return super.close();
     }
 
