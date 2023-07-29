@@ -48,7 +48,6 @@
                 $material instanceof SelectionMaterial &&
                 $material.isSingular
             ) {
-                console.log($material.blocks[0][0][1]);
                 selected = $material.blocks[0][0][1];
             }
         })();

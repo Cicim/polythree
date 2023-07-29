@@ -1,39 +1,17 @@
 <script lang="ts">
     import type { MapEditorContext } from "src/views/MapEditor";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext } from "svelte";
     import MapCanvas from "../editor/MapCanvas.svelte";
 
     const context: MapEditorContext = getContext("context");
-    const data = context.data;
-
-    let blocks: BlockData[][] = null;
-
-    const unsubscribeFromData = data.subscribe((value) => {
-        const numTiles = value.tilesets.length;
-
-        // Generate the block data for this tileset
-        const blockData = [];
-        for (let y = 0; y < Math.ceil(numTiles / 8); y++) {
-            blockData[y] = [];
-            for (let x = 0; x < 8; x++) {
-                const metatile = y * 8 + x;
-                if (metatile > numTiles) continue;
-                blockData[y][x] = [metatile, (x + y) % 8];
-            }
-        }
-
-        blocks = blockData;
-    });
-
-    onDestroy(() => {
-        unsubscribeFromData();
-    });
+    const blocksStore = context.tilesetBlocks;
 </script>
 
 <div class="palette">
     <div class="canvas-container">
         <MapCanvas
-            {blocks}
+            blocks={$blocksStore}
+            changes={context.tilesetLevelChanges}
             editLevels={true}
             nullLevels={true}
             chunkSize={8}

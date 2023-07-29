@@ -103,7 +103,6 @@
 
         const tilesetBlocks = $tilesetBlocksStore;
 
-        // See if the brush is a single tile
         const blocks = [];
         for (let i = 0; i < height; i++) {
             const row = [];

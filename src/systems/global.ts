@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api";
 import { writable, type Writable } from "svelte/store";
 
 export interface Rom {
@@ -12,6 +13,8 @@ export interface Config {
     layout_names: Record<number, string>;
     /** A map of tileset offsets to tileset name */
     tileset_names: Record<number, string>;
+    /** A map of tileset offsets to a base64 representation of each tile's levels */
+    tileset_levels: Record<number, string>;
 }
 
 /** The curretly open ROM */
