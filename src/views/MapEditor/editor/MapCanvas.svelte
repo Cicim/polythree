@@ -875,27 +875,16 @@
     }
 
     // ANCHOR Other Event handlers
+    /** Updates the canvas size and redraws the canvas. */
     function updateSize() {
-        if (constantWidth === null) {
-            canvasWidth = containerEl.clientWidth;
-            canvasHeight = containerEl.clientHeight;
-        } else {
-            canvasWidth = constantWidth;
-            // Compute the height based on the width
-            canvasHeight = (canvasWidth / blocksWidth) * blocksHeight;
+        if (constantWidth !== null) return;
 
-            // Change the zoom so that the whole map width fits in the canvas
-            zoomIndex = null;
-            zoom = canvasWidth / (blocksWidth * 16);
-        }
-
-        // If data was updated to 0, 0, don't bother changing it, but redraw anyways
-        if (canvasWidth === 0 || canvasHeight === 0) {
-            draw();
-            return;
-        }
+        // Set it to the container size
+        canvasWidth = containerEl.clientWidth;
+        canvasHeight = containerEl.clientHeight;
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
+        // Redraw (always)
         draw();
     }
 
@@ -918,7 +907,23 @@
     onMount(async () => {
         ctx = canvas.getContext("2d");
         await tick();
-        updateSize();
+
+        if (constantWidth === null) updateSize();
+        // If the width is static, then check if this is a resize.
+        // Since the width is static, we only want to update it once,
+        // and not on every resize (if they ever happen).
+        else {
+            canvasWidth = constantWidth;
+            // Compute the height based on the width
+            canvasHeight = canvasWidth * (blocksHeight / blocksWidth);
+            // Change the zoom so that the whole map width fits in the canvas
+            zoomIndex = null;
+            zoom = canvasWidth / (blocksWidth * 16);
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            draw();
+        }
 
         // Add the zoomIn and zoomOut function to the context
         context.zoomIn = zoomIn;
@@ -952,7 +957,6 @@
     on:blur={() => onMouseUp({ button: 0 })}
 />
 
-<!-- {#if constantWidth === null} -->
 <div
     class="canvas-container"
     bind:this={containerEl}
@@ -960,6 +964,7 @@
 >
     <canvas
         bind:this={canvas}
+        class:fit={constantWidth === null}
         on:mousedown={onMouseDown}
         on:mouseup={onMouseUp}
         on:mousemove={onMouseMove}
@@ -967,21 +972,20 @@
     />
 </div>
 
-<!-- {:else}
-    <canvas
-        bind:this={canvas}
-        on:mousedown={onMouseDown}
-        on:mouseup={onMouseUp}
-        on:mousemove={onMouseMove}
-        on:wheel={onMouseWheel}
-    />
-{/if} -->
-
 <style lang="scss">
     .canvas-container {
         display: grid;
         height: 100%;
         overflow: hidden;
         max-height: 100%;
+
+        canvas {
+            image-rendering: optimizeSpeed;
+
+            &.fit {
+                width: min-content;
+                height: min-content;
+            }
+        }
     }
 </style>
