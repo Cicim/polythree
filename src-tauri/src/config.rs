@@ -16,6 +16,8 @@ pub struct RomConfig {
     pub layout_names: HashMap<u16, String>,
     #[serde(serialize_with = "ordered_map")]
     pub tileset_names: HashMap<u32, String>,
+    #[serde(serialize_with = "ordered_map")]
+    pub tileset_levels: HashMap<u32, String>,
 }
 
 fn ordered_map<S, T>(value: &HashMap<T, String>, serializer: S) -> Result<S::Ok, S::Error>
@@ -71,6 +73,7 @@ impl RomConfig {
         Self {
             layout_names: HashMap::new(),
             tileset_names: HashMap::new(),
+            tileset_levels: HashMap::new(),
         }
     }
 
@@ -123,4 +126,34 @@ pub fn set_config(state: AppState) -> AppResult<()> {
     config.save(config_path)?;
 
     Ok(())
+}
+
+pub fn update_config(state: AppState, callback: impl FnOnce(&mut RomConfig)) -> AppResult<()> {
+    let rom_path = get_rom_path(&state)?;
+
+    // Unlock the ROM data
+    let mut config_data = state
+        .config
+        .lock()
+        .map_err(|_| "Failed to unlock the config data")
+        .unwrap();
+
+    // Get a mutable reference to the ROM data
+    let config = config_data.as_mut().ok_or("No ROM is open")?;
+
+    // Call the callback with the ROM
+    callback(config);
+
+    // Call the callback with the ROM
+    let config_path = format!("{}.config.json", rom_path);
+    config.save(config_path)?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn update_tileset_level(state: AppState, tileset: u32, levels: String) -> AppResult<()> {
+    update_config(state, |config| {
+        config.tileset_levels.insert(tileset, levels);
+    })
 }

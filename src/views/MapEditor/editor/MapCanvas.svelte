@@ -11,6 +11,7 @@
     } from "./painter_state";
     import type { Tool } from "./tools";
     import { LEVEL_COLORS, LAYER_CHARS } from "./consts";
+    import type { EditorChanges } from "src/systems/changes";
 
     /** Blocks to edit */
     export let blocks: BlockData[][];
@@ -110,6 +111,9 @@
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
     let tilesetImages = $data.tilesets;
+
+    /** The object that will contain all the changes applied to this editor */
+    export let changes: EditorChanges = context.changes;
 
     /** Width of the canvas in pixels */
     let canvasWidth: number = null;
@@ -760,7 +764,7 @@
             // Create the painting state
             paintingState = new PainterState(PAINTER_METHODS);
             tool = new context.toolClass(paintingState, $material);
-            context.changes.locked++;
+            changes.locked++;
             tool.startStroke(x, y);
         }
 
@@ -784,7 +788,7 @@
             // Save the tile where the selection starts
             selectionStart.x = x;
             selectionStart.y = y;
-            context.changes.locked++;
+            changes.locked++;
             // Compute the selection without drawing it
             computeSelectionRectangle();
         }
@@ -828,11 +832,11 @@
             // Get the current tile coordinates
             const { x, y } = hoveredTile();
             // Don't care if the tile is in bounds, the stroke should always end
-            context.changes.locked--;
+            changes.locked--;
             tool.endStroke(x, y);
 
             // Create a brush edit
-            context.changes.push(new PaintChange(paintingState));
+            changes.push(new PaintChange(paintingState));
 
             state = State.Idle;
         } else if (event.button === 1 && state === State.Panning) {
@@ -841,7 +845,7 @@
             // Do not show the selection
             selection = null;
             draw();
-            context.changes.locked--;
+            changes.locked--;
 
             state = State.Idle;
         }

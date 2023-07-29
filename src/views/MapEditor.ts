@@ -12,6 +12,7 @@ import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte"
 import { config } from "src/systems/global";
 import { PaintingMaterial, PaletteMaterial, type CustomMaterial } from "./MapEditor/editor/materials";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
+import { EditorChanges } from "src/systems/changes";
 
 export interface MapEditorProperties {
     group: number;
@@ -50,8 +51,16 @@ export class MapEditorContext extends TabbedEditorContext {
 
     public material: Writable<PaintingMaterial>;
     public brushes: Writable<CustomMaterial[]>;
+    /** The block data for the tilset level editor */
     public tilesetBlocks: Writable<BlockData[][]>;
+    /** The selected tool's id */
     public selectedTool: Writable<EditorTool>;
+    /** The changes that are applied to the tileset level editor */
+    public tilesetLevelChanges: EditorChanges;
+    private tileset1Offset: number;
+    private tileset2Offset: number;
+    private tileset1Length: number;
+    private tileset2Length: number;
 
     public tabs = {
         "header": {
@@ -86,6 +95,11 @@ export class MapEditorContext extends TabbedEditorContext {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         return this.doneSaving();
+    }
+
+    public async close(): Promise<boolean> {
+        this.exportTilesetsLevels();
+        return super.close();
     }
 
     public async load() {
@@ -152,6 +166,8 @@ export class MapEditorContext extends TabbedEditorContext {
             return;
         }
         const [tileset1, tileset2, tilesetData] = tilesetResults;
+        this.tileset1Offset = tileset1;
+        this.tileset2Offset = tileset2;
         layoutData.header.primary_tileset = { offset: tileset1 };
         layoutData.header.secondary_tileset = { offset: tileset2 };
 
@@ -189,16 +205,33 @@ export class MapEditorContext extends TabbedEditorContext {
         // TODO Get from configs
         this.brushes = writable([]);
 
-        // TODO Get from configs
-        const tilesetBlocks = new Array(allImages.length);
-        for (let y = 0; y < Math.ceil(allImages.length / 8); y++) {
-            let tilesetRow = [];
-            for (let x = 0; x < 8; x++)
-                tilesetRow[x] = [y * 8 + x, null];
+        // Get the tilesets lengths
+        try {
+            [this.tileset1Length, this.tileset2Length] =
+                await invoke('get_tilesets_lengths', { tileset1, tileset2 }) as [number, number];
+        }
+        catch (message) {
+            // If the map header failed to load, close the editor
+            await spawnDialog(AlertDialog, {
+                title: "Could not load tilesets lengths",
+                message,
+            });
+            this.isLoading.set(false);
+            this.close();
+            return;
+        }
 
-            tilesetBlocks[y] = tilesetRow;
+        // Get the levels for these tilesets from config
+        const importedTilesetLevels = await this.importTilesetsLevels();
+        // Compose the block data for the tileset level editor
+        const tilesetBlocks = new Array(Math.ceil(allImages.length / 8));
+        for (let y = 0; y < tilesetBlocks.length; y++) {
+            tilesetBlocks[y] = [];
+            for (let x = 0; x < 8; x++)
+                tilesetBlocks[y][x] = [y * 8 + x, importedTilesetLevels[y * 8 + x]];
         }
         this.tilesetBlocks = writable(tilesetBlocks);
+        this.tilesetLevelChanges = new EditorChanges(null);
 
         this.material = writable(new PaletteMaterial([[tilesetBlocks[0][0]]]));
         this.selectedTool = writable(EditorTool.Pencil);
@@ -266,6 +299,99 @@ export class MapEditorContext extends TabbedEditorContext {
         return image;
     }
 
+    private async importTilesetsLevels(): Promise<number[]> {
+        // Get the tileset levels
+        const t1Levels = await this._parseTilesetLevels(this.tileset1Offset, this.tileset1Length);
+        const t2Levels = await this._parseTilesetLevels(this.tileset2Offset, this.tileset2Length);
+
+        return [...t1Levels, ...t2Levels];
+    }
+
+    public async exportTilesetsLevels(): Promise<void> {
+        // Get the tileset levels from the editor
+        const tilesetLevels = get(this.tilesetBlocks).flat().map(block => block[1]);
+        // Divide the two tilsets based on the lengths
+        const t1Levels = tilesetLevels.slice(0, this.tileset1Length);
+        const t2Levels = tilesetLevels.slice(this.tileset1Length, this.tileset1Length + this.tileset2Length);
+        // Convert the levels to a string
+        const t1LevelChars = this._encodeTilesetLevels(t1Levels);
+        const t2LevelChars = this._encodeTilesetLevels(t2Levels);
+        // Update the configs with the new tileset levels
+        config.update(config => {
+            config.tileset_levels[this.tileset1Offset] = t1LevelChars;
+            config.tileset_levels[this.tileset2Offset] = t2LevelChars;
+            return config;
+        });
+        // Update the tileset the configs jsons too
+        await invoke("update_tileset_level", { tileset: this.tileset1Offset, levels: t1LevelChars });
+        await invoke("update_tileset_level", { tileset: this.tileset2Offset, levels: t2LevelChars });
+    }
+
+    private async _parseTilesetLevels(tilesetOffset: number, tilesetLength: number) {
+        const levelChars = get(config).tileset_levels[tilesetOffset];
+
+        // If you can't find the levelChars, return a list of null as long as the tileset
+        if (levelChars === undefined) {
+            // Update the configs with the new tileset levels
+            config.update(config => {
+                config.tileset_levels[tilesetOffset] = "";
+                return config;
+            });
+            await invoke("update_tileset_level", { tileset: tilesetOffset, levels: "" })
+            return new Array(tilesetLength).fill(null);
+        }
+        // Otherwise, read the data from the levelChars
+        else {
+            const data = new Array(tilesetLength).fill(null);
+
+            for (let i = 0; i < levelChars.length; i++) {
+                const char = levelChars[i];
+                if (char === "=") data[i] = null;
+                else {
+                    if (char === "\\") data[i] = 29;
+                    else data[i] = levelChars.charCodeAt(i) - 63;
+
+                    // Convert it back to the original format
+                    if (data[i] % 2 === 0)
+                        data[i] = Math.floor(data[i] / 2);
+                    else
+                        data[i] = Math.floor(data[i] / 2) + 0x100;
+                }
+
+
+            }
+
+            return data;
+        }
+    }
+
+    private _encodeTilesetLevels(levels: number[]) {
+        let levelChars = "";
+        let nullsEncountered = 0;
+
+        for (const level of levels) {
+            if (level === null) {
+                nullsEncountered++;
+                continue;
+            }
+            else {
+                // Add the nulls   
+                levelChars += "=".repeat(nullsEncountered);
+                nullsEncountered = 0;
+
+                let compressedLevel = (level & 0xFF) * 2;
+                if (level & 0x100)
+                    compressedLevel++;
+                if (level === null)
+                    compressedLevel = null;
+
+                if (compressedLevel === 29) levelChars += "\\";
+                else levelChars += String.fromCharCode(compressedLevel + 63);
+            }
+        }
+
+        return levelChars;
+    }
 
     constructor(id: MapEditorProperties) {
         // Create the editor element
@@ -301,6 +427,13 @@ export class MapEditorContext extends TabbedEditorContext {
     }
     public zoomIn: () => void = () => { };
     public zoomOut: () => void = () => { };
+
+    public undoTilesetChanges() {
+        this.tilesetLevelChanges.undo();
+    }
+    public redoTilesetChanges() {
+        this.tilesetLevelChanges.redo();
+    }
 }
 
 redefineBindings({
@@ -327,5 +460,11 @@ redefineBindings({
     },
     "map_editor/zoom_out": (view: MapEditorContext) => {
         view.zoomOut();
+    },
+    "map_editor/undo_tileset_level_changes": (view: MapEditorContext) => {
+        view.undoTilesetChanges();
+    },
+    "map_editor/redo_tileset_level_changes": (view: MapEditorContext) => {
+        view.redoTilesetChanges();
     },
 });

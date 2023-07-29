@@ -8,12 +8,14 @@ mod state;
 
 use std::path::PathBuf;
 
-use config::{get_config, set_config};
 use iconify_server::spawn_iconify_server_thread;
 use state::PolythreeState;
 use tauri::App;
 
-use crate::handlers::{map_editor::*, map_list::*, rom::*};
+use crate::{
+    config::*,
+    handlers::{map_editor::*, map_list::*, rom::*},
+};
 
 fn setup_function(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     // If you are in development
@@ -43,6 +45,7 @@ fn main() {
             // Config
             get_config,
             set_config,
+            update_tileset_level,
             // Map list
             get_map_list,
             get_map_names,
@@ -56,6 +59,7 @@ fn main() {
             get_map_layout_data,
             get_rendered_tilesets,
             get_layout_offset,
+            get_tilesets_lengths,
             update_map_header,
             update_layout_header,
         ])

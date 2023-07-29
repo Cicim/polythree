@@ -1,6 +1,6 @@
 use poly3lib::maps::{
     header::{MapHeader, MapHeaderData},
-    layout::{MapLayoutData, MapLayout},
+    layout::{MapLayout, MapLayoutData},
     render::{RenderedMetatile, TilesetsPair},
 };
 
@@ -35,6 +35,23 @@ pub fn get_rendered_tilesets(
             .map_err(|e| format!("Error while loading tilesets: {}", e))?;
 
         Ok(tilesets.render())
+    })
+}
+
+#[tauri::command]
+pub fn get_tilesets_lengths(
+    state: AppState,
+    tileset1: usize,
+    tileset2: usize,
+) -> AppResult<(usize, usize)> {
+    state.with_rom(|rom| match rom.refs.tilesets_table.as_ref() {
+        Some(table) => Ok((
+            table.get(&tileset1).map(|x| x.0).unwrap_or(0),
+            table.get(&tileset2).map(|x| x.0).unwrap_or(0),
+        )),
+        None => {
+            return Err("Tilesets table not found".to_owned());
+        }
     })
 }
 

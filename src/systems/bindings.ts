@@ -187,6 +187,8 @@ const keybindings: Record<string, KeyBinding> = {
     "permissions_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", () => console.log("Picked Pencil in level"), "active.name === 'Map Editor' && active.tab === 'level'"),
     "map_editor/zoom_in": new KeyBinding("Zoom In", "Ctrl++", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
     "map_editor/zoom_out": new KeyBinding("Zoom Out", "Ctrl+-", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
+    "map_editor/undo_tileset_level_changes": new KeyBinding("Undo Tileset Level Changes", "Ctrl+Shift+Z", undefined, "active.name === 'Map Editor' && active.tab === 'level'"),
+    "map_editor/redo_tileset_level_changes": new KeyBinding("Redo Tileset Level Changes", "Ctrl+Shift+Y", undefined, "active.name === 'Map Editor' && active.tab === 'level'"),
 };
 
 /** The object containing all the existing shortcuts */
