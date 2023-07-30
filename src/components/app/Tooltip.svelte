@@ -17,6 +17,9 @@
         target: HTMLElement,
         placement: TooltipOptions["placement"]
     ) {
+        tooltip.style.top = "0px";
+        tooltip.style.left = "0px";
+
         // Get the tooltip's bounding rect
         const tooltipRect = tooltip.getBoundingClientRect();
         const tooltipWidth = tooltipRect.width;
