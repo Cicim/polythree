@@ -1,3 +1,5 @@
+import type { TilesetData } from "src/views/MapEditor";
+import { writable } from "svelte/store";
 import type { PainterState } from "./painter_state";
 
 export abstract class PaintingMaterial {
@@ -8,10 +10,6 @@ export abstract class PaintingMaterial {
     }
 
     public apply(state: PainterState, x: number, y: number) { }
-}
-
-export class CustomMaterial extends PaintingMaterial {
-    public name = "Brush";
 }
 
 export class PaletteMaterial extends PaintingMaterial {
@@ -44,5 +42,43 @@ export class SelectionMaterial extends PaletteMaterial {
         public levelCanvas: HTMLCanvasElement
     ) {
         super(tiles);
+    }
+}
+
+export class BrushMaterial extends PaintingMaterial {
+    public name = "Unnamed Brush";
+    public pinned = writable(false);
+
+    public exportThumbnail(tilesetData: TilesetData): HTMLCanvasElement {
+        const canvas = document.createElement("canvas");
+        canvas.width = 48;
+        canvas.height = 48;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, 48, 48);
+
+        // Draw the brush
+        ctx.drawImage(tilesetData[104][0], 0, 0, 16, 16);
+        ctx.drawImage(tilesetData[104][1], 0, 0, 16, 16);
+        ctx.drawImage(tilesetData[105][0], 16, 0, 16, 16);
+        ctx.drawImage(tilesetData[105][1], 16, 0, 16, 16);
+        ctx.drawImage(tilesetData[106][0], 32, 0, 16, 16);
+        ctx.drawImage(tilesetData[106][1], 32, 0, 16, 16);
+
+        ctx.drawImage(tilesetData[112][0], 0, 16, 16, 16);
+        ctx.drawImage(tilesetData[112][1], 0, 16, 16, 16);
+        ctx.drawImage(tilesetData[113][0], 16, 16, 16, 16);
+        ctx.drawImage(tilesetData[113][1], 16, 16, 16, 16);
+        ctx.drawImage(tilesetData[114][0], 32, 16, 16, 16);
+        ctx.drawImage(tilesetData[114][1], 32, 16, 16, 16);
+
+        ctx.drawImage(tilesetData[120][0], 0, 32, 16, 16);
+        ctx.drawImage(tilesetData[120][1], 0, 32, 16, 16);
+        ctx.drawImage(tilesetData[121][0], 16, 32, 16, 16);
+        ctx.drawImage(tilesetData[121][1], 16, 32, 16, 16);
+        ctx.drawImage(tilesetData[122][0], 32, 32, 16, 16);
+        ctx.drawImage(tilesetData[122][1], 32, 32, 16, 16);
+
+        return canvas;
     }
 }

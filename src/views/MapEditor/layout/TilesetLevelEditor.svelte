@@ -28,8 +28,10 @@
         overflow-y: auto;
     }
 
-    :global(canvas) {
-        width: 100%;
-        image-rendering: pixelated;
+    .canvas-container {
+        :global(canvas) {
+            width: 100%;
+            image-rendering: pixelated;
+        }
     }
 </style>

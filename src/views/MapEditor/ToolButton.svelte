@@ -5,7 +5,7 @@
     const dispatch = createEventDispatcher();
 
     export let icon: string;
-    export let title: string;
+    export let title: string = "";
 
     export let theme: "primary" | "secondary" | "transparent" = "primary";
 
@@ -28,7 +28,7 @@
     class:secondary={theme === "secondary"}
     class:transparent={theme === "transparent"}
 >
-    <iconify-icon {icon} />
+    <iconify-icon inline {icon} />
 </button>
 
 <style lang="scss">

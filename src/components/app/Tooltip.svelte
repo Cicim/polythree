@@ -78,8 +78,12 @@
         timeout = setTimeout(() => {
             // Show the tooltip
             tooltip.style.display = "block";
+            // Get the attribute for tooltip
+            const tooltipAttribute = target.getAttribute("tooltip");
+            // If the attribute is a falsy value, return
+            if (!tooltipAttribute) return;
             // Update the tooltip
-            tooltip.innerText = target.getAttribute("tooltip");
+            tooltip.innerText = tooltipAttribute;
             // Place the tooltip
             placeTooltip(target, options.placement);
         }, 500);

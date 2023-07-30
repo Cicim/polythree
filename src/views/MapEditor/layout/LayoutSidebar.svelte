@@ -16,6 +16,7 @@
     import TilesetLevelEditor from "./TilesetLevelEditor.svelte";
     import LevelPalette from "./LevelPalette.svelte";
     import MapCanvas from "../editor/MapCanvas.svelte";
+    import Input from "src/components/Input.svelte";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -33,10 +34,17 @@
     const data = context.data;
     const brushesStore = context.brushes;
     const material: Writable<PaintingMaterial> = context.material;
+    const editingBrush = context.editingBrush;
 
     let borders = $data.layout.border_data;
 
-    let state: LayoutState = LayoutState.Palette;
+    let state: LayoutState = LayoutState.BrushList;
+
+    $: (() => {
+        if ($editingBrush !== null) {
+            state = LayoutState.Brush;
+        }
+    })();
 
     $: selection =
         $material instanceof SelectionMaterial
@@ -68,16 +76,29 @@
             class="brush-list-view"
         >
             <div class="topbar">
-                <ToolButton
-                    icon="mdi:close"
-                    title="Close"
-                    on:click={() => (state = LayoutState.Palette)}
-                    theme="transparent"
-                />
+                <div class="left">
+                    <ToolButton
+                        icon="mdi:plus"
+                        title="Create Brush"
+                        on:click={() => {}}
+                        theme="transparent"
+                    />
+                </div>
+                <div class="center">BRUSH LIST</div>
+                <div class="right">
+                    <ToolButton
+                        icon="mdi:close"
+                        title="Close"
+                        on:click={() => (state = LayoutState.Palette)}
+                        theme="transparent"
+                    />
+                </div>
             </div>
             <div class="brush-container">
                 {#each $brushesStore as brush, i}
                     <BrushCard {brush} index={i} />
+                {:else}
+                    <div class="no-brushes">There are no brushes</div>
                 {/each}
             </div>
         </div>
@@ -109,7 +130,7 @@
                 startHeight: 100,
             }}
         >
-            <div class="brushes">
+            <div class="brushes" class:no-brushes={$brushesStore.length === 0}>
                 {#each $brushesStore as brush, i}
                     <BrushCard small={true} {brush} index={i} />
                 {/each}
@@ -136,13 +157,15 @@
             }}
         >
             <div class="topbar">
-                Map Border
-                <ToolButton
-                    icon="mdi:close"
-                    title="Close"
-                    on:click={() => (state = LayoutState.Palette)}
-                    theme="transparent"
-                />
+                <div class="center">Map Border</div>
+                <div class="right">
+                    <ToolButton
+                        icon="mdi:close"
+                        title="Close"
+                        on:click={() => (state = LayoutState.Palette)}
+                        theme="transparent"
+                    />
+                </div>
             </div>
             <div class="borders-container">
                 <MapCanvas
@@ -166,7 +189,36 @@
                 startHeight: 200,
             }}
         >
-            Brush
+            <div class="brush-editor">
+                <div class="topbar">
+                    <div class="left">
+                        <ToolButton
+                            icon="quill:meatballs-v"
+                            theme="transparent"
+                            title="Brush Type"
+                        />
+                    </div>
+                    <div
+                        class="center"
+                        style="place-content: stretch; place-items: stretch;"
+                    >
+                        <Input placeholder="Brush Name" />
+                    </div>
+                    <div class="right">
+                        <ToolButton
+                            icon="mdi:close"
+                            theme="transparent"
+                            title="close"
+                            on:click={() => {
+                                $editingBrush = null;
+                                state = LayoutState.Palette;
+                            }}
+                        />
+                    </div>
+                </div>
+                <div class="brush-body">Body</div>
+                <div class="brush-settings">Settings</div>
+            </div>
             <div class="resize-handle top" />
         </div>
         <!-- ANCHOR View -->
@@ -288,9 +340,16 @@
         .brushes {
             display: flex;
             flex-flow: row wrap;
-            padding: 8px;
+            padding: 6px 8px;
             gap: 8px;
             overflow-x: hidden;
+            width: calc(100% - 16px);
+            height: calc(100% - 12px);
+            place-content: flex-start;
+
+            &.no-brushes {
+                place-content: center;
+            }
 
             .view-all {
                 width: 75px;
@@ -301,6 +360,7 @@
 
                 &:hover {
                     color: var(--accent-fg);
+                    text-decoration: underline;
                     iconify-icon {
                         color: var(--accent-fg);
                     }
@@ -329,6 +389,25 @@
     .brush-view {
         display: grid;
         grid-template-rows: minmax(0, 1fr) 0;
+
+        .brush-editor {
+            display: grid;
+            grid-template-rows: min-content minmax(0, 1fr) min-content;
+
+            .topbar .center {
+                align-items: stretch;
+
+                :global(input) {
+                    width: 100%;
+                }
+            }
+
+            .brush-body {
+            }
+
+            .brush-settings {
+            }
+        }
     }
     .tile-palette-view {
         display: flex;
@@ -351,6 +430,14 @@
         border-bottom: none !important;
         container-type: inline-size;
 
+        .no-brushes {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            padding-top: 1em;
+            color: var(--weak-fg);
+        }
+
         .brush-container {
             display: grid;
             align-content: flex-start;
@@ -371,12 +458,46 @@
     }
     .topbar {
         height: 36px;
-        display: flex;
-        flex-flow: row nowrap;
-        padding: 0 2px;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 2px;
+        background: var(--main-bg);
+
+        display: grid;
+        grid-template-columns: minmax(32px, min-content) 1fr minmax(
+                32px,
+                min-content
+            );
+        grid-template-areas: "left center right";
+
+        .left {
+            grid-area: left;
+            justify-content: left;
+        }
+        .center {
+            grid-area: center;
+            justify-content: center;
+        }
+        .right {
+            grid-area: right;
+            justify-content: right;
+        }
+
+        .left,
+        .right,
+        .center {
+            display: flex;
+            flex-flow: row nowrap;
+            padding: 0 2px;
+            justify-content: center;
+            align-items: center;
+            gap: 2px;
+            background: var(--main-bg);
+        }
+
+        .center {
+            text-align: center;
+            color: var(--weak-fg);
+            text-transform: uppercase;
+        }
+
         box-shadow: 0 0 2px 0 var(--hard-shadow);
         z-index: 4;
     }

@@ -10,7 +10,7 @@ import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
-import { PaintingMaterial, PaletteMaterial, type CustomMaterial } from "./MapEditor/editor/materials";
+import { BrushMaterial, PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 
@@ -50,7 +50,8 @@ export class MapEditorContext extends TabbedEditorContext {
     declare public data: Writable<MapEditorData>;
 
     public material: Writable<PaintingMaterial>;
-    public brushes: Writable<CustomMaterial[]>;
+    public brushes: Writable<BrushMaterial[]>;
+    public editingBrush: Writable<BrushMaterial>;
     /** The block data for the tilset level editor */
     public tilesetBlocks: Writable<BlockData[][]>;
     /** The selected tool's id */
@@ -204,7 +205,9 @@ export class MapEditorContext extends TabbedEditorContext {
         this.data.set({ header: headerData, layout: layoutData, tilesets: allImages });
 
         // TODO Get from configs
-        this.brushes = writable([]);
+        this.brushes = writable([new BrushMaterial(), new BrushMaterial(), new BrushMaterial(), new BrushMaterial()]);
+        // Set the currently editing brush
+        this.editingBrush = writable(null);
 
         // Get the tilesets lengths
         try {
