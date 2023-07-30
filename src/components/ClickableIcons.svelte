@@ -23,12 +23,13 @@
         <button
             class="icon-button"
             on:click|stopPropagation={onclick}
+            on:dblclick|stopPropagation
             style={`font-size: ${size}`}
         >
             <span class="text">{text}</span>
             <span class="icon">
                 {#key icon}
-                <iconify-icon {icon} />
+                    <iconify-icon {icon} />
                 {/key}
             </span>
         </button>
