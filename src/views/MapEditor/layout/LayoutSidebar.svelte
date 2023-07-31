@@ -1,57 +1,41 @@
-<script lang="ts">
-    import { getContext } from "svelte";
-    import type { Writable } from "svelte/store";
-    import Select from "src/components/Select.svelte";
-    import { resizeY } from "src/systems/resize";
-    import type { MapEditorContext } from "src/views/MapEditor";
-    import BrushCard from "./BrushCard.svelte";
-    import Button from "src/components/Button.svelte";
-    import ToolButton from "../ToolButton.svelte";
-    import TilePalette from "./TilePalette.svelte";
-    import {
-        SelectionMaterial,
-        type PaintingMaterial,
-    } from "../editor/materials";
-    import SelectionPreview from "./SelectionPreview.svelte";
-    import TilesetLevelEditor from "./TilesetLevelEditor.svelte";
-    import LevelPalette from "./LevelPalette.svelte";
-    import MapCanvas from "../editor/MapCanvas.svelte";
-    import Input from "src/components/Input.svelte";
-
-    /** Set this to true if you are editing the levels */
-    export let levelMode: boolean;
-    export let hidden: boolean;
-
-    enum LayoutState {
+<script lang="ts" context="module">
+    export enum SidebarState {
         Palette,
         BrushList,
         Borders,
         Brush,
         BrushLevel,
     }
+</script>
+
+<script lang="ts">
+    import { getContext } from "svelte";
+    import Select from "src/components/Select.svelte";
+    import type { MapEditorContext } from "src/views/MapEditor";
+    import BrushList from "./sidebar/BrushList.svelte";
+    import TopBar from "./sidebar/TopBar.svelte";
+    import BrushPalette from "./sidebar/BrushPalette.svelte";
+    import BordersEditor from "./sidebar/BordersEditor.svelte";
+    import BrushEditor from "./sidebar/BrushEditor.svelte";
+    import LevelPaletteContainer from "./sidebar/LevelPaletteContainer.svelte";
+    import TilePaletteContainer from "./sidebar/TilePaletteContainer.svelte";
+    import TilesetLevelEditorContainer from "./sidebar/TilesetLevelEditorContainer.svelte";
+    import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
+
+    /** Set this to true if you are editing the levels */
+    export let levelMode: boolean;
+    export let hidden: boolean;
 
     const context: MapEditorContext = getContext("context");
-    const data = context.data;
-    const brushesStore = context.brushes;
-    const material: Writable<PaintingMaterial> = context.material;
     const editingBrush = context.editingBrush;
 
-    let borders = $data.layout.border_data;
-
-    let state: LayoutState = LayoutState.BrushList;
+    let state: SidebarState = SidebarState.BrushList;
 
     $: (() => {
         if ($editingBrush !== null) {
-            state = LayoutState.Brush;
+            state = SidebarState.Brush;
         }
     })();
-
-    $: selection =
-        $material instanceof SelectionMaterial
-            ? $material.isSingular
-                ? null
-                : $material
-            : null;
 </script>
 
 <svelte:window />
@@ -59,230 +43,35 @@
 <div class="a">
     <Select
         options={[
-            [LayoutState.Palette, "Palette"],
-            [LayoutState.BrushList, "Brush List"],
-            [LayoutState.Borders, "Borders"],
-            [LayoutState.Brush, "Brush"],
-            [LayoutState.BrushLevel, "Brush Level"],
+            [SidebarState.Palette, "Palette"],
+            [SidebarState.BrushList, "Brush List"],
+            [SidebarState.Borders, "Borders"],
+            [SidebarState.Brush, "Brush"],
+            [SidebarState.BrushLevel, "Brush Level"],
         ]}
         bind:value={state}
     />
 </div>
 <div class="sidebar-container" class:hidden>
     <div class="sidebar-content">
-        <!-- ANCHOR - Brush List -->
-        <div
-            class:hidden={levelMode || state !== LayoutState.BrushList}
-            class="brush-list-view"
-        >
-            <div class="topbar">
-                <div class="left">
-                    <ToolButton
-                        icon="mdi:plus"
-                        title="Create Brush"
-                        on:click={() => {}}
-                        theme="transparent"
-                    />
-                </div>
-                <div class="center">BRUSH LIST</div>
-                <div class="right">
-                    <ToolButton
-                        icon="mdi:close"
-                        title="Close"
-                        on:click={() => (state = LayoutState.Palette)}
-                        theme="transparent"
-                    />
-                </div>
-            </div>
-            <div class="brush-container">
-                {#key $editingBrush}
-                    {#each $brushesStore as brush, i}
-                        <BrushCard {brush} index={i} />
-                    {:else}
-                        <div class="no-brushes">There are no brushes</div>
-                    {/each}
-                {/key}
-            </div>
-        </div>
-        <!-- ANCHOR - Top bar -->
-        <div
-            class:hidden={levelMode || state !== LayoutState.Palette}
-            class="topbar-view"
-        >
-            <Button on:click={() => (state = LayoutState.Borders)}>
-                <iconify-icon icon="mdi:border-all" width="1.5em" />
-                Borders
-            </Button>
-            <Button on:click={() => (state = LayoutState.BrushList)}>
-                <iconify-icon icon="mdi:format-list-bulleted" width="1.5em" />
-                Brush List
-            </Button>
-            <Button>
-                <iconify-icon icon="mdi:puzzle" width="1.5em" />
-                Edit Tilesets
-            </Button>
-        </div>
-        <!-- ANCHOR - Brushes Container -->
-        <div
-            class="brushes-container"
-            class:hidden={levelMode || state !== LayoutState.Palette}
-            use:resizeY={{
-                minHeight: () => Math.max(100, window.innerHeight * 0.1),
-                maxHeight: () => Math.min(288, window.innerHeight * 0.33),
-                startHeight: 100,
-            }}
-        >
-            <div class="brushes" class:no-brushes={$brushesStore.length === 0}>
-                {#key $editingBrush}
-                    {#each $brushesStore as brush, i}
-                        <BrushCard small={true} {brush} index={i} />
-                    {/each}
-                {/key}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    class="view-all"
-                    on:click={() => (state = LayoutState.BrushList)}
-                >
-                    <iconify-icon icon="material-symbols:list" width="2em" />
-                    <br />
-                    View All Brushes
-                </div>
-            </div>
-            <div class="resize-handle top" />
-        </div>
-        <!-- ANCHOR - Borders editing view -->
-        <div
-            class="borders-view"
-            class:hidden={levelMode || state !== LayoutState.Borders}
-            use:resizeY={{
-                minHeight: () => window.innerHeight * 0.1,
-                maxHeight: () => window.innerHeight * 0.33,
-                startHeight: 200,
-            }}
-        >
-            <div class="topbar">
-                <div class="center">Map Border</div>
-                <div class="right">
-                    <ToolButton
-                        icon="mdi:close"
-                        title="Close"
-                        on:click={() => (state = LayoutState.Palette)}
-                        theme="transparent"
-                    />
-                </div>
-            </div>
-            <div class="borders-container">
-                <MapCanvas
-                    blocks={borders}
-                    centerOnResize={true}
-                    allowPan={false}
-                    allowZoom={false}
-                />
-            </div>
-            <div class="resize-handle top" />
-        </div>
-        <!-- ANCHOR - Brush editing view -->
-        <div
-            class="brush-view"
-            class:hidden={levelMode ||
-                (state !== LayoutState.Brush &&
-                    state !== LayoutState.BrushLevel)}
-            use:resizeY={{
-                minHeight: () => Math.min(100, window.innerHeight * 0.2),
-                maxHeight: () => window.innerHeight * 0.5,
-                startHeight: 200,
-            }}
-        >
-            <div class="brush-editor">
-                {#if $editingBrush !== null}
-                    <div class="topbar">
-                        <div class="left">
-                            <ToolButton
-                                icon="quill:meatballs-v"
-                                theme="transparent"
-                                title="Brush Type"
-                            />
-                        </div>
-                        <div
-                            class="center"
-                            style="place-content: stretch; place-items: stretch;"
-                        >
-                            <Input
-                                placeholder="Brush Name"
-                                bind:value={$editingBrush.name}
-                            />
-                        </div>
-                        <div class="right">
-                            <ToolButton
-                                icon="mdi:close"
-                                theme="transparent"
-                                title="close"
-                                on:click={() => {
-                                    $editingBrush = null;
-                                    state = LayoutState.Palette;
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div class="brush-body">
-                        <MapCanvas blocks={$editingBrush.blocks} />
-                    </div>
-                    <div class="brush-settings">Settings</div>
-                {/if}
-            </div>
-            <div class="resize-handle top" />
-        </div>
-        <!-- ANCHOR View -->
-        <div
-            class="level-palette-view"
-            class:flexed={!levelMode}
-            class:hidden={!levelMode && state !== LayoutState.BrushLevel}
-            use:resizeY={{
-                maxHeight: () => Math.min(310, window.innerHeight * 0.33),
-                minHeight: () => window.innerHeight * 0.1,
-                startHeight: 310,
-            }}
-        >
-            <div class="level-palette-container">
-                <LevelPalette />
-            </div>
-            <div class="resize-handle top" class:hidden={!levelMode} />
-        </div>
-        <!-- ANCHOR - Tile palette view -->
-        <div
-            class:hidden={levelMode ||
-                state === LayoutState.BrushList ||
-                state === LayoutState.BrushLevel}
-            class="tile-palette-view"
-        >
-            <div class="palette-container">
-                <TilePalette />
-            </div>
-        </div>
-        <div
-            class:hidden={levelMode ||
-                state === LayoutState.BrushList ||
-                state === LayoutState.BrushLevel}
-            class="footbar-view"
-        >
-            Footbar!
-        </div>
-        <!-- ANCHOR - Palette Permissions Editing -->
-        <div class="tileset-level-editor-view" class:hidden={!levelMode}>
-            <TilesetLevelEditor />
-        </div>
-        <!-- ANCHOR - Mutliselect preview -->
-        <div
-            class:hidden={selection === null ||
-                (!levelMode && state === LayoutState.BrushList)}
-            class="multi-selection-view"
-        >
-            {#key selection}
-                {#if selection !== null}
-                    <SelectionPreview {selection} showLevels={levelMode} />
-                {/if}
-            {/key}
-        </div>
+        <!-- Brush List -->
+        <BrushList {levelMode} bind:state />
+        <!-- Top bar -->
+        <TopBar {levelMode} bind:state />
+        <!-- Brushes Container -->
+        <BrushPalette {levelMode} bind:state />
+        <!-- Borders editing view -->
+        <BordersEditor {levelMode} bind:state />
+        <!-- Brush editing view -->
+        <BrushEditor {levelMode} bind:state />
+        <!-- Level Palette -->
+        <LevelPaletteContainer {levelMode} bind:state />
+        <!-- Tile palette view -->
+        <TilePaletteContainer {levelMode} bind:state />
+        <!-- Palette Permissions Editing -->
+        <TilesetLevelEditorContainer {levelMode} />
+        <!-- Mutliselect preview -->
+        <SelectionPreviewContainer {levelMode} bind:state />
     </div>
 </div>
 
@@ -312,228 +101,60 @@
         align-items: stretch;
         position: relative;
 
-        & > div:not(.resize) {
+        & :global(> div:not(.resize)) {
             border-bottom: 1px solid var(--light-shadow);
         }
-    }
 
-    // ANCHOR Topbar Style
-    .topbar-view {
-        background: var(--main-bg);
-        height: min-content;
-        display: flex;
-        gap: 8px;
-        padding: 8px;
-        justify-content: space-evenly;
-
-        > :global(.button) {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            gap: 4px;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            flex: 1;
-            height: 60px;
-            text-align: center;
-            white-space: normal;
-        }
-    }
-
-    .brushes-container {
-        display: grid;
-        grid-template-rows: minmax(0, 1fr) 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-        align-items: flex-start;
-
-        .brushes {
-            display: flex;
-            flex-flow: row wrap;
-            padding: 6px 8px;
-            gap: 8px;
-            overflow-x: hidden;
-            width: calc(100% - 16px);
-            height: calc(100% - 12px);
-            place-content: flex-start;
-
-            &.no-brushes {
-                place-content: center;
-            }
-
-            .view-all {
-                width: 75px;
-                height: 75px;
-                text-align: center;
-                padding: 5px;
-                cursor: pointer;
-
-                &:hover {
-                    color: var(--accent-fg);
-                    text-decoration: underline;
-                    iconify-icon {
-                        color: var(--accent-fg);
-                    }
-                }
-            }
-        }
-    }
-
-    .footbar-view {
-        height: 20px;
-        background: var(--tabs-bg);
-        border-bottom: none !important;
-    }
-    .borders-view {
-        display: grid;
-        grid-template-rows: max-content minmax(0, 1fr) 0;
-
-        .borders-container {
-            display: grid;
-            position: relative;
-            padding: 16px;
-            width: calc(100% - 32px);
-            height: calc(100% - 32px);
-        }
-    }
-    .brush-view {
-        display: grid;
-        grid-template-rows: minmax(0, 1fr) 0;
-
-        .brush-editor {
-            display: grid;
-            grid-template-rows: min-content minmax(0, 1fr) min-content;
-
-            .topbar .center {
-                align-items: stretch;
-
-                :global(input) {
-                    width: 100%;
-                }
-            }
-
-            .brush-body {
-                :global(canvas) {
-                    max-width: 100%;
-                }
-            }
-
-            .brush-settings {
-                box-shadow: 0 -1px 1px var(--light-shadow);
-            }
-        }
-    }
-    .tile-palette-view {
-        display: flex;
-        flex: 4;
-        overflow: hidden;
-
-        .palette-container {
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-        }
-    }
-    .multi-selection-view {
-        max-height: 25%;
-        min-height: 20px;
-    }
-    .brush-list-view {
-        display: grid;
-        grid-template-rows: max-content calc(100vh - 104px);
-        border-bottom: none !important;
-        container-type: inline-size;
-
-        .no-brushes {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: center;
-            padding-top: 1em;
-            color: var(--weak-fg);
-        }
-
-        .brush-container {
-            display: grid;
-            align-content: flex-start;
-            gap: 8px;
-            padding: 8px;
-            overflow-x: hidden;
-
-            grid-template-columns: 1fr;
-
-            @container (min-width: 584px) {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            @container (min-width: 862px) {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
-        }
-    }
-    .topbar {
-        height: 36px;
-        background: var(--main-bg);
-
-        display: grid;
-        grid-template-columns: minmax(32px, min-content) 1fr minmax(
-                32px,
-                min-content
-            );
-        grid-template-areas: "left center right";
-
-        .left {
-            grid-area: left;
-            justify-content: left;
-        }
-        .center {
-            grid-area: center;
-            justify-content: center;
-        }
-        .right {
-            grid-area: right;
-            justify-content: right;
-        }
-
-        .left,
-        .right,
-        .center {
-            display: flex;
-            flex-flow: row nowrap;
-            padding: 0 2px;
-            justify-content: center;
-            align-items: center;
-            gap: 2px;
+        :global(.topbar) {
+            height: 36px;
             background: var(--main-bg);
+
+            display: grid;
+            grid-template-columns: minmax(32px, min-content) 1fr minmax(
+                    32px,
+                    min-content
+                );
+            grid-template-areas: "left center right";
+
+            :global(.left) {
+                grid-area: left;
+                justify-content: left;
+            }
+            :global(.center) {
+                grid-area: center;
+                justify-content: center;
+            }
+            :global(.right) {
+                grid-area: right;
+                justify-content: right;
+            }
+
+            :global(.left),
+            :global(.right),
+            :global(.center) {
+                display: flex;
+                flex-flow: row nowrap;
+                padding: 0 2px;
+                justify-content: center;
+                align-items: center;
+                gap: 2px;
+                background: var(--main-bg);
+            }
+
+            :global(.center) {
+                text-align: center;
+                color: var(--weak-fg);
+                text-transform: uppercase;
+            }
+
+            box-shadow: 0 0 2px 0 var(--hard-shadow);
+            z-index: 4;
         }
 
-        .center {
-            text-align: center;
-            color: var(--weak-fg);
-            text-transform: uppercase;
+        :global(.footbar) {
+            height: 20px;
+            background: var(--tabs-bg);
+            border-bottom: none !important;
         }
-
-        box-shadow: 0 0 2px 0 var(--hard-shadow);
-        z-index: 4;
-    }
-    .level-palette-view {
-        display: grid;
-        grid-template-rows: minmax(0, 1fr) 0;
-        overflow: hidden;
-
-        &.flexed {
-            flex: 1;
-        }
-
-        .level-palette-container {
-            overflow-y: auto;
-        }
-    }
-
-    .tileset-level-editor-view {
-        display: grid;
-        flex: 4;
-        border-bottom: none !important;
-        overflow: hidden;
     }
 </style>
