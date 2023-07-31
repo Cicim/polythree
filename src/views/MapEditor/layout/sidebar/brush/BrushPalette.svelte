@@ -1,9 +1,9 @@
 <script lang="ts">
     import { resizeY } from "src/systems/resize";
-    import { SidebarState } from "../LayoutSidebar.svelte";
+    import { SidebarState } from "../../LayoutSidebar.svelte";
     import { getContext } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
-    import BrushCard from "../BrushCard.svelte";
+    import BrushCard from "./BrushCard.svelte";
 
     export let state: SidebarState;
     export let levelMode: boolean;

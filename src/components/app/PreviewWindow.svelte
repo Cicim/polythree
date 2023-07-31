@@ -7,6 +7,8 @@
         height?: number;
         maxWidth?: number;
         maxHeight?: number;
+        minWidth?: number;
+        minHeight?: number;
         slot?: {
             component?: typeof SvelteComponent;
             props?: any;
@@ -166,6 +168,14 @@
             if (options.maxHeight)
                 previewWindow.style.maxHeight = `${options.maxHeight}px`;
             else previewWindow.style.removeProperty("max-height");
+
+            if (options.minWidth)
+                previewWindow.style.minWidth = `${options.minWidth}px`;
+            else previewWindow.style.removeProperty("min-width");
+
+            if (options.minHeight)
+                previewWindow.style.minHeight = `${options.minHeight}px`;
+            else previewWindow.style.removeProperty("min-height");
         }
 
         previewWindow.showModal();

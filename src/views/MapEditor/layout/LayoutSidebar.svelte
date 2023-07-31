@@ -13,11 +13,11 @@
     import { BrushMaterial } from "../editor/materials";
     import type { MapEditorContext } from "src/views/MapEditor";
     import Select from "src/components/Select.svelte";
-    import BrushList from "./sidebar/BrushList.svelte";
+    import BrushList from "./sidebar/brush/BrushList.svelte";
     import TopBar from "./sidebar/TopBar.svelte";
-    import BrushPalette from "./sidebar/BrushPalette.svelte";
+    import BrushPalette from "./sidebar/brush/BrushPalette.svelte";
     import BordersEditor from "./sidebar/BordersEditor.svelte";
-    import BrushEditor from "./sidebar/BrushEditor.svelte";
+    import BrushEditor from "./sidebar/brush/BrushEditor.svelte";
     import LevelPaletteContainer from "./sidebar/LevelPaletteContainer.svelte";
     import TilePaletteContainer from "./sidebar/TilePaletteContainer.svelte";
     import TilesetLevelEditorContainer from "./sidebar/TilesetLevelEditorContainer.svelte";
@@ -35,7 +35,7 @@
 
     $: (() => {
         if ($editingBrush !== null) {
-            state = SidebarState.Brush;
+            if (state !== SidebarState.BrushLevel) state = SidebarState.Brush;
         }
     })();
 

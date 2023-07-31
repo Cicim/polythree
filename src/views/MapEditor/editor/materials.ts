@@ -92,6 +92,12 @@ export abstract class BrushMaterial extends PaintingMaterial {
 
         return canvas;
     }
+
+    /** Creates a base64 image for preview */
+    public createPreviewImage(tilesetData: TilesetData): string {
+        const canvas = this.renderThumbnail(tilesetData);
+        return canvas.toDataURL();
+    }
 }
 
 export class TestBrush extends BrushMaterial {
@@ -99,6 +105,6 @@ export class TestBrush extends BrushMaterial {
     public blocks: BlockData[][] = [[[42, null]]];
 
     public apply(state: PainterState, x: number, y: number): void {
-        state.set(x, y, [42, null]);
+        state.set(x, y, this.blocks[0][0]);
     }
 }

@@ -6,7 +6,7 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
-    import type { BrushMaterial } from "../editor/materials";
+    import type { BrushMaterial } from "../../../editor/materials";
     import { getContext, onMount } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
 
@@ -52,7 +52,7 @@
         new Separator(name),
         new IconOption("Edit", "mdi:edit", editBrush),
         $pinned
-            ? new IconOption("Unpin", "mdi:pin", setUnpinned)
+            ? new IconOption("Unpin", "mdi:pin-off", setUnpinned)
             : new IconOption("Pin", "mdi:pin", setPinned),
         new Separator(),
         new IconOption("Delete", "mdi:trash", () => {}),
@@ -101,7 +101,11 @@
                 // { icon: "mdi:trash", text: "Delete", onclick: () => {} },
                 // { icon: "mdi:edit", text: "Edit", onclick: () => {} },
                 $pinned
-                    ? { icon: "mdi:pin", text: "Unpin", onclick: setUnpinned }
+                    ? {
+                          icon: "mdi:pin",
+                          text: "Unpin",
+                          onclick: setUnpinned,
+                      }
                     : { icon: "mdi:pin", text: "Pin", onclick: setPinned },
             ]}
         />
@@ -125,6 +129,7 @@
 
         .preview :global(canvas) {
             border-radius: 4px;
+            filter: drop-shadow(-1px -1px 3px var(--main-bg));
         }
 
         &:hover {
@@ -156,6 +161,7 @@
                 box-shadow: 0 8px 4px #0005;
                 background: #0005;
                 text-shadow: none;
+                width: 100%;
             }
         }
 
