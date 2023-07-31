@@ -13,19 +13,27 @@
     import { LEVEL_COLORS, LAYER_CHARS } from "./consts";
     import type { EditorChanges } from "src/systems/changes";
 
+    interface MapCanvasText {
+        text: string;
+        x: number;
+        y: number;
+        maxWidth?: number;
+    }
+
     /** Blocks to edit */
     export let blocks: BlockData[][];
-    /**
-     * The size of the chunks in which to divide the map for caching.
-     * Caching is always enabled as supporting it being disabled would be
-     * more work than it's worth.
-     */
+    /** The size of the chunks in which to divide the map for caching */
     export let chunkSize: number = 32;
     /** Whether or not to print the levels on top of the tiles */
     export let editLevels: boolean = false;
     $: editLevels, draw();
     /** Whether or not this map allows having null levels */
     export let nullLevels: boolean = false;
+    /** Allows inserting null tiles in place of BlockData to draw empty slots */
+    export let nullBlocks: boolean = false;
+
+    /** Texts to print on top of the map */
+    export let texts: MapCanvasText[] = [];
 
     /** Whether zooming is allowed */
     export let allowZoom: boolean = true;
@@ -54,16 +62,14 @@
     const ZOOM_LEVELS = [1, 1.5, 2, 3, 4, 5, 6, 8, 16];
 
     /**
-     * Zoom level to render cache in. If we used 1, the text
-     * would be pixelly at any zoom level.
+     * Zoom level to render the level cache with text in.
+     * If we used 1, the text would look pixelated at any
+     * zoom level higher than 1.
      *
-     * Not that the size of a canvas is limited. A value that
-     * seems to work fine with blockSize=32 is 8.
-     *
-     * If the limit is reached, the program will crash.
+     * Consider memory limitations if updating this constant.
      */
     const LEVEL_CACHE_ZOOM = 8;
-    /** Zoom level before which only colors are rendered */
+    /** Zoom level before which only colors are rendered for layers */
     const LEVEL_ZOOM_WITH_TEXT = 2;
     /** Transparency level for the level background */
     const LEVEL_BACKGROUND_ALPHA = 0.33;
@@ -101,9 +107,17 @@
         const tileY = Math.floor(mouseMapPos.y / 16);
         return point(tileX, tileY);
     };
-    /** Returns whether the current tile is in bounds */
-    const isInBounds = (x: number, y: number): boolean =>
-        x >= 0 && x < blocksWidth && y >= 0 && y < blocksHeight;
+    /**
+     * Returns whether you can start an action from this tile.
+     * Starting an action like painting or selecting on a tile
+     * requires it to be within the bounds of the map and not null.
+     */
+    const canPaintOnTile = (x: number, y: number): boolean =>
+        x >= 0 &&
+        x < blocksWidth &&
+        y >= 0 &&
+        y < blocksHeight &&
+        blocks[y][x] !== null;
 
     // ANCHOR Properties
     let containerEl: HTMLDivElement;
@@ -190,19 +204,13 @@
         drawTopLayer();
         if (editLevels) drawLevels();
 
-        if (selection !== null) {
-            const { x, y, width, height } = selection;
+        // Draw the texts on the canvas
+        for (const text of texts) drawText(text);
+        // Draw the selection on top of everything
+        drawSelection();
 
-            // Find the position on the canvas
-            const { x: px, y: py } = mapToCanvas({ x: x * 16, y: y * 16 });
-            // Draw the rectangle
-            ctx.strokeStyle = "red";
-            ctx.lineWidth = zoom;
-            ctx.strokeRect(px, py, width * 16 * zoom, height * 16 * zoom);
-        }
-
+        // Debug printing
         if (!debug) return;
-
         const frameTime = performance.now() - frameStart;
         const hovered = hoveredTile();
 
@@ -360,6 +368,26 @@
 
         // Obtain the boxed variant of the layer number
         return [color, LAYER_CHARS[layer]];
+    }
+
+    // ANCHOR Text drawing function
+    function drawText({ text, x, y, maxWidth }: MapCanvasText) {
+        // Get the actual position of the text on the canvas
+        const pos = mapToCanvas({ x: x * 16, y: y * 16 });
+
+        const fontSize = 12 * zoom;
+
+        // Draw the text starting from there
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.font = fontSize + "px Rubik";
+        ctx.fillText(
+            text,
+            pos.x,
+            pos.y,
+            maxWidth === undefined ? undefined : maxWidth * 16 * zoom
+        );
     }
 
     // ANCHOR Debug drawing functions
@@ -594,7 +622,7 @@
     // ANCHOR Selection
     /** Computes the selection rectangle */
     function computeSelectionRectangle() {
-        const oldSelection = selection;
+        const oldSel = selection;
 
         let { x: sx, y: sy } = selectionStart;
         let { x: ex, y: ey } = hoveredTile();
@@ -605,22 +633,36 @@
         ex = clamp(ex, 0, blocksWidth - 1);
         ey = clamp(ey, 0, blocksHeight - 1);
 
-        selection = {
-            x: Math.min(sx, ex),
-            y: Math.min(sy, ey),
-            width: Math.abs(sx - ex) + 1,
-            height: Math.abs(sy - ey) + 1,
-        };
+        const x = Math.min(sx, ex);
+        const y = Math.min(sy, ey);
+        const width = Math.abs(sx - ex) + 1;
+        const height = Math.abs(sy - ey) + 1;
 
         // If nothing changed since last time
         if (
-            oldSelection !== null &&
-            oldSelection.x == selection.x &&
-            oldSelection.y == selection.y &&
-            oldSelection.width == selection.width &&
-            oldSelection.height == selection.height
+            oldSel !== null &&
+            oldSel.x == x &&
+            oldSel.y == y &&
+            oldSel.width == width &&
+            oldSel.height == height
         )
             return;
+
+        // If null blocks are allowed, we need more checks to make sure
+        // that no null tile can be selected when selecting an area
+        if (nullBlocks) {
+            for (let i = y; i < y + height; i++)
+                for (let j = x; j < x + width; j++)
+                    if (blocks[i]?.[j] === null) return;
+        }
+
+        // Update the selection
+        selection = {
+            x,
+            y,
+            width,
+            height,
+        };
 
         // TODO Change for event selection
         createSelectionMaterial(selection);
@@ -698,12 +740,25 @@
         // Save the material
         $material = new SelectionMaterial(selBlockData, selCanvas, lvCanvas);
     }
+    /** Draws the selection if present */
+    function drawSelection() {
+        if (selection === null) return;
+
+        const { x, y, width, height } = selection;
+
+        // Find the position on the canvas
+        const { x: px, y: py } = mapToCanvas({ x: x * 16, y: y * 16 });
+        // Draw the rectangle
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = zoom;
+        ctx.strokeRect(px, py, width * 16 * zoom, height * 16 * zoom);
+    }
 
     // ANCHOR Painting with brushes
     const PAINTER_METHODS: PainterMethods = {
         nullLevels,
         update: () => draw(),
-        inBounds: (x, y) => isInBounds(x, y),
+        canPaint: (x, y) => canPaintOnTile(x, y),
         get: (x: number, y: number) => blocks[y][x],
 
         forEach(callback) {
@@ -775,7 +830,7 @@
             // Get the current tile coordinates
             const { x, y } = hoveredTile();
             // If the tile are not in bounds, don't start anything
-            if (!isInBounds(x, y)) return;
+            if (!canPaintOnTile(x, y)) return;
             state = State.Painting;
 
             // Create the painting state
@@ -799,7 +854,7 @@
         // Selection starts with the right mouse button (2)
         if (event.button === 2) {
             const { x, y } = hoveredTile();
-            if (!isInBounds(x, y)) return;
+            if (!canPaintOnTile(x, y)) return;
 
             state = State.Selecting;
             // Save the tile where the selection starts
@@ -836,7 +891,7 @@
                 // Get the current tile coordinates
                 const { x, y } = hoveredTile();
                 // If the tile are not in bounds, don't do anything
-                if (!isInBounds(x, y)) return;
+                if (!canPaintOnTile(x, y)) return;
 
                 tool.moveStroke(x, y);
                 break;
@@ -859,7 +914,7 @@
         } else if (event.button === 1 && state === State.Panning) {
             state = State.Idle;
         } else if (event.button === 2 && state === State.Selecting) {
-            // Do not show the selection
+            // Hide the selection
             selection = null;
             draw();
             changes.locked--;

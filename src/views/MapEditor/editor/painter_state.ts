@@ -7,8 +7,8 @@ export interface PainterMethods {
 
     /** Loop over all blocks in the map */
     forEach(callback: (x: number, y: number, data: BlockData) => void): void;
-    /** Returns whether the given block is in bounds */
-    inBounds(x: number, y: number): boolean;
+    /** Returns whether you can paint on the given block */
+    canPaint(x: number, y: number): boolean;
     /** Set a block at the given coordinates */
     set(x: number, y: number, data: BlockData): void;
     /** Get a block at the given coordinates */
@@ -31,7 +31,7 @@ export class PainterState {
 
     /** Sets the given block and updates the chunk */
     public set(x: number, y: number, data: BlockData) {
-        if (!this.methods.inBounds(x, y)) return;
+        if (!this.methods.canPaint(x, y)) return;
 
         let oldData = this.get(x, y);
 
@@ -68,7 +68,7 @@ export class PainterState {
      * Returns `null` if the coordinates are out of bounds.
      */
     public get(x: number, y: number): BlockData {
-        if (!this.methods.inBounds(x, y)) return null;
+        if (!this.methods.canPaint(x, y)) return null;
 
         return this.methods.get(x, y);
     }
