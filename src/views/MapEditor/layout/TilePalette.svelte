@@ -177,9 +177,9 @@
             selectionEnd = getTile(event);
             drawSelection();
 
-            const { width, height } = sortSelection();
+            const { x, y, width, height } = sortSelection();
             // Update the multiselection tile
-            const selectedStartTile = selectionStart.x + selectionStart.y * 8;
+            const selectedStartTile = x + y * 8;
             if (isSingleSelection()) selectedTile = selectedStartTile;
             else selectedTile = [selectedStartTile, width, height];
         }
