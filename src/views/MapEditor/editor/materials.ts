@@ -48,6 +48,7 @@ export class SelectionMaterial extends PaletteMaterial {
 export class BrushMaterial extends PaintingMaterial {
     public name = "Unnamed Brush";
     public pinned = writable(false);
+    public blocks: BlockData[][] = [[[0, null]]];
 
     public exportThumbnail(tilesetData: TilesetData): HTMLCanvasElement {
         const canvas = document.createElement("canvas");

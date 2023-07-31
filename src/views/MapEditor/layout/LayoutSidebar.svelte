@@ -95,11 +95,13 @@
                 </div>
             </div>
             <div class="brush-container">
-                {#each $brushesStore as brush, i}
-                    <BrushCard {brush} index={i} />
-                {:else}
-                    <div class="no-brushes">There are no brushes</div>
-                {/each}
+                {#key $editingBrush}
+                    {#each $brushesStore as brush, i}
+                        <BrushCard {brush} index={i} />
+                    {:else}
+                        <div class="no-brushes">There are no brushes</div>
+                    {/each}
+                {/key}
             </div>
         </div>
         <!-- ANCHOR - Top bar -->
@@ -131,9 +133,11 @@
             }}
         >
             <div class="brushes" class:no-brushes={$brushesStore.length === 0}>
-                {#each $brushesStore as brush, i}
-                    <BrushCard small={true} {brush} index={i} />
-                {/each}
+                {#key $editingBrush}
+                    {#each $brushesStore as brush, i}
+                        <BrushCard small={true} {brush} index={i} />
+                    {/each}
+                {/key}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
                     class="view-all"
@@ -190,34 +194,41 @@
             }}
         >
             <div class="brush-editor">
-                <div class="topbar">
-                    <div class="left">
-                        <ToolButton
-                            icon="quill:meatballs-v"
-                            theme="transparent"
-                            title="Brush Type"
-                        />
+                {#if $editingBrush !== null}
+                    <div class="topbar">
+                        <div class="left">
+                            <ToolButton
+                                icon="quill:meatballs-v"
+                                theme="transparent"
+                                title="Brush Type"
+                            />
+                        </div>
+                        <div
+                            class="center"
+                            style="place-content: stretch; place-items: stretch;"
+                        >
+                            <Input
+                                placeholder="Brush Name"
+                                bind:value={$editingBrush.name}
+                            />
+                        </div>
+                        <div class="right">
+                            <ToolButton
+                                icon="mdi:close"
+                                theme="transparent"
+                                title="close"
+                                on:click={() => {
+                                    $editingBrush = null;
+                                    state = LayoutState.Palette;
+                                }}
+                            />
+                        </div>
                     </div>
-                    <div
-                        class="center"
-                        style="place-content: stretch; place-items: stretch;"
-                    >
-                        <Input placeholder="Brush Name" />
+                    <div class="brush-body">
+                        <MapCanvas blocks={$editingBrush.blocks} />
                     </div>
-                    <div class="right">
-                        <ToolButton
-                            icon="mdi:close"
-                            theme="transparent"
-                            title="close"
-                            on:click={() => {
-                                $editingBrush = null;
-                                state = LayoutState.Palette;
-                            }}
-                        />
-                    </div>
-                </div>
-                <div class="brush-body">Body</div>
-                <div class="brush-settings">Settings</div>
+                    <div class="brush-settings">Settings</div>
+                {/if}
             </div>
             <div class="resize-handle top" />
         </div>
@@ -403,9 +414,13 @@
             }
 
             .brush-body {
+                :global(canvas) {
+                    max-width: 100%;
+                }
             }
 
             .brush-settings {
+                box-shadow: 0 -1px 1px var(--light-shadow);
             }
         }
     }
