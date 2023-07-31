@@ -47,15 +47,14 @@
                 $material.blocks[0][0][0] === null
             ) {
                 // Update the selection
-                selectionStart = { x: -10, y: 0 };
-                selectionEnd = { x: -10, y: 0 };
-                drawSelection();
+                hideSelection();
             } else if (
                 !(
                     $material instanceof PaletteMaterial &&
                     $material.isPaletteMaterial
                 )
             ) {
+                hideSelection();
                 selectedTile = null;
             }
         })();
@@ -100,6 +99,12 @@
         selectionDiv.style.setProperty("--y", `${y}`);
         selectionDiv.style.setProperty("--width", `${width}`);
         selectionDiv.style.setProperty("--height", `${height}`);
+    }
+
+    function hideSelection() {
+        selectionStart = { x: -10, y: 0 };
+        selectionEnd = { x: -10, y: 0 };
+        drawSelection();
     }
 
     function scrollToTile(tileY: number) {
