@@ -51,7 +51,7 @@
     $: contextMenu = new Menu([
         new Separator(name),
         new IconOption("Edit", "mdi:edit", editBrush),
-        pinned
+        $pinned
             ? new IconOption("Unpin", "mdi:pin", setUnpinned)
             : new IconOption("Pin", "mdi:pin", setPinned),
         new Separator(),
