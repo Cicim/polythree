@@ -10,7 +10,8 @@ import LayoutPickerDialog from "./MapEditor/dialogs/LayoutPickerDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
-import { BrushMaterial, PaintingMaterial, PaletteMaterial, TestBrush } from "./MapEditor/editor/materials";
+import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
+import { BrushMaterial, TestBrush } from "./MapEditor/editor/brushes";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 

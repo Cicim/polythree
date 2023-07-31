@@ -42,7 +42,7 @@
                         title="Brush Settings"
                         on:click={() => {
                             spawnDialog(BrushSettings, {
-                                brush: $editingBrush,
+                                brush: editingBrush,
                             });
                         }}
                     />

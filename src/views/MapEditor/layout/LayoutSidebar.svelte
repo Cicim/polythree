@@ -10,7 +10,7 @@
 
 <script lang="ts">
     import { getContext, onDestroy } from "svelte";
-    import { BrushMaterial } from "../editor/materials";
+    import { BrushMaterial } from "../editor/brushes";
     import type { MapEditorContext } from "src/views/MapEditor";
     import Select from "src/components/Select.svelte";
     import BrushList from "./sidebar/brush/BrushList.svelte";

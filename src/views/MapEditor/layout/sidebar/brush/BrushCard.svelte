@@ -6,7 +6,7 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
-    import type { BrushMaterial } from "../../../editor/materials";
+    import type { BrushMaterial } from "../../../editor/brushes";
     import { getContext, onMount } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
 
