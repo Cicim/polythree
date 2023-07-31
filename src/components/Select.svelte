@@ -184,6 +184,12 @@
         lastValue = value;
     }
 
+    function closeOptions() {
+        // Focus the select element
+        optionsEl.close();
+        selectEl.focus();
+    }
+
     /** For closing the modal options */
     function onClickOutside(event: MouseEvent) {
         if (!open) return;
@@ -202,7 +208,7 @@
         ) {
             // Check if the click was outside the options list
             // Close the options list
-            optionsEl.close();
+            closeOptions();
             open = false;
 
             // Trigger a change if the value was changed
@@ -265,7 +271,7 @@
                 event.preventDefault();
                 event.stopPropagation();
                 // Close the options list
-                optionsEl.close();
+                closeOptions();
                 open = false;
                 break;
             }
@@ -367,7 +373,7 @@
         if (!open) return;
 
         // Close the options list
-        optionsEl.close();
+        closeOptions();
         open = false;
 
         // Set the value of the select element
@@ -380,7 +386,7 @@
         if (!open) return;
 
         // Close the options list
-        optionsEl.close();
+        closeOptions();
         open = false;
 
         value = lastValue;
@@ -495,7 +501,8 @@
             outline-offset: 1px;
         }
         &.open {
-            outline: none;
+            outline: 1px solid var(--accent-fg);
+            outline-offset: 1px;
 
             .icon-dropdown {
                 transform: rotate(180deg);

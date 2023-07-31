@@ -230,12 +230,15 @@ export function getActionsShortcut(id: string): [binding: BindingFunction, short
 
 /** Window keydown event listener */
 export function handleKeydown(event: KeyboardEvent) {
+    // If you are writing in an input, return
+    if (document.activeElement instanceof HTMLInputElement) return;
     // Get the shortcut pressed
     const shortcutCode = getShortcutCode(event);
     // Get the bindings from the shortcutCode
     const keybindings = shortcutCodeToKeybindings[shortcutCode];
     // Exit if the keybindings were not defined
     if (keybindings === undefined) return;
+
 
     const active = get(activeView);
 
