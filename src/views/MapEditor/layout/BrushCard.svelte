@@ -43,7 +43,7 @@
     function updateThumbnail() {
         if (!previewContainer) return;
         previewContainer.innerHTML = "";
-        previewContainer.appendChild(brush.exportThumbnail($data.tilesets));
+        previewContainer.appendChild(brush.renderThumbnail($data.tilesets));
     }
 
     $: updateThumbnail();
