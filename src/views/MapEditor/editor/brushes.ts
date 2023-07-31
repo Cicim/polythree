@@ -3,9 +3,16 @@ import { writable } from "svelte/store";
 import { PaintingMaterial } from "./materials";
 import type { PainterState } from "./painter_state";
 
+export enum BrushType {
+    Simple,
+    NinePatch,
+}
+
 export abstract class BrushMaterial extends PaintingMaterial {
     /** Name of the brush (as it appears in the preview) */
     public name = "Unnamed Brush";
+    /** The brush's type */
+    public abstract type: BrushType;
     /** Whether the brush is pinned to the top in the brushes list */
     public pinned = writable(false);
     /** The blocks that are modified by MapCanvas in the BrushEditor */
@@ -54,13 +61,102 @@ export abstract class BrushMaterial extends PaintingMaterial {
         const canvas = this.renderThumbnail(tilesetData);
         return canvas.toDataURL();
     }
+
+    public abstract clone(): BrushMaterial;
 }
 
-export class TestBrush extends BrushMaterial {
-    public name = "Test Brush";
+export class SimpleBrush extends BrushMaterial {
+    public name = "Simple Brush";
     public blocks: BlockData[][] = [[[42, null]]];
+    public type = BrushType.Simple;
+    public _width = 1;
+    public _height = 1;
+
+    public get width(): number {
+        return this._width;
+    }
+
+    public set width(value: number) {
+        // Add or remove columns
+        if (value > this._width) {
+            // Add new columns
+            this.blocks = this.blocks.map((row) =>
+                [...row, ...new Array(value - this._width)
+                    .fill(0).map(_ => [0, null] as BlockData)]
+            );
+        } else {
+            // Remove Columns
+            this.blocks = this.blocks.map((row) => row.slice(0, value));
+        }
+        this._width = value;
+    }
+
+    public get height(): number {
+        return this._height;
+    }
+
+    public set height(value: number) {
+        // Add or remove rows
+        if (value > this._height) {
+            // Add new rows
+            this.blocks = [...this.blocks, ...new Array(value - this._height)
+                .fill(0).map(_ => new Array(this._width)
+                    .fill(0).map(_ => [0, null] as BlockData))];
+        }
+        else {
+            // Remove rows
+            this.blocks = this.blocks.slice(0, value);
+        }
+        this._height = value;
+    }
 
     public apply(state: PainterState, x: number, y: number): void {
-        state.set(x, y, this.blocks[0][0]);
+        const blocks = this.blocks;
+        const width = blocks[0].length;
+        const height = blocks.length;
+
+        for (let dy = 0; dy < height; dy++)
+            for (let dx = 0; dx < width; dx++)
+                state.set(x + dx, y + dy, blocks[dy][dx]);
+    }
+
+    public clone(): SimpleBrush {
+        const brush = new SimpleBrush();
+        brush.blocks = this.blocks.map((row) => row.map((block) => [...block]));
+        brush.width = this.width;
+        brush.height = this.height;
+        brush.name = this.name;
+        return brush;
+    }
+}
+
+export class NinePatchBrush extends BrushMaterial {
+    public name = "Nine Patch Brush";
+    public blocks: BlockData[][] = [
+        [
+            [42, null], [42, null], [42, null],
+            [42, null], [42, null], [42, null],
+            [42, null], [42, null], [42, null],
+        ],
+    ];
+    public type = BrushType.NinePatch;
+    public hasCorners = false;
+
+    public apply(state: PainterState, x: number, y: number): void {
+        const blocks = this.blocks;
+        const width = blocks[0].length;
+        const height = blocks.length;
+
+        for (let dy = 0; dy < height; dy++)
+            for (let dx = 0; dx < width; dx++)
+                state.set(x + dx, y + dy, blocks[dy][dx]);
+    }
+
+    public clone(): NinePatchBrush {
+        const brush = new NinePatchBrush();
+        brush.blocks = this.blocks.map((row) => row.map((block) => [...block]));
+        brush.name = this.name;
+        brush.hasCorners = this.hasCorners;
+        return brush;
     }
 }

@@ -331,6 +331,22 @@
     "prefix": "mdi",
     "width": 24
   },
+  "tick": {
+    "aliases": {
+      "tick": {
+        "parent": "check"
+      }
+    },
+    "height": 24,
+    "icons": {
+      "check": {
+        "body": "<path fill=\"currentColor\" d=\"M21 7L9 19l-5.5-5.5l1.41-1.41L9 16.17L19.59 5.59L21 7Z\"/>"
+      }
+    },
+    "lastModified": 1689058119,
+    "prefix": "mdi",
+    "width": 24
+  },
   "trash": {
     "aliases": {
       "trash": {

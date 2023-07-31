@@ -11,7 +11,7 @@ import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
 import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
-import { BrushMaterial, TestBrush } from "./MapEditor/editor/brushes";
+import { BrushMaterial, SimpleBrush } from "./MapEditor/editor/brushes";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 
@@ -206,7 +206,7 @@ export class MapEditorContext extends TabbedEditorContext {
         this.data.set({ header: headerData, layout: layoutData, tilesets: allImages });
 
         // TODO Get from configs
-        this.brushes = writable([new TestBrush(), new TestBrush()]);
+        this.brushes = writable([new SimpleBrush(), new SimpleBrush()]);
         // Set the currently editing brush
         this.editingBrush = writable(null);
 

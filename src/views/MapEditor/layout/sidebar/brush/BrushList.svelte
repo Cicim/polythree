@@ -4,6 +4,7 @@
     import { SidebarState } from "../../LayoutSidebar.svelte";
     import ToolButton from "../../../ToolButton.svelte";
     import BrushCard from "./BrushCard.svelte";
+    import { SimpleBrush } from "src/views/MapEditor/editor/brushes";
 
     export let state: SidebarState;
     export let levelMode: boolean;
@@ -11,6 +12,16 @@
     const context: MapEditorContext = getContext("context");
     const editingBrush = context.editingBrush;
     const brushes = context.brushes;
+
+    function createBrush() {
+        // Create a new SimpleBrush
+        const brush = new SimpleBrush();
+        // Add it to the list of brushes
+        brushes.update((brushes) => {
+            brushes.push(brush);
+            return brushes;
+        });
+    }
 </script>
 
 <div
@@ -22,7 +33,7 @@
             <ToolButton
                 icon="mdi:plus"
                 title="Create Brush"
-                on:click={() => {}}
+                on:click={createBrush}
                 theme="transparent"
             />
         </div>

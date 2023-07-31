@@ -42,7 +42,7 @@
                         title="Brush Settings"
                         on:click={() => {
                             spawnDialog(BrushSettings, {
-                                brush: editingBrush,
+                                context,
                             });
                         }}
                     />
@@ -88,9 +88,9 @@
                         />
                     {/if}
                     <ToolButton
-                        icon="mdi:close"
+                        icon="mdi:tick"
                         theme="transparent"
-                        title="Close"
+                        title="Done Editing"
                         on:click={() => {
                             $editingBrush = null;
                             state = SidebarState.Palette;
@@ -99,10 +99,12 @@
                 </div>
             </div>
             <div class="editor" bind:this={bodyEl}>
-                <MapCanvas
-                    blocks={$editingBrush.blocks}
-                    centerOnResize={true}
-                />
+                {#key $editingBrush}
+                    <MapCanvas
+                        blocks={$editingBrush.blocks}
+                        centerOnResize={true}
+                    />
+                {/key}
             </div>
         {/if}
     </div>

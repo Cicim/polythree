@@ -7,13 +7,16 @@
     } from "src/systems/context_menu";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
     import type { BrushMaterial } from "../../../editor/brushes";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
+    import { spawnDialog } from "src/systems/dialogs";
+    import BrushSettings from "./BrushSettings.svelte";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
     const data = context.data;
     const editingBrush = context.editingBrush;
+    const brushes = context.brushes;
 
     export let small: boolean = false;
     export let index: number;
@@ -39,6 +42,20 @@
         $editingBrush = brush;
     }
 
+    async function openSettings() {
+        editBrush();
+        await tick();
+        spawnDialog(BrushSettings, {
+            context,
+        });
+    }
+
+    function deleteBrush() {
+        brushes.update((brushes) => {
+            return brushes.filter((b) => b !== brush);
+        });
+    }
+
     let previewContainer: HTMLDivElement;
     function updateThumbnail() {
         if (!previewContainer) return;
@@ -51,11 +68,12 @@
     $: contextMenu = new Menu([
         new Separator(name),
         new IconOption("Edit", "mdi:edit", editBrush),
+        new IconOption("Settings", "mdi:cog", openSettings),
         $pinned
             ? new IconOption("Unpin", "mdi:pin-off", setUnpinned)
             : new IconOption("Pin", "mdi:pin", setPinned),
         new Separator(),
-        new IconOption("Delete", "mdi:trash", () => {}),
+        new IconOption("Delete", "mdi:trash", deleteBrush),
     ]);
 
     onMount(() => {
@@ -78,9 +96,11 @@
         <ClickableIcons
             size={small ? "9pt" : "11pt"}
             vertical_alignment="bottom"
-            icons={$pinned
-                ? [{ icon: "mdi:pin", text: "Unpin", onclick: setUnpinned }]
-                : [{ icon: "mdi:pin", text: "Pin", onclick: setPinned }]}
+            icons={[
+                $pinned
+                    ? { icon: "mdi:pin", text: "Unpin", onclick: setUnpinned }
+                    : { icon: "mdi:pin", text: "Pin", onclick: setPinned },
+            ]}
         />
     </div>
 {:else}
@@ -98,11 +118,11 @@
         <ClickableIcons
             vertical_alignment="bottom"
             icons={[
-                // { icon: "mdi:trash", text: "Delete", onclick: () => {} },
                 // { icon: "mdi:edit", text: "Edit", onclick: () => {} },
+                { icon: "mdi:trash", text: "Delete", onclick: deleteBrush },
                 $pinned
                     ? {
-                          icon: "mdi:pin",
+                          icon: "mdi:pin-off",
                           text: "Unpin",
                           onclick: setUnpinned,
                       }
@@ -178,6 +198,21 @@
         .name {
             position: absolute;
         }
+
+        &:not(.pinned) {
+            :global(.icons-container) {
+                display: none;
+            }
+            &:hover {
+                :global(.icons-container) {
+                    display: flex;
+                }
+            }
+        }
+
+        &.pinned {
+            order: -1;
+        }
     }
 
     .brush-card {
@@ -197,21 +232,6 @@
                 width: 100%;
                 height: 100%;
             }
-        }
-
-        &:not(.pinned) {
-            :global(.icons-container) {
-                display: none;
-            }
-            &:hover {
-                :global(.icons-container) {
-                    display: flex;
-                }
-            }
-        }
-
-        &.pinned {
-            order: -1;
         }
     }
 </style>
