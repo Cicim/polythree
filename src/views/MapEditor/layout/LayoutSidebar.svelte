@@ -53,26 +53,24 @@
     />
 </div>
 <div class="sidebar-container" class:hidden>
-    <div class="sidebar-content">
-        <!-- Brush List -->
-        <BrushList {levelMode} bind:state />
-        <!-- Top bar -->
-        <TopBar {levelMode} bind:state />
-        <!-- Brushes Container -->
-        <BrushPalette {levelMode} bind:state />
-        <!-- Borders editing view -->
-        <BordersEditor {levelMode} bind:state />
-        <!-- Brush editing view -->
-        <BrushEditor {levelMode} bind:state />
-        <!-- Level Palette -->
-        <LevelPaletteContainer {levelMode} bind:state />
-        <!-- Tile palette view -->
-        <TilePaletteContainer {levelMode} bind:state />
-        <!-- Palette Permissions Editing -->
-        <TilesetLevelEditorContainer {levelMode} />
-        <!-- Mutliselect preview -->
-        <SelectionPreviewContainer {levelMode} bind:state />
-    </div>
+    <!-- Brush List -->
+    <BrushList {levelMode} bind:state />
+    <!-- Top bar -->
+    <TopBar {levelMode} bind:state />
+    <!-- Brushes Container -->
+    <BrushPalette {levelMode} bind:state />
+    <!-- Borders editing view -->
+    <BordersEditor {levelMode} bind:state />
+    <!-- Brush editing view -->
+    <BrushEditor {levelMode} bind:state />
+    <!-- Level Palette -->
+    <LevelPaletteContainer {levelMode} bind:state />
+    <!-- Tile palette view -->
+    <TilePaletteContainer {levelMode} bind:state />
+    <!-- Palette Permissions Editing -->
+    <TilesetLevelEditorContainer {levelMode} />
+    <!-- Mutliselect preview -->
+    <SelectionPreviewContainer {levelMode} bind:state />
 </div>
 
 <style lang="scss">
@@ -90,16 +88,13 @@
         user-select: none;
         display: flex;
         overflow: hidden;
-    }
 
-    .sidebar-content {
         flex: 1;
 
         display: flex;
         flex-direction: column;
         flex-wrap: wrap;
         align-items: stretch;
-        position: relative;
 
         & :global(> div:not(.resize)) {
             border-bottom: 1px solid var(--light-shadow);

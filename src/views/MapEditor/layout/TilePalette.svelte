@@ -4,6 +4,9 @@
     import { watchResize } from "svelte-watch-resize";
     import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
 
+    export let hoveringTile: number = null;
+    export let selectedTile: number | [number, number, number] = null;
+
     const context: MapEditorContext = getContext("context");
     // Get the data
     const data = context.data;
@@ -37,6 +40,7 @@
                 selectionEnd = { x, y };
                 drawSelection();
                 scrollToTile(y);
+                selectedTile = tile;
             } else if (
                 $material instanceof PaletteMaterial &&
                 $material.isSingular &&
@@ -46,6 +50,13 @@
                 selectionStart = { x: -10, y: 0 };
                 selectionEnd = { x: -10, y: 0 };
                 drawSelection();
+            } else if (
+                !(
+                    $material instanceof PaletteMaterial &&
+                    $material.isPaletteMaterial
+                )
+            ) {
+                selectedTile = null;
             }
         })();
 
@@ -123,6 +134,13 @@
         $material = new PaletteMaterial(blocks);
     }
 
+    function isSingleSelection() {
+        return (
+            selectionStart.x === selectionEnd.x &&
+            selectionStart.y === selectionEnd.y
+        );
+    }
+
     /** Gets the coordinates of the clicked tile on the canvas */
     function getTile(event: MouseEvent): Point {
         // Get the pixel coordinates
@@ -150,16 +168,29 @@
         if (event.buttons === 2) {
             rightClicking = true;
         }
+        if (isSingleSelection()) {
+            selectedTile = hoveringTile;
+        }
     }
     function onMouseMove(event: MouseEvent) {
         if (rightClicking) {
             selectionEnd = getTile(event);
             drawSelection();
+
+            const { width, height } = sortSelection();
+            // Update the multiselection tile
+            const selectedStartTile = selectionStart.x + selectionStart.y * 8;
+            if (isSingleSelection()) selectedTile = selectedStartTile;
+            else selectedTile = [selectedStartTile, width, height];
         }
+        hoveringTile = getTile(event).x + getTile(event).y * 8;
     }
     function onMouseUp(event: MouseEvent) {
         rightClicking = false;
         buildMaterial();
+    }
+    function onMouseLeave() {
+        hoveringTile = null;
     }
 
     function onResized() {
@@ -181,7 +212,7 @@
     });
 </script>
 
-<div class="palette" use:watchResize={onResized}>
+<div class="palette" use:watchResize={onResized} on:mouseleave={onMouseLeave}>
     <div class="canvas-container">
         <div class="selection" bind:this={selectionDiv} />
         <canvas

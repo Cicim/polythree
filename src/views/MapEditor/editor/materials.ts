@@ -14,6 +14,7 @@ export abstract class PaintingMaterial {
 
 export class PaletteMaterial extends PaintingMaterial {
     public name = "Palette Material";
+    public isPaletteMaterial = true;
 
     constructor(public blocks: BlockData[][]) {
         super();
@@ -35,6 +36,7 @@ export class PaletteMaterial extends PaintingMaterial {
 
 export class SelectionMaterial extends PaletteMaterial {
     public name = "Selection Material";
+    public isPaletteMaterial = false;
 
     constructor(
         tiles: BlockData[][],
