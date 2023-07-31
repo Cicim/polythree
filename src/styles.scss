@@ -55,6 +55,10 @@ body {
   -webkit-user-select: none;
 }
 
+.button {
+  font-size: 13.333px;
+}
+
 * {
   &::-webkit-scrollbar {
     width: 8px;

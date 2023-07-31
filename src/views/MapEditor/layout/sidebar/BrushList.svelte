@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import ToolButton from "../../ToolButton.svelte";
-    import { SidebarState } from "../LayoutSidebar.svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
+    import { getContext } from "svelte";
+    import { SidebarState } from "../LayoutSidebar.svelte";
+    import ToolButton from "../../ToolButton.svelte";
     import BrushCard from "../BrushCard.svelte";
 
     export let state: SidebarState;

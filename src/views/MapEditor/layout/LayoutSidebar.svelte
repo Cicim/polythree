@@ -9,9 +9,10 @@
 </script>
 
 <script lang="ts">
-    import { getContext } from "svelte";
-    import Select from "src/components/Select.svelte";
+    import { getContext, onDestroy } from "svelte";
+    import { BrushMaterial } from "../editor/materials";
     import type { MapEditorContext } from "src/views/MapEditor";
+    import Select from "src/components/Select.svelte";
     import BrushList from "./sidebar/BrushList.svelte";
     import TopBar from "./sidebar/TopBar.svelte";
     import BrushPalette from "./sidebar/BrushPalette.svelte";
@@ -28,6 +29,7 @@
 
     const context: MapEditorContext = getContext("context");
     const editingBrush = context.editingBrush;
+    const material = context.material;
 
     let state: SidebarState = SidebarState.BrushList;
 
@@ -36,6 +38,19 @@
             state = SidebarState.Brush;
         }
     })();
+
+    // Exit from the BrushList state if you just selected a material that was not a brush
+    const unsubscribeFromMaterial = material.subscribe((material) => {
+        if (
+            state === SidebarState.BrushList &&
+            !(material instanceof BrushMaterial)
+        )
+            state = SidebarState.Palette;
+    });
+
+    onDestroy(() => {
+        unsubscribeFromMaterial();
+    });
 </script>
 
 <svelte:window />
