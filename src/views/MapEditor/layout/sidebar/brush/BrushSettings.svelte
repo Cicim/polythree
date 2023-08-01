@@ -33,6 +33,7 @@
                 brushSettings.height < 1 ||
                 brushSettings.width > MAX_WIDTH ||
                 brushSettings.height > MAX_HEIGHT;
+        if (brushType === BrushType.NinePatch) isDisabled = false;
     }
 
     const brushToTypeClass = {
@@ -79,11 +80,11 @@
             $editingBrush = $editingBrush;
         } else {
             // Create a new brush
-            const newBrush = new brushToTypeClass[brushType](brushSettings);
+            const newBrush = new brushToTypeClass[brushType]();
             // Copy the name
             newBrush.name = brush.name;
             // Apply all the properties
-            for (const [key, value] of Object.entries(brush)) {
+            for (const [key, value] of Object.entries(brushSettings)) {
                 newBrush[key] = value;
             }
             // Update the current brush
@@ -113,7 +114,10 @@
             <Select bind:value={brushType} options={brushOptions} />
         </div>
         <div class="row dark">
-            <div class="title">{BrushType[brushType]} Brush Settings</div>
+            <div class="title">
+                <iconify-icon inline icon={brushToTypeClass[brushType].icon} />
+                {BrushType[brushType]} Brush Settings
+            </div>
             <div class="hr" />
             {#if brushType === BrushType.Simple}
                 <div class="half-row">

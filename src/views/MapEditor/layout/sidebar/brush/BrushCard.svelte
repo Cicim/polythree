@@ -14,6 +14,7 @@
     import type { MapEditorContext } from "src/views/MapEditor";
     import { spawnDialog } from "src/systems/dialogs";
     import BrushSettings from "./BrushSettings.svelte";
+    import { tooltip } from "src/systems/tooltip";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
@@ -28,6 +29,8 @@
     let name = brush.name;
     let pinned = brush.pinned;
     $: selected = $material === brush;
+    let icon = brush.icon;
+    let brushName = brush.brushName;
 
     function setPinned() {
         $pinned = true;
@@ -117,6 +120,9 @@
     >
         <div class="preview" bind:this={previewContainer} />
         <div class="name">{name}</div>
+        <div class="icon" use:tooltip tooltip={brushName}>
+            <iconify-icon {icon} inline />
+        </div>
         <ClickableIcons
             vertical_alignment="bottom"
             icons={[
@@ -148,6 +154,17 @@
         display: grid;
         grid-template-areas: "preview name";
         grid-template-columns: 96px 1fr;
+
+        .icon {
+            position: absolute;
+            top: 80px;
+            left: 108px;
+
+            iconify-icon {
+                font-size: 20px;
+                color: var(--weak-fg);
+            }
+        }
 
         .preview :global(canvas) {
             border-radius: 4px;

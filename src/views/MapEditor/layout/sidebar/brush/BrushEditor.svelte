@@ -10,12 +10,7 @@
     import MapCanvas from "../../../editor/MapCanvas.svelte";
     import BrushPreview from "./BrushPreview.svelte";
     import BrushSettings from "./BrushSettings.svelte";
-    import {
-        AddBrushChange,
-        DeleteBrushChange,
-        EditBrushChange,
-        SimpleBrush,
-    } from "src/views/MapEditor/editor/brushes";
+    import { EditBrushChange } from "src/views/MapEditor/editor/brushes";
 
     export let state: SidebarState;
     export let levelMode: boolean;
@@ -30,30 +25,6 @@
     const editingBrushClone = context.editingBrushClone;
     const editingBrushChanges = context.editingBrushChanges;
 
-    // function debug() {
-    //     console.log("Changes: ");
-    //     // Loop through all the changes
-    //     changes.stack.forEach((change, i) => {
-    //         if (change instanceof AddBrushChange) {
-    //             console.log("| AddBrushChange");
-    //         } else if (change instanceof DeleteBrushChange) {
-    //             console.log("| DeleteBrushChange");
-    //         } else if (change instanceof EditBrushChange) {
-    //             // Assume it's of type SimpleBrush
-    //             const prev = change.prevBrush as SimpleBrush;
-    //             const next = change.nextBrush as SimpleBrush;
-    //             console.log(
-    //                 `${changes.top === i ? ">" : "|"} ${prev.width}x${
-    //                     prev.height
-    //                 } (${prev.blocks[0][0][0]}) => ${next.width}x${
-    //                     next.height
-    //                 } (${next.blocks[0][0][0]})`
-    //             );
-    //         }
-    //     });
-    //     console.log("|___");
-    // }
-
     function doneEditing() {
         // See if you need to apply the change
         changes.push(
@@ -67,7 +38,7 @@
         $editingBrush = null;
         $editingBrushChanges = null;
         context.editingBrushIndex = null;
-        state = SidebarState.Palette;
+        state = context.editingBrushEnteredFromState;
     }
 </script>
 

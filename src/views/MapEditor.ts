@@ -14,6 +14,7 @@ import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials"
 import type { BrushMaterial, BrushesChangesData } from "./MapEditor/editor/brushes";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
+import type { SidebarState } from "./MapEditor/layout/LayoutSidebar.svelte";
 
 export interface MapEditorProperties {
     group: number;
@@ -62,6 +63,8 @@ export class MapEditorContext extends TabbedEditorContext {
     public brushes: Writable<BrushMaterial[]>;
     /** The brush you're currently editing, if any */
     public editingBrush: Writable<BrushMaterial>;
+    /** The state from which you entered the brush editing */
+    public editingBrushEnteredFromState: SidebarState;
     /** The index of the editing brush withing the brushes */
     public editingBrushIndex: number;
     /** The changes that are applied to the editing brush */

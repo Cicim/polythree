@@ -18,6 +18,10 @@ export abstract class BrushMaterial extends PaintingMaterial {
     public pinned = writable(false);
     /** The blocks that are modified by MapCanvas in the BrushEditor */
     public blocks: BlockData[][];
+    /** This brush type's icon */
+    static icon: string = "";
+    /** This brush type's name */
+    static typeName: string = "";
 
     /** Return the square metatile data matrix that appears in the thumbnail */
     public getThumbnailMetatile(): number[][] {
@@ -77,13 +81,23 @@ export abstract class BrushMaterial extends PaintingMaterial {
 
         return true;
     }
+
+    public get brushName(): string {
+        // @ts-ignore
+        return this.constructor.typeName;
+    }
+    public get icon(): string {
+        // @ts-ignore
+        return this.constructor.icon;
+    }
 }
 
 export class SimpleBrush extends BrushMaterial {
     static MAX_WIDTH = 64;
     static MAX_HEIGHT = 64;
 
-    public name = "Simple Brush";
+    static typeName = "Simple Brush";
+    static icon = "ep:brush-filled";
     public blocks: BlockData[][] = [[[42, null]]];
     public type = BrushType.Simple;
     public _width = 1;
@@ -155,7 +169,8 @@ export class SimpleBrush extends BrushMaterial {
 }
 
 export class NinePatchBrush extends BrushMaterial {
-    public name = "Nine Patch Brush";
+    static typeName = "Nine Patch Brush";
+    static icon = "icon-park-outline:nine-key";
     public blocks: BlockData[][] = [
         [
             [42, null], [42, null], [42, null],
@@ -202,7 +217,7 @@ export class AddBrushChange extends Change {
 
     constructor(public brush: BrushMaterial) {
         super();
-        this.addedBrush = brush;
+        this.addedBrush = brush.clone();
     }
 
     public updatePrev(changes: EditorChanges<BrushesChangesData>): boolean {
@@ -213,6 +228,7 @@ export class AddBrushChange extends Change {
         // Add the change
         return false;
     }
+    // Remove from brushes
     public async revert(data: BrushesChangesData) {
         data[0].update((brushes) => {
             brushes.splice(this.position, 1);
@@ -224,9 +240,10 @@ export class AddBrushChange extends Change {
             data[1].set(new PaletteMaterial([[data[2]()]]));
         }
     }
+    // Adds to brushes
     public async apply(data: BrushesChangesData) {
         data[0].update((brushes) => {
-            brushes.push(this.addedBrush);
+            brushes.push(this.addedBrush.clone());
             return brushes;
         });
     }
@@ -237,7 +254,7 @@ export class DeleteBrushChange extends Change {
 
     constructor(brush: BrushMaterial) {
         super();
-        this.deletedBrush = brush;
+        this.deletedBrush = brush.clone();
     }
 
     public updatePrev(changes: EditorChanges<BrushesChangesData>): boolean {
@@ -248,20 +265,23 @@ export class DeleteBrushChange extends Change {
         // If you can't find the brush, return
         if (this.position === -1) return true;
     }
+    // Adds to brushes
     public async revert(data: BrushesChangesData): Promise<void> {
+        const clonedBrush = this.deletedBrush.clone();
         // Add the brush back
         data[0].update((brushes) => {
-            brushes.splice(this.position, 0, this.deletedBrush);
+            brushes.splice(this.position, 0, clonedBrush);
             return brushes;
         });
         // Set the material to the selected brush if it isn't a brush already
         data[1].update(material => {
             if (!(material instanceof BrushMaterial)) {
-                return this.deletedBrush;
+                return clonedBrush;
             }
             return material;
         });
     }
+    // Removes from brushes
     public async apply(data: BrushesChangesData): Promise<void> {
         // Delete the element at the position
         data[0].update((brushes) => {
@@ -288,7 +308,7 @@ export class EditBrushChange extends Change {
     /** Updates the brush at the index */
     private updateBrush(data: BrushesChangesData, toInsert: BrushMaterial) {
         data[0].update((brushes) => {
-            brushes.splice(this.index, 1, toInsert.clone());
+            brushes[this.index] = toInsert.clone();
             return brushes;
         });
     }

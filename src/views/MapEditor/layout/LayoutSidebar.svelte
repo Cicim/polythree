@@ -11,7 +11,6 @@
 <script lang="ts">
     import { getContext, onDestroy } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
-    import Select from "src/components/Select.svelte";
     import BrushList from "./sidebar/brush/BrushList.svelte";
     import TopBar from "./sidebar/TopBar.svelte";
     import BrushPalette from "./sidebar/brush/BrushPalette.svelte";
@@ -50,6 +49,8 @@
             );
             // Create a change for the brush's tiles
             $editingBrushChanges = new EditorChanges(null);
+            // Save the original state
+            context.editingBrushEnteredFromState = state;
             // Update the state
             state = SidebarState.Brush;
         }
