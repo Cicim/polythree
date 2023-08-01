@@ -13,7 +13,6 @@
     export let levelMode: boolean;
 
     const context: MapEditorContext = getContext("context");
-    const editingBrush = context.editingBrush;
     const brushes = context.brushes;
     const changes = context.brushesChanges;
 
@@ -35,7 +34,7 @@
                 on:click={createBrush}
                 theme="transparent"
             />
-            {#key $brushes.length}
+            {#key $brushes}
                 <ToolButton
                     icon="mdi:undo"
                     title="Undo"
@@ -47,7 +46,7 @@
         </div>
         <div class="center">BRUSH LIST</div>
         <div class="right">
-            {#key $brushes.length}
+            {#key $brushes}
                 <ToolButton
                     icon="mdi:redo"
                     title="Redo"
@@ -65,7 +64,7 @@
         </div>
     </div>
     <div class="brush-container">
-        {#key $editingBrush}
+        {#key $brushes}
             {#each $brushes as brush, i}
                 <BrushCard {brush} index={i} />
             {:else}

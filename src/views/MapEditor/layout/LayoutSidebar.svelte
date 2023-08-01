@@ -10,7 +10,6 @@
 
 <script lang="ts">
     import { getContext, onDestroy } from "svelte";
-    import { BrushMaterial } from "../editor/brushes";
     import type { MapEditorContext } from "src/views/MapEditor";
     import Select from "src/components/Select.svelte";
     import BrushList from "./sidebar/brush/BrushList.svelte";
@@ -22,6 +21,7 @@
     import TilePaletteContainer from "./sidebar/TilePaletteContainer.svelte";
     import TilesetLevelEditorContainer from "./sidebar/TilesetLevelEditorContainer.svelte";
     import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
+    import { SelectionMaterial } from "../editor/materials";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -29,13 +29,25 @@
 
     const context: MapEditorContext = getContext("context");
     const editingBrush = context.editingBrush;
+    const editingBrushClone = context.editingBrushClone;
     const material = context.material;
+    const brushes = context.brushes;
 
     let state: SidebarState = SidebarState.BrushList;
 
     $: (() => {
         if ($editingBrush !== null) {
-            if (state !== SidebarState.BrushLevel) state = SidebarState.Brush;
+            if (state === SidebarState.BrushLevel) return;
+            if (state === SidebarState.Brush) return;
+            // Here you have just started editing the brush
+            // so create a clone of the brush
+            $editingBrushClone = $editingBrush.clone();
+            // Save the index of the current brush
+            context.editingBrushIndex = $brushes.findIndex(
+                (brush) => $editingBrush === brush
+            );
+            // Update the state
+            state = SidebarState.Brush;
         }
     })();
 
@@ -43,7 +55,7 @@
     const unsubscribeFromMaterial = material.subscribe((material) => {
         if (
             state === SidebarState.BrushList &&
-            !(material instanceof BrushMaterial)
+            material instanceof SelectionMaterial
         )
             state = SidebarState.Palette;
     });

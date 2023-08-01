@@ -11,7 +11,7 @@ import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
 import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
-import { BrushMaterial, SimpleBrush } from "./MapEditor/editor/brushes";
+import { BrushMaterial, SimpleBrush, type BrushesChangesData } from "./MapEditor/editor/brushes";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 
@@ -62,14 +62,19 @@ export class MapEditorContext extends TabbedEditorContext {
     public brushes: Writable<BrushMaterial[]>;
     /** The brush you're currently editing, if any */
     public editingBrush: Writable<BrushMaterial>;
+    /** The index of the editing brush withing the brushes */
+    public editingBrushIndex: number;
+    /** A clone of the brush you've just started editing at the moment 
+     * before you made any edits to it */
+    public editingBrushClone: Writable<BrushMaterial>;
     /** The changes that are applied to the brushes store */
-    public brushesChanges: EditorChanges;
+    public brushesChanges: EditorChanges<BrushesChangesData>;
 
     // Tileset Palette
     /** The block data for the tilset level editor */
     public tilesetBlocks: Writable<BlockData[][]>;
     /** The changes that are applied to the tileset level editor */
-    public tilesetLevelChanges: EditorChanges;
+    public tilesetLevelChanges: EditorChanges<null>;
 
 
     private tileset1Offset: number;
@@ -218,12 +223,6 @@ export class MapEditorContext extends TabbedEditorContext {
 
         this.data.set({ header: headerData, layout: layoutData, tilesets: allImages });
 
-        // TODO Get from configs
-        this.brushes = writable([new SimpleBrush(), new SimpleBrush()]);
-        this.brushesChanges = new EditorChanges(this.brushes);
-        // Set the currently editing brush
-        this.editingBrush = writable(null);
-
         // Get the tilesets lengths
         try {
             [this.tileset1Length, this.tileset2Length] =
@@ -254,6 +253,13 @@ export class MapEditorContext extends TabbedEditorContext {
 
         this.material = writable(new PaletteMaterial([[tilesetBlocks[0][0]]]));
         this.selectedTool = writable(EditorTool.Pencil);
+
+        // TODO Get from configs
+        this.brushes = writable([new SimpleBrush(), new SimpleBrush()]);
+        this.brushesChanges = new EditorChanges<BrushesChangesData>([this.brushes, this.material, () => get(this.tilesetBlocks)[0][0]]);
+        // Set the currently editing brush
+        this.editingBrush = writable(null);
+        this.editingBrushClone = writable(null);
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;

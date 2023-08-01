@@ -1,7 +1,7 @@
 import { Change, EditorChanges } from "src/systems/changes";
 import type { TilesetData } from "src/views/MapEditor";
 import { get, writable, type Writable } from "svelte/store";
-import { PaintingMaterial } from "./materials";
+import { PaintingMaterial, PaletteMaterial } from "./materials";
 import type { PainterState } from "./painter_state";
 
 export enum BrushType {
@@ -64,6 +64,19 @@ export abstract class BrushMaterial extends PaintingMaterial {
     }
 
     public abstract clone(): BrushMaterial;
+
+    public equals(other: BrushMaterial): boolean {
+        // Compare the type
+        if (this.type !== other.type) return false;
+        // Compare the name
+        if (this.name !== other.name) return false;
+        // Compare the pinned reference
+        if (this.pinned !== other.pinned) return false;
+        // Compare the blocks
+        if (JSON.stringify(this.blocks) !== JSON.stringify(other.blocks)) return false;
+
+        return true;
+    }
 }
 
 export class SimpleBrush extends BrushMaterial {
@@ -123,11 +136,18 @@ export class SimpleBrush extends BrushMaterial {
 
     public clone(): SimpleBrush {
         const brush = new SimpleBrush();
+        brush._width = this._width;
+        brush._height = this._height;
         brush.blocks = this.blocks.map((row) => row.map((block) => [...block]));
-        brush.width = this.width;
-        brush.height = this.height;
         brush.name = this.name;
+        brush.pinned = this.pinned;
         return brush;
+    }
+
+    public equals(other: SimpleBrush): boolean {
+        if (!super.equals(other)) return false;
+
+        return this.width === other.width && this.height === other.height;
     }
 }
 
@@ -158,9 +178,20 @@ export class NinePatchBrush extends BrushMaterial {
         brush.blocks = this.blocks.map((row) => row.map((block) => [...block]));
         brush.name = this.name;
         brush.hasCorners = this.hasCorners;
+        brush.pinned = this.pinned;
         return brush;
     }
+
+    public equals(other: NinePatchBrush): boolean {
+        if (!super.equals(other)) return false;
+
+        return this.hasCorners === other.hasCorners;
+    }
 }
+
+
+// ANCHOR Changes
+export type BrushesChangesData = [Writable<BrushMaterial[]>, Writable<PaintingMaterial>, () => BlockData];
 
 export class AddBrushChange extends Change {
     protected addedBrush: BrushMaterial;
@@ -171,58 +202,99 @@ export class AddBrushChange extends Change {
         this.addedBrush = brush;
     }
 
-    public updatePrev(changes: EditorChanges): boolean {
+    public updatePrev(changes: EditorChanges<BrushesChangesData>): boolean {
         // Get the data
-        const brushes = get(changes.data);
+        const brushes = get(changes.data[0]);
         // Get the position the brush would finish at
         this.position = brushes.length;
         // Add the change
         return false;
     }
-    public async revert(data: Writable<BrushMaterial[]>) {
-        data.update((brushes) => {
+    public async revert(data: BrushesChangesData) {
+        data[0].update((brushes) => {
             brushes.splice(this.position, 1);
             return brushes;
         });
+        // If the selection is the brush, remove it
+        if (get(data[1]) === this.addedBrush) {
+            // Set the data to 0,0
+            data[1].set(new PaletteMaterial([[data[2]()]]));
+        }
     }
-    public async apply(data: Writable<BrushMaterial[]>) {
-        data.update((brushes) => {
+    public async apply(data: BrushesChangesData) {
+        data[0].update((brushes) => {
             brushes.push(this.addedBrush);
             return brushes;
         });
     }
 }
-
 export class DeleteBrushChange extends Change {
-    public deleted: BrushMaterial;
+    public deletedBrush: BrushMaterial;
     public position: number;
 
     constructor(brush: BrushMaterial) {
         super();
-        this.deleted = brush;
+        this.deletedBrush = brush;
     }
 
-    public updatePrev(changes: EditorChanges): boolean {
+    public updatePrev(changes: EditorChanges<BrushesChangesData>): boolean {
         // Get the brushes
-        const brushes = get(changes.data);
+        const brushes = get(changes.data[0]);
         // Get the brush's position in the array
-        this.position = brushes.indexOf(this.deleted);
+        this.position = brushes.indexOf(this.deletedBrush);
         // If you can't find the brush, return
         if (this.position === -1) return true;
     }
-    public async revert(data: Writable<BrushMaterial[]>): Promise<void> {
+    public async revert(data: BrushesChangesData): Promise<void> {
         // Add the brush back
-        data.update((brushes) => {
-            brushes.splice(this.position, 0, this.deleted);
+        data[0].update((brushes) => {
+            brushes.splice(this.position, 0, this.deletedBrush);
             return brushes;
         });
+        // Set the material to the selected brush if it isn't a brush already
+        data[1].update(material => {
+            if (!(material instanceof BrushMaterial)) {
+                return this.deletedBrush;
+            }
+            return material;
+        });
     }
-    public async apply(data: Writable<BrushMaterial[]>): Promise<void> {
+    public async apply(data: BrushesChangesData): Promise<void> {
         // Delete the element at the position
-        data.update((brushes) => {
+        data[0].update((brushes) => {
             brushes.splice(this.position, 1);
+            return brushes;
+        });
+        // Select the empty tile
+        data[1].set(new PaletteMaterial([[data[2]()]]));
+    }
+
+}
+/** The edit brush change, takes as input an old clone of the brush, 
+ * taken before starting to edit and the current editing brush */
+export class EditBrushChange extends Change {
+    constructor(public prevBrush: BrushMaterial, public nextBrush: BrushMaterial, public index: number) {
+        super();
+    }
+
+    public updatePrev(_changes: EditorChanges<BrushesChangesData>): boolean {
+        // Return if the brushes are the same
+        return this.prevBrush.equals(this.nextBrush);
+    }
+
+    /** Updates the brush at the index */
+    private updateBrush(data: BrushesChangesData, toInsert: BrushMaterial) {
+        data[0].update((brushes) => {
+            brushes.splice(this.index, 1, toInsert.clone());
             return brushes;
         });
     }
 
+    public async revert(data: BrushesChangesData) {
+        this.updateBrush(data, this.prevBrush);
+    }
+
+    public async apply(data: BrushesChangesData) {
+        this.updateBrush(data, this.nextBrush);
+    }
 }

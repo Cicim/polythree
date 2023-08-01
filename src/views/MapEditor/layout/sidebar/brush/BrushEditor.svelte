@@ -10,6 +10,12 @@
     import MapCanvas from "../../../editor/MapCanvas.svelte";
     import BrushPreview from "./BrushPreview.svelte";
     import BrushSettings from "./BrushSettings.svelte";
+    import {
+        AddBrushChange,
+        DeleteBrushChange,
+        EditBrushChange,
+        SimpleBrush,
+    } from "src/views/MapEditor/editor/brushes";
 
     export let state: SidebarState;
     export let levelMode: boolean;
@@ -17,9 +23,49 @@
     let bodyEl: HTMLDivElement;
 
     const context: MapEditorContext = getContext("context");
-    const editingBrush = context.editingBrush;
     const data = context.data;
     const tilesetData = $data.tilesets;
+    const editingBrush = context.editingBrush;
+    const changes = context.brushesChanges;
+    const editingBrushClone = context.editingBrushClone;
+
+    // function debug() {
+    //     console.log("Changes: ");
+    //     // Loop through all the changes
+    //     changes.stack.forEach((change, i) => {
+    //         if (change instanceof AddBrushChange) {
+    //             console.log("| AddBrushChange");
+    //         } else if (change instanceof DeleteBrushChange) {
+    //             console.log("| DeleteBrushChange");
+    //         } else if (change instanceof EditBrushChange) {
+    //             // Assume it's of type SimpleBrush
+    //             const prev = change.prevBrush as SimpleBrush;
+    //             const next = change.nextBrush as SimpleBrush;
+    //             console.log(
+    //                 `${changes.top === i ? ">" : "|"} ${prev.width}x${
+    //                     prev.height
+    //                 } (${prev.blocks[0][0][0]}) => ${next.width}x${
+    //                     next.height
+    //                 } (${next.blocks[0][0][0]})`
+    //             );
+    //         }
+    //     });
+    //     console.log("|___");
+    // }
+
+    function doneEditing() {
+        // See if you need to apply the change
+        changes.push(
+            new EditBrushChange(
+                $editingBrushClone,
+                $editingBrush,
+                context.editingBrushIndex
+            )
+        );
+
+        $editingBrush = null;
+        state = SidebarState.Palette;
+    }
 </script>
 
 <div
@@ -91,10 +137,7 @@
                         icon="mdi:tick"
                         theme="transparent"
                         title="Done Editing"
-                        on:click={() => {
-                            $editingBrush = null;
-                            state = SidebarState.Palette;
-                        }}
+                        on:click={doneEditing}
                     />
                 </div>
             </div>

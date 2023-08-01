@@ -9,7 +9,6 @@
     export let levelMode: boolean;
 
     const context: MapEditorContext = getContext("context");
-    const editingBrush = context.editingBrush;
     const brushes = context.brushes;
 </script>
 
@@ -23,7 +22,7 @@
     }}
 >
     <div class="brushes" class:no-brushes={$brushes.length === 0}>
-        {#key $editingBrush}
+        {#key $brushes}
             {#each $brushes as brush, i}
                 <BrushCard small={true} {brush} index={i} />
             {/each}

@@ -1,11 +1,11 @@
 import { get, writable, type Writable } from "svelte/store";
 import r, { type NavigatePath } from "./navigate";
 
-type Data = Writable<any>;
+type Data = Writable<Record<string, any>>;
 
-export class EditorChanges {
+export class EditorChanges<T> {
     /** The data this class changes */
-    public data: Data;
+    public data: T;
     /** The current tab store */
     public currentTab?: Writable<string>;
     /** Whether or not the editor needs to be saved */
@@ -23,7 +23,7 @@ export class EditorChanges {
 
     public queue: Change[] = [];
 
-    public constructor(data: Data, tabStore?: Writable<string>) {
+    public constructor(data: T, tabStore?: Writable<string>) {
         this.data = data;
         this.currentTab = tabStore ?? null;
         this.unsaved = writable(false);
@@ -134,10 +134,10 @@ export abstract class Change {
      * returns true if the change is invalid
      * and should not be added to the stack
      */
-    public abstract updatePrev(changes: EditorChanges): boolean;
+    public abstract updatePrev(changes: EditorChanges<any>): boolean;
 
-    public abstract revert(data: Data): Promise<void>;
-    public abstract apply(data: Data): Promise<void>;
+    public abstract revert(data: any): Promise<void>;
+    public abstract apply(data: any): Promise<void>;
 }
 
 export class ValueChange extends Change {
@@ -152,7 +152,7 @@ export class ValueChange extends Change {
         this.edits = r.getPath(edits);
     }
 
-    public updatePrev(changes: EditorChanges): boolean {
+    public updatePrev(changes: EditorChanges<Data>): boolean {
         const data = changes.data;
         const lastChange = changes.current();
 

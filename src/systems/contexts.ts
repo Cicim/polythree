@@ -209,7 +209,7 @@ export abstract class ViewContext {
  */
 export abstract class EditorContext extends ViewContext {
     /** The changes made to the editor */
-    public changes: EditorChanges;
+    public changes: EditorChanges<Writable<Record<string, any>>>;
     /** This editor's data, used for displaying information */
     public data: Writable<Record<string, any>>;
     /** Whether or not the editor is currently loading */
