@@ -11,7 +11,7 @@
 </script>
 
 <div class="container">
-    <MapCanvas {editLevels} {blocks} debug={true} />
+    <MapCanvas {editLevels} {blocks} mainCanvas={true} debug={true} />
 </div>
 
 <style lang="scss">

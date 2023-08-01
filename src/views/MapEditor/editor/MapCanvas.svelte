@@ -27,6 +27,10 @@
     /** Whether or not to print the levels on top of the tiles */
     export let editLevels: boolean = false;
     $: editLevels, draw();
+
+    /** Whether this is the main map canvas */
+    export let mainCanvas: boolean = false;
+
     /** Whether or not this map allows having null levels */
     export let nullLevels: boolean = false;
     /** Allows inserting null tiles in place of BlockData to draw empty slots */
@@ -606,8 +610,8 @@
         colorLevelMap.fillRect(x, y, 1, 1);
     }
 
-    // ANCHOR Panning
-    function pan(x: number, y: number) {
+    // ANCHOR Panning and zoom
+    function doPanning(x: number, y: number) {
         // Compute the offset
         const xOffset = x - mousePanStart.x;
         const yOffset = y - mousePanStart.y;
@@ -615,6 +619,27 @@
         // Apply the offset
         offset.x = mapPanStart.x + xOffset;
         offset.y = mapPanStart.y + yOffset;
+
+        draw();
+    }
+    /** Zooms in the given direction while centering on the given point*/
+    function doZooming(x: number, y: number, direction: 1 | -1) {
+        if (!allowZoom) return;
+
+        // Compute the new zoom index and factor
+        const newZoomIndex = zoomIndex + direction;
+        if (newZoomIndex < 0 || newZoomIndex >= ZOOM_LEVELS.length) return;
+        const newZoom = ZOOM_LEVELS[newZoomIndex];
+
+        // Compute the new offset so that the mouse points to the same point
+        const newOffsetX = x - (newZoom / zoom) * (x - offset.x);
+        const newOffsetY = y - (newZoom / zoom) * (y - offset.y);
+
+        // Apply the new zoom and offset
+        offset.x = Math.round(newOffsetX);
+        offset.y = Math.round(newOffsetY);
+        zoomIndex = newZoomIndex;
+        zoom = newZoom;
 
         draw();
     }
@@ -880,7 +905,7 @@
 
         switch (state) {
             case State.Panning:
-                pan(event.offsetX, event.offsetY);
+                doPanning(event.offsetX, event.offsetY);
                 break;
             case State.Selecting:
                 // Compute the selection
@@ -928,26 +953,9 @@
         let scroll = event.deltaY;
         if (scroll === 0) return;
         // Normalize the scroll value
-        scroll = scroll > 0 ? -1 : 1;
-        // Compute the new zoom factor
-        zoomIndex = Math.max(
-            0,
-            Math.min(zoomIndex + scroll, ZOOM_LEVELS.length - 1)
-        );
-        const newZoom = ZOOM_LEVELS[zoomIndex];
+        const direction = scroll > 0 ? -1 : 1;
 
-        // Compute the new offset so that the mouse points to the same point
-        const newOffsetX =
-            mousePosition.x - (newZoom / zoom) * (mousePosition.x - offset.x);
-        const newOffsetY =
-            mousePosition.y - (newZoom / zoom) * (mousePosition.y - offset.y);
-
-        // Apply the new zoom and offset
-        offset.x = Math.round(newOffsetX);
-        offset.y = Math.round(newOffsetY);
-        zoom = newZoom;
-
-        draw();
+        doZooming(mousePosition.x, mousePosition.y, direction);
     }
 
     // ANCHOR Cursor Updating
@@ -1003,18 +1011,10 @@
 
     // ANCHOR Exported actions
     export function zoomIn() {
-        if (!allowZoom) return;
-
-        zoomIndex = Math.min(zoomIndex + 1, ZOOM_LEVELS.length - 1);
-        zoom = ZOOM_LEVELS[zoomIndex];
-        draw();
+        doZooming(canvasWidth / 2, canvasHeight / 2, 1);
     }
     export function zoomOut() {
-        if (!allowZoom) return;
-
-        zoomIndex = Math.max(zoomIndex - 1, 0);
-        zoom = ZOOM_LEVELS[zoomIndex];
-        draw();
+        doZooming(canvasWidth / 2, canvasHeight / 2, -1);
     }
 
     onMount(async () => {
@@ -1038,9 +1038,11 @@
             draw();
         }
 
-        // Add the zoomIn and zoomOut function to the context
-        context.zoomIn = zoomIn;
-        context.zoomOut = zoomOut;
+        if (mainCanvas) {
+            // Add the zoomIn and zoomOut function to the context
+            context.zoomIn = zoomIn;
+            context.zoomOut = zoomOut;
+        }
     });
     onDestroy(() => {
         unsubscribeFromData();
