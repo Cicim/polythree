@@ -254,7 +254,7 @@ export class DeleteBrushChange extends Change {
 
     constructor(brush: BrushMaterial) {
         super();
-        this.deletedBrush = brush.clone();
+        this.deletedBrush = brush;
     }
 
     public updatePrev(changes: EditorChanges<BrushesChangesData>): boolean {
