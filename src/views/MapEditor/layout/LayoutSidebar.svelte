@@ -22,6 +22,7 @@
     import TilesetLevelEditorContainer from "./sidebar/TilesetLevelEditorContainer.svelte";
     import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
     import { SelectionMaterial } from "../editor/materials";
+    import { EditorChanges } from "src/systems/changes";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -29,6 +30,7 @@
 
     const context: MapEditorContext = getContext("context");
     const editingBrush = context.editingBrush;
+    const editingBrushChanges = context.editingBrushChanges;
     const editingBrushClone = context.editingBrushClone;
     const material = context.material;
     const brushes = context.brushes;
@@ -46,6 +48,8 @@
             context.editingBrushIndex = $brushes.findIndex(
                 (brush) => $editingBrush === brush
             );
+            // Create a change for the brush's tiles
+            $editingBrushChanges = new EditorChanges(null);
             // Update the state
             state = SidebarState.Brush;
         }

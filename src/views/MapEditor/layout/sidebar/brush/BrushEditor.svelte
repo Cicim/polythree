@@ -28,6 +28,7 @@
     const editingBrush = context.editingBrush;
     const changes = context.brushesChanges;
     const editingBrushClone = context.editingBrushClone;
+    const editingBrushChanges = context.editingBrushChanges;
 
     // function debug() {
     //     console.log("Changes: ");
@@ -64,6 +65,8 @@
         );
 
         $editingBrush = null;
+        $editingBrushChanges = null;
+        context.editingBrushIndex = null;
         state = SidebarState.Palette;
     }
 </script>
@@ -146,6 +149,7 @@
                     <MapCanvas
                         blocks={$editingBrush.blocks}
                         centerOnResize={true}
+                        changes={$editingBrushChanges}
                     />
                 {/key}
             </div>

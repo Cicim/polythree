@@ -64,6 +64,8 @@ export class MapEditorContext extends TabbedEditorContext {
     public editingBrush: Writable<BrushMaterial>;
     /** The index of the editing brush withing the brushes */
     public editingBrushIndex: number;
+    /** The changes that are applied to the editing brush */
+    public editingBrushChanges: Writable<EditorChanges<null>>;
     /** A clone of the brush you've just started editing at the moment 
      * before you made any edits to it */
     public editingBrushClone: Writable<BrushMaterial>;
@@ -260,6 +262,7 @@ export class MapEditorContext extends TabbedEditorContext {
         // Set the currently editing brush
         this.editingBrush = writable(null);
         this.editingBrushClone = writable(null);
+        this.editingBrushChanges = writable(null);
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
@@ -458,6 +461,19 @@ export class MapEditorContext extends TabbedEditorContext {
     }
     public redoTilesetChanges() {
         this.tilesetLevelChanges.redo();
+    }
+
+    public async undo() {
+        if (get(this.editingBrushChanges) !== null)
+            get(this.editingBrushChanges).undo();
+        else
+            super.undo();
+    }
+    public async redo() {
+        if (get(this.editingBrushChanges) !== null)
+            get(this.editingBrushChanges).redo();
+        else
+            super.redo();
     }
 }
 

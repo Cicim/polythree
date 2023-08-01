@@ -133,7 +133,7 @@
     let tilesetImages = $data.tilesets;
 
     /** The object that will contain all the changes applied to this editor */
-    export let changes: EditorChanges = context.changes;
+    export let changes: EditorChanges<any> = context.changes;
 
     /** Width of the canvas in pixels */
     let canvasWidth: number = null;

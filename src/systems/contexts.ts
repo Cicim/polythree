@@ -316,6 +316,15 @@ export abstract class EditorContext extends ViewContext {
         else super.close();
         return true;
     }
+
+    /** Undoes this editor's last applied change */
+    public async undo() {
+        this.changes.undo();
+    }
+    /** Redoes this editor's last undone change */
+    public async redo() {
+        this.changes.redo();
+    }
 }
 
 export interface EditorSubTab {
