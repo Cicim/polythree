@@ -8,6 +8,7 @@
         AddBrushChange,
         SimpleBrush,
     } from "src/views/MapEditor/editor/brushes";
+    import Input from "src/components/Input.svelte";
 
     export let state: SidebarState;
     export let levelMode: boolean;
@@ -15,6 +16,14 @@
     const context: MapEditorContext = getContext("context");
     const brushes = context.brushes;
     const changes = context.brushesChanges;
+
+    let filterString: string = "";
+    function clearFilter(event: KeyboardEvent) {
+        if (event.key === "Escape") {
+            filterString = "";
+            (event.target as HTMLInputElement).value = "";
+        }
+    }
 
     function createBrush() {
         // Add it to the list of brushes
@@ -63,10 +72,23 @@
             />
         </div>
     </div>
+    <div class="searchbar">
+        <Input
+            type="text"
+            placeholder="Filter"
+            bind:value={filterString}
+            on:keydown={clearFilter}
+        />
+    </div>
     <div class="brush-container">
         {#key $brushes}
             {#each $brushes as brush, i}
-                <BrushCard {brush} index={i} />
+                <BrushCard
+                    show={brush.name
+                        .toLowerCase()
+                        .includes(filterString.toLowerCase())}
+                    {brush}
+                />
             {:else}
                 <div class="no-brushes">There are no brushes</div>
             {/each}
@@ -77,7 +99,7 @@
 <style lang="scss">
     .brush-list-view {
         display: grid;
-        grid-template-rows: max-content calc(100vh - 104px);
+        grid-template-rows: max-content max-content calc(100vh - 104px);
         border-bottom: none !important;
         container-type: inline-size;
 
@@ -87,6 +109,16 @@
             justify-content: center;
             padding-top: 1em;
             color: var(--weak-fg);
+        }
+
+        .searchbar {
+            display: grid;
+
+            :global(input) {
+                padding: 8px;
+                margin: 8px 8px 2px;
+                z-index: 10;
+            }
         }
 
         .brush-container {

@@ -80,6 +80,9 @@ export abstract class BrushMaterial extends PaintingMaterial {
 }
 
 export class SimpleBrush extends BrushMaterial {
+    static MAX_WIDTH = 64;
+    static MAX_HEIGHT = 64;
+
     public name = "Simple Brush";
     public blocks: BlockData[][] = [[[42, null]]];
     public type = BrushType.Simple;

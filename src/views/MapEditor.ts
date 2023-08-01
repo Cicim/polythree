@@ -11,7 +11,7 @@ import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
 import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
-import { BrushMaterial, SimpleBrush, type BrushesChangesData } from "./MapEditor/editor/brushes";
+import type { BrushMaterial, BrushesChangesData } from "./MapEditor/editor/brushes";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 
@@ -257,7 +257,7 @@ export class MapEditorContext extends TabbedEditorContext {
         this.selectedTool = writable(EditorTool.Pencil);
 
         // TODO Get from configs
-        this.brushes = writable([new SimpleBrush(), new SimpleBrush()]);
+        this.brushes = writable([]);
         this.brushesChanges = new EditorChanges<BrushesChangesData>([this.brushes, this.material, () => get(this.tilesetBlocks)[0][0]]);
         // Set the currently editing brush
         this.editingBrush = writable(null);

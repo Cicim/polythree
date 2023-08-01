@@ -35,7 +35,7 @@
     const material = context.material;
     const brushes = context.brushes;
 
-    let state: SidebarState = SidebarState.BrushList;
+    let state: SidebarState = SidebarState.Palette;
 
     $: (() => {
         if ($editingBrush !== null) {
@@ -71,18 +71,6 @@
 
 <svelte:window />
 
-<div class="a">
-    <Select
-        options={[
-            [SidebarState.Palette, "Palette"],
-            [SidebarState.BrushList, "Brush List"],
-            [SidebarState.Borders, "Borders"],
-            [SidebarState.Brush, "Brush"],
-            [SidebarState.BrushLevel, "Brush Level"],
-        ]}
-        bind:value={state}
-    />
-</div>
 <div class="sidebar-container" class:hidden>
     <!-- Brush List -->
     <BrushList {levelMode} bind:state />
@@ -105,15 +93,6 @@
 </div>
 
 <style lang="scss">
-    .a {
-        position: fixed;
-        top: 8px;
-        z-index: 1000;
-        width: 296px;
-        display: flex;
-        flex-direction: column;
-    }
-
     .sidebar-container {
         position: relative;
         user-select: none;
@@ -136,7 +115,7 @@
             background: var(--main-bg);
 
             display: grid;
-            grid-template-columns: minmax(32px, min-content) 1fr minmax(
+            grid-template-columns: minmax(32px, min-content) minmax(0, 1fr) minmax(
                     32px,
                     min-content
                 );

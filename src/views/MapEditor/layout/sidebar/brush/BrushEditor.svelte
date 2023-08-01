@@ -150,6 +150,7 @@
                         blocks={$editingBrush.blocks}
                         centerOnResize={true}
                         changes={$editingBrushChanges}
+                        editLevels={state === SidebarState.BrushLevel}
                     />
                 {/key}
             </div>

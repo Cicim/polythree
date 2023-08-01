@@ -98,6 +98,7 @@
     {min}
     {max}
     on:keydown={onKeyDown}
+    on:keydown
     on:change={onChange}
     on:keyup={onKeyUp}
     {spellcheck}

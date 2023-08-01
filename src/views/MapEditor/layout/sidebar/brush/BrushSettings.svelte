@@ -11,6 +11,9 @@
     import type { MapEditorContext } from "src/views/MapEditor";
     import { PaletteMaterial } from "src/views/MapEditor/editor/materials";
 
+    const MAX_WIDTH = SimpleBrush.MAX_WIDTH;
+    const MAX_HEIGHT = SimpleBrush.MAX_HEIGHT;
+
     export let context: MapEditorContext;
     const editingBrush = context.editingBrush;
     const material = context.material;
@@ -21,6 +24,16 @@
     let brush = $editingBrush.clone();
     /** The selected brush's type */
     let brushType: BrushType = brush.type;
+
+    let isDisabled = true;
+    $: {
+        if (brushType === BrushType.Simple)
+            isDisabled =
+                brushSettings.width < 1 ||
+                brushSettings.height < 1 ||
+                brushSettings.width > MAX_WIDTH ||
+                brushSettings.height > MAX_HEIGHT;
+    }
 
     const brushToTypeClass = {
         [BrushType.Simple]: SimpleBrush,
@@ -106,11 +119,18 @@
                 <div class="half-row">
                     <div class="row">
                         <div class="subtitle">Width</div>
-                        <Input type="number" bind:value={brushSettings.width} />
+                        <Input
+                            min={1}
+                            max={MAX_WIDTH}
+                            type="number"
+                            bind:value={brushSettings.width}
+                        />
                     </div>
                     <div class="row">
                         <div class="subtitle">Height</div>
                         <Input
+                            min={1}
+                            max={MAX_HEIGHT}
                             type="number"
                             bind:value={brushSettings.height}
                         />
@@ -133,7 +153,7 @@
     </div>
     <div class="buttons">
         <Button on:click={() => close(null)}>Don't Apply</Button>
-        <Button color="secondary" on:click={apply}>
+        <Button color="secondary" on:click={apply} disabled={isDisabled}>
             {#if $editingBrush.type !== brushType}
                 Change Type
             {:else}

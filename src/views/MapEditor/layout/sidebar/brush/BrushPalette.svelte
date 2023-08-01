@@ -24,7 +24,7 @@
     <div class="brushes" class:no-brushes={$brushes.length === 0}>
         {#key $brushes}
             {#each $brushes as brush, i}
-                <BrushCard small={true} {brush} index={i} />
+                <BrushCard small={true} {brush} />
             {/each}
         {/key}
         <!-- svelte-ignore a11y-click-events-have-key-events -->

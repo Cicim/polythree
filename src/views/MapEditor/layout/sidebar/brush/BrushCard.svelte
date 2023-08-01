@@ -22,8 +22,8 @@
     const changes = context.brushesChanges;
 
     export let small: boolean = false;
-    export let index: number;
     export let brush: BrushMaterial;
+    export let show: boolean = true;
 
     let name = brush.name;
     let pinned = brush.pinned;
@@ -113,6 +113,7 @@
         on:dblclick={editBrush}
         class:pinned={$pinned}
         class:selected
+        class:hidden={!show}
     >
         <div class="preview" bind:this={previewContainer} />
         <div class="name">{name}</div>
