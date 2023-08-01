@@ -283,6 +283,18 @@
     "prefix": "mdi",
     "width": 24
   },
+  "redo": {
+    "aliases": {},
+    "height": 24,
+    "icons": {
+      "redo": {
+        "body": "<path fill=\"currentColor\" d=\"M18.4 10.6C16.55 9 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16a8.002 8.002 0 0 1 7.6-5.5c1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6Z\"/>"
+      }
+    },
+    "lastModified": 1689058119,
+    "prefix": "mdi",
+    "width": 24
+  },
   "refresh": {
     "aliases": {},
     "height": 24,
@@ -357,6 +369,18 @@
     "icons": {
       "delete": {
         "body": "<path fill=\"currentColor\" d=\"M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z\"/>"
+      }
+    },
+    "lastModified": 1689058119,
+    "prefix": "mdi",
+    "width": 24
+  },
+  "undo": {
+    "aliases": {},
+    "height": 24,
+    "icons": {
+      "undo": {
+        "body": "<path fill=\"currentColor\" d=\"M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88c3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8Z\"/>"
       }
     },
     "lastModified": 1689058119,

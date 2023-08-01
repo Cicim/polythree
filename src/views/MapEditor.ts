@@ -50,15 +50,28 @@ export class MapEditorContext extends TabbedEditorContext {
     declare public component: MapEditor;
     declare public data: Writable<MapEditorData>;
 
+
+    // Drawing
+    /** The currently selected material */
     public material: Writable<PaintingMaterial>;
-    public brushes: Writable<BrushMaterial[]>;
-    public editingBrush: Writable<BrushMaterial>;
-    /** The block data for the tilset level editor */
-    public tilesetBlocks: Writable<BlockData[][]>;
     /** The selected tool's id */
     public selectedTool: Writable<EditorTool>;
+
+    // Brushes
+    /** The list of brushes loaded for this tileset */
+    public brushes: Writable<BrushMaterial[]>;
+    /** The brush you're currently editing, if any */
+    public editingBrush: Writable<BrushMaterial>;
+    /** The changes that are applied to the brushes store */
+    public brushesChanges: EditorChanges;
+
+    // Tileset Palette
+    /** The block data for the tilset level editor */
+    public tilesetBlocks: Writable<BlockData[][]>;
     /** The changes that are applied to the tileset level editor */
     public tilesetLevelChanges: EditorChanges;
+
+
     private tileset1Offset: number;
     private tileset2Offset: number;
     private tileset1Length: number;
@@ -207,6 +220,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
         // TODO Get from configs
         this.brushes = writable([new SimpleBrush(), new SimpleBrush()]);
+        this.brushesChanges = new EditorChanges(this.brushes);
         // Set the currently editing brush
         this.editingBrush = writable(null);
 

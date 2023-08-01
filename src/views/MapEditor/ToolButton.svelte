@@ -7,6 +7,7 @@
     export let icon: string;
     export let title: string = "";
 
+    export let disabled: boolean = false;
     export let theme: "primary" | "secondary" | "transparent" = "primary";
 
     export let value: string = null;
@@ -27,6 +28,7 @@
     class:primary={theme === "primary"}
     class:secondary={theme === "secondary"}
     class:transparent={theme === "transparent"}
+    {disabled}
 >
     <iconify-icon inline {icon} />
 </button>
@@ -49,6 +51,9 @@
             --fg-hover: var(--btn-primary-fg-hover);
             --fg-active: var(--fg-hover);
             --fg-selected: var(--accent-fg);
+            --bg-disabled: var(--btn-primary-bg-disabled);
+            --border-disabled: var(--btn-primary-border-disabled);
+            --fg-disabled: var(--btn-primary-fg-disabled);
         }
         &.secondary {
             --bg: var(--btn-secondary-bg);
@@ -59,6 +64,9 @@
             --fg-hover: var(--btn-secondary-fg-hover);
             --fg-active: var(--fg-hover);
             --fg-selected: var(--btn-primary-bg);
+            --bg-disabled: var(--btn-secondary-bg-disabled);
+            --border-disabled: var(--btn-secondary-border-disabled);
+            --fg-disabled: var(--btn-secondary-fg-disabled);
         }
         &.transparent {
             --bg: transparent;
@@ -68,6 +76,9 @@
             --border-hover: transparent;
             --fg-hover: var(--main-fg);
             --fg-active: var(--accent-fg);
+            --bg-disabled: transparent;
+            --border-disabled: transparent;
+            --fg-disabled: var(--light-shadow);
         }
 
         background: var(--bg);
@@ -107,6 +118,16 @@
                 background: var(--bg);
                 iconify-icon {
                     color: var(--fg-active);
+                }
+            }
+
+            &[disabled] {
+                cursor: default;
+                background: var(--bg-disabled);
+                border: 1px solid var(--border-disabled);
+                color: var(--fg-disabled);
+                iconify-icon {
+                    color: var(--fg-disabled);
                 }
             }
         }

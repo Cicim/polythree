@@ -4,7 +4,10 @@
     import { SidebarState } from "../../LayoutSidebar.svelte";
     import ToolButton from "../../../ToolButton.svelte";
     import BrushCard from "./BrushCard.svelte";
-    import { SimpleBrush } from "src/views/MapEditor/editor/brushes";
+    import {
+        AddBrushChange,
+        SimpleBrush,
+    } from "src/views/MapEditor/editor/brushes";
 
     export let state: SidebarState;
     export let levelMode: boolean;
@@ -12,15 +15,11 @@
     const context: MapEditorContext = getContext("context");
     const editingBrush = context.editingBrush;
     const brushes = context.brushes;
+    const changes = context.brushesChanges;
 
     function createBrush() {
-        // Create a new SimpleBrush
-        const brush = new SimpleBrush();
         // Add it to the list of brushes
-        brushes.update((brushes) => {
-            brushes.push(brush);
-            return brushes;
-        });
+        changes.push(new AddBrushChange(new SimpleBrush()));
     }
 </script>
 
@@ -36,9 +35,27 @@
                 on:click={createBrush}
                 theme="transparent"
             />
+            {#key $brushes.length}
+                <ToolButton
+                    icon="mdi:undo"
+                    title="Undo"
+                    on:click={() => changes.undo()}
+                    theme="transparent"
+                    disabled={changes.top === 0}
+                />
+            {/key}
         </div>
         <div class="center">BRUSH LIST</div>
         <div class="right">
+            {#key $brushes.length}
+                <ToolButton
+                    icon="mdi:redo"
+                    title="Redo"
+                    on:click={() => changes.redo()}
+                    theme="transparent"
+                    disabled={changes.stack.length === changes.top}
+                />
+            {/key}
             <ToolButton
                 icon="mdi:close"
                 title="Close"

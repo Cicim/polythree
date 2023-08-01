@@ -1,8 +1,7 @@
 import { get, writable, type Writable } from "svelte/store";
 import r, { type NavigatePath } from "./navigate";
-import { TabbedEditorContext, type EditorContext } from "./contexts";
 
-type Data = Writable<Record<string, any>>;
+type Data = Writable<any>;
 
 export class EditorChanges {
     /** The data this class changes */

@@ -1,5 +1,6 @@
+import { Change, EditorChanges } from "src/systems/changes";
 import type { TilesetData } from "src/views/MapEditor";
-import { writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 import { PaintingMaterial } from "./materials";
 import type { PainterState } from "./painter_state";
 
@@ -159,4 +160,69 @@ export class NinePatchBrush extends BrushMaterial {
         brush.hasCorners = this.hasCorners;
         return brush;
     }
+}
+
+export class AddBrushChange extends Change {
+    protected addedBrush: BrushMaterial;
+    protected position: number;
+
+    constructor(public brush: BrushMaterial) {
+        super();
+        this.addedBrush = brush;
+    }
+
+    public updatePrev(changes: EditorChanges): boolean {
+        // Get the data
+        const brushes = get(changes.data);
+        // Get the position the brush would finish at
+        this.position = brushes.length;
+        // Add the change
+        return false;
+    }
+    public async revert(data: Writable<BrushMaterial[]>) {
+        data.update((brushes) => {
+            brushes.splice(this.position, 1);
+            return brushes;
+        });
+    }
+    public async apply(data: Writable<BrushMaterial[]>) {
+        data.update((brushes) => {
+            brushes.push(this.addedBrush);
+            return brushes;
+        });
+    }
+}
+
+export class DeleteBrushChange extends Change {
+    public deleted: BrushMaterial;
+    public position: number;
+
+    constructor(brush: BrushMaterial) {
+        super();
+        this.deleted = brush;
+    }
+
+    public updatePrev(changes: EditorChanges): boolean {
+        // Get the brushes
+        const brushes = get(changes.data);
+        // Get the brush's position in the array
+        this.position = brushes.indexOf(this.deleted);
+        // If you can't find the brush, return
+        if (this.position === -1) return true;
+    }
+    public async revert(data: Writable<BrushMaterial[]>): Promise<void> {
+        // Add the brush back
+        data.update((brushes) => {
+            brushes.splice(this.position, 0, this.deleted);
+            return brushes;
+        });
+    }
+    public async apply(data: Writable<BrushMaterial[]>): Promise<void> {
+        // Delete the element at the position
+        data.update((brushes) => {
+            brushes.splice(this.position, 1);
+            return brushes;
+        });
+    }
+
 }

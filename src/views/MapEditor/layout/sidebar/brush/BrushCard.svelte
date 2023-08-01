@@ -6,17 +6,23 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
-    import type { BrushMaterial } from "../../../editor/brushes";
+    import {
+        DeleteBrushChange,
+        type BrushMaterial,
+    } from "../../../editor/brushes";
     import { getContext, onMount, tick } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import { spawnDialog } from "src/systems/dialogs";
     import BrushSettings from "./BrushSettings.svelte";
+    import { PaletteMaterial } from "src/views/MapEditor/editor/materials";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
     const data = context.data;
     const editingBrush = context.editingBrush;
     const brushes = context.brushes;
+    const tilesetBlocks = context.tilesetBlocks;
+    const changes = context.brushesChanges;
 
     export let small: boolean = false;
     export let index: number;
@@ -51,9 +57,7 @@
     }
 
     function deleteBrush() {
-        brushes.update((brushes) => {
-            return brushes.filter((b) => b !== brush);
-        });
+        changes.push(new DeleteBrushChange(brush));
     }
 
     let previewContainer: HTMLDivElement;
