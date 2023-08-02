@@ -8,6 +8,7 @@
 
     let hoveringTile: number;
     let selectedTile: number | [number, number, number];
+    let fitToContainer: boolean = true;
 </script>
 
 <div
@@ -17,7 +18,7 @@
     class="tile-palette-view"
 >
     <div class="palette-container">
-        <TilePalette bind:hoveringTile bind:selectedTile />
+        <TilePalette bind:fitToContainer bind:hoveringTile bind:selectedTile />
     </div>
 </div>
 <div
@@ -32,6 +33,29 @@
             <span class="number">
                 {hoveringTile.toString().padStart(4, "0")}
             </span>
+        </span>
+    {/if}
+    <!-- Toggle fitToContainer -->
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    {#if fitToContainer}
+        <span
+            use:tooltip
+            tooltip="Reset to fixed size"
+            class="toggle-size"
+            on:click={() => (fitToContainer = !fitToContainer)}
+        >
+            <iconify-icon icon="fluent:arrow-fit-16-regular" inline />
+            Fit Width
+        </span>
+    {:else}
+        <span
+            use:tooltip
+            tooltip={"Fit the Palette to the Container"}
+            class="toggle-size"
+            on:click={() => (fitToContainer = !fitToContainer)}
+        >
+            <iconify-icon icon="fluent:arrow-fit-in-16-regular" inline />
+            Reset Width
         </span>
     {/if}
     {#if selectedTile != null}
@@ -72,6 +96,24 @@
     .footbar {
         padding: 0 0.5em;
         color: var(--weak-fg);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        .toggle-size {
+            float: right;
+            padding: 0 0.25em;
+            cursor: pointer;
+            border-radius: 2px;
+
+            &:hover {
+                background: var(--light-shadow);
+                text-decoration: underline;
+            }
+            &:active {
+                background: var(--medium-shadow);
+                color: var(--accent-fg);
+            }
+        }
 
         .number {
             font-family: monospace;

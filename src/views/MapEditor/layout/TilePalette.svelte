@@ -6,6 +6,7 @@
 
     export let hoveringTile: number = null;
     export let selectedTile: number | [number, number, number] = null;
+    export let fitToContainer: boolean = true;
 
     const context: MapEditorContext = getContext("context");
     // Get the data
@@ -99,6 +100,15 @@
         selectionDiv.style.setProperty("--y", `${y}`);
         selectionDiv.style.setProperty("--width", `${width}`);
         selectionDiv.style.setProperty("--height", `${height}`);
+
+        // Get the left offset if fitToContainer is set
+        const rect = paletteCanvas.getBoundingClientRect();
+        // Get the container's width
+        const containerWidth = paletteCanvas.parentElement.clientWidth;
+        console.log(containerWidth, rect.width);
+        // Get the left offset
+        const left = (containerWidth - rect.width) / 2;
+        selectionDiv.style.setProperty("--left", `${left}px`);
     }
 
     function hideSelection() {
@@ -219,8 +229,13 @@
 
 <div class="palette" use:watchResize={onResized} on:mouseleave={onMouseLeave}>
     <div class="canvas-container">
-        <div class="selection" bind:this={selectionDiv} />
+        <div
+            class="selection"
+            bind:this={selectionDiv}
+            class:stretch={fitToContainer}
+        />
         <canvas
+            class:stretch={fitToContainer}
             class="palette-canvas"
             bind:this={paletteCanvas}
             on:mousedown={onMouseDown}
@@ -255,6 +270,18 @@
 
     .canvas-container {
         position: relative;
+        display: flex;
+        flex-flow: column nowrap;
+        width: 100%;
+        align-items: center;
+    }
+
+    .palette-canvas {
+        width: 256px;
+        &.stretch {
+            width: 100%;
+        }
+        image-rendering: pixelated;
     }
 
     .selection {
@@ -263,9 +290,13 @@
         --y: 0;
         --width: 1;
         --height: 1;
+        --left: 182px;
+        &.stretch {
+            --left: 0px;
+        }
         position: absolute;
 
-        left: calc(var(--size) * var(--x));
+        left: calc(var(--size) * var(--x) + var(--left));
         top: calc(var(--size) * var(--y));
         width: calc(var(--size) * var(--width));
         height: calc(var(--size) * var(--height));
@@ -273,10 +304,5 @@
         outline: 2px solid red;
         box-shadow: 0 0 4px 4px black;
         pointer-events: none;
-    }
-
-    .palette-canvas {
-        width: 100%;
-        image-rendering: pixelated;
     }
 </style>
