@@ -23,6 +23,18 @@
     "prefix": "material-symbols",
     "width": 24
   },
+  "swap-horiz": {
+    "aliases": {},
+    "height": 24,
+    "icons": {
+      "swap-horiz": {
+        "body": "<path fill=\"currentColor\" d=\"m7 20l-5-5l5-5l1.4 1.425L5.825 14H13v2H5.825L8.4 18.575L7 20Zm10-6l-1.4-1.425L18.175 10H11V8h7.175L15.6 5.425L17 4l5 5l-5 5Z\"/>"
+      }
+    },
+    "lastModified": 1690784521,
+    "prefix": "material-symbols",
+    "width": 24
+  },
   "visibility": {
     "aliases": {},
     "height": 24,

@@ -120,7 +120,7 @@
             </div>
             <div class="hr" />
             {#if brushType === BrushType.Simple}
-                <div class="half-row">
+                <div class="half-max-row">
                     <div class="row">
                         <div class="subtitle">Width</div>
                         <Input
@@ -129,6 +129,23 @@
                             type="number"
                             bind:value={brushSettings.width}
                         />
+                    </div>
+                    <div class="row">
+                        <div class="subtitle padding">|</div>
+                        <Button
+                            on:click={() => {
+                                [brushSettings.width, brushSettings.height] = [
+                                    brushSettings.height,
+                                    brushSettings.width,
+                                ];
+                            }}
+                            title="Swap width with height"
+                        >
+                            <iconify-icon
+                                icon="material-symbols:swap-horiz"
+                                inline
+                            />
+                        </Button>
                     </div>
                     <div class="row">
                         <div class="subtitle">Height</div>
@@ -187,6 +204,12 @@
             gap: 4px;
         }
 
+        .half-max-row {
+            display: grid;
+            grid-template-columns: 1fr max-content 1fr;
+            gap: 4px;
+        }
+
         .hr {
             width: 100%;
             border-bottom: 1px solid var(--light-shadow);
@@ -205,6 +228,12 @@
         }
         .subtitle {
             text-align: center;
+        }
+
+        .padding {
+            color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
         }
     }
 

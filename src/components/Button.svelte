@@ -1,12 +1,17 @@
 <script lang="ts">
+    import { tooltip } from "src/systems/tooltip";
+
     type ButtonColor = "primary" | "secondary" | "warning";
 
     export let color: ButtonColor = "primary";
     export let disabled: boolean = false;
     export let pressed: boolean = false;
+    export let title: string = "";
 </script>
 
 <button
+    use:tooltip
+    tooltip={title}
     {disabled}
     on:click
     class:pressed
@@ -75,7 +80,8 @@
         text-overflow: ellipsis;
 
         transition: background 100ms ease-in-out, transform 0.1s ease-out,
-            box-shadow 0.1s ease-out, outline 0.2s ease-out, color 100ms ease-in-out;
+            box-shadow 0.1s ease-out, outline 0.2s ease-out,
+            color 100ms ease-in-out;
 
         &[disabled] {
             --btn-bg: var(--btn-bg-disabled);

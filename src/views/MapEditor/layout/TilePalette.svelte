@@ -105,15 +105,14 @@
         const rect = paletteCanvas.getBoundingClientRect();
         // Get the container's width
         const containerWidth = paletteCanvas.parentElement.clientWidth;
-        console.log(containerWidth, rect.width);
         // Get the left offset
         const left = (containerWidth - rect.width) / 2;
         selectionDiv.style.setProperty("--left", `${left}px`);
     }
 
     function hideSelection() {
-        selectionStart = { x: -10, y: 0 };
-        selectionEnd = { x: -10, y: 0 };
+        selectionStart = { x: -100, y: 0 };
+        selectionEnd = { x: -100, y: 0 };
         drawSelection();
     }
 

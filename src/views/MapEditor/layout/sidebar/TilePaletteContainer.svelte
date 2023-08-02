@@ -45,7 +45,7 @@
             on:click={() => (fitToContainer = !fitToContainer)}
         >
             <iconify-icon icon="fluent:arrow-fit-16-regular" inline />
-            Fit Width
+            Reset Width
         </span>
     {:else}
         <span
@@ -55,7 +55,7 @@
             on:click={() => (fitToContainer = !fitToContainer)}
         >
             <iconify-icon icon="fluent:arrow-fit-in-16-regular" inline />
-            Reset Width
+            Fit Width
         </span>
     {/if}
     {#if selectedTile != null}

@@ -122,6 +122,7 @@
                         centerOnResize={true}
                         changes={$editingBrushChanges}
                         editLevels={state === SidebarState.BrushLevel}
+                        nullLevels={true}
                     />
                 {/key}
             </div>
