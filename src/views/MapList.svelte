@@ -1,5 +1,4 @@
 <script lang="ts">
-    
     import { onMount, setContext, tick } from "svelte";
     import {
         GroupCriteria,
@@ -30,6 +29,7 @@
     import { MapEditorContext } from "./MapEditor";
     import CloseViewsDialog from "../components/dialog/CloseViewsDialog.svelte";
     import CreateMapDialog from "./MapList/CreateMapDialog.svelte";
+    import { resizeX } from "src/systems/resize";
 
     export let context: MapListContext;
     let data = context.data;
@@ -333,11 +333,20 @@
                     bind:lastSelected
                 />
             </div>
-            {#if mapInfoOpen}
-                <div class="sidebar">
-                    <MapInfo bind:selectedMaps />
-                </div>
-            {/if}
+            <div
+                class="sidebar"
+                use:resizeX={{
+                    startWidth: 420,
+                    maxWidth: () => {
+                        return Math.min(800, window.innerWidth - 420);
+                    },
+                    minWidth: 300,
+                }}
+                class:hidden={!mapInfoOpen}
+            >
+                <div class="resize-handle left" />
+                <MapInfo bind:selectedMaps />
+            </div>
         </div>
     {/if}
 {/key}
@@ -349,17 +358,16 @@
         height: 100%;
         grid-template-columns: 1fr;
         grid-template-rows: min-content 1fr;
-        align-self: center;
-
-        user-select: none;
-
         grid-template-areas:
             "top"
             "list";
 
+        position: relative;
+        user-select: none;
+
         &.show-info {
             @media (min-width: 720px) {
-                grid-template-columns: minmax(420px, 1fr) minmax(0, 400px);
+                grid-template-columns: minmax(420px, 1fr) minmax(0, min-content);
                 grid-template-rows: min-content 1fr;
 
                 grid-template-areas:
@@ -367,8 +375,8 @@
                     "list sidebar";
 
                 .sidebar {
-                    display: block;
-                    box-shadow: -2px 0 2px 0 var(--light-shadow);
+                    display: grid;
+                    box-shadow: -1px 0 0 var(--light-shadow);
                 }
             }
         }
@@ -381,7 +389,7 @@
 
         padding: 0.5em 1em;
         z-index: 10;
-        box-shadow: 0 2px 2px 0 var(--light-shadow);
+        box-shadow: 0 1px 0 var(--light-shadow);
 
         .searchbar {
             display: grid;
@@ -420,13 +428,13 @@
 
     .sidebar {
         display: none;
+        grid-template-columns: 0 minmax(0, 1fr);
         grid-area: sidebar;
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow: hidden;
+        background: var(--medium-bg);
 
-        &::-webkit-scrollbar {
-            background: transparent;
-            width: 10px;
+        .resize-handle::before {
+            height: calc(100% - 94px);
         }
     }
 </style>

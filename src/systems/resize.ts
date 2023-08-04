@@ -124,8 +124,6 @@ export function resizeY(node: HTMLElement, { startHeight, minHeight, maxHeight }
         const rect = node.getBoundingClientRect();
         const offset = event.clientY - rect.y - rect.height;
 
-        console.log(offset);
-
         if (offset >= -5 && offset <= -2) {
             resizeOffsetY = offset;
             isResizing = true;

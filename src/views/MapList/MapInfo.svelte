@@ -164,8 +164,10 @@
     .info-container {
         margin: 0;
         padding: 1em;
-        overflow: hidden;
+        overflow-y: scroll;
         display: grid;
+        align-items: baseline;
+        align-content: baseline;
         gap: 1em;
 
         .preview {
