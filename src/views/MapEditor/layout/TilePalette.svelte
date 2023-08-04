@@ -3,6 +3,7 @@
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
     import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
+    import type { z } from "@tauri-apps/api/path-c062430b";
 
     export let hoveringTile: number = null;
     export let selectedTile: number | [number, number, number] = null;
@@ -20,12 +21,18 @@
     // Get the canvas
     let paletteCanvas: HTMLCanvasElement;
     let selectionDiv: HTMLDivElement;
+    let paletteContainer: HTMLDivElement;
 
     // Currently selected tile
     let selectionStart: Point = { x: 0, y: 0 },
         selectionEnd: Point = { x: 0, y: 0 },
         // If you are multi selecting
         rightClicking: boolean = false;
+
+    /** The first tile that was selected. Doesn't change after selection start */
+    let firstSelection: Point = { x: 0, y: 0 };
+
+    let lastTileSize: number;
 
     $: $material,
         (() => {
@@ -176,6 +183,7 @@
 
     function onMouseDown(event: MouseEvent) {
         selectionStart = getTile(event);
+        firstSelection = { ...selectionStart };
         selectionEnd = { ...selectionStart };
         drawSelection();
 
@@ -213,11 +221,118 @@
         const rect = paletteCanvas.getBoundingClientRect();
         const width = rect.width;
         // Calculate the new tile size
-        const tileSize = width / 8;
+        lastTileSize = width / 8;
         // Update the selection's position and size
-        selectionDiv.style.setProperty("--size", `${tileSize}px`);
+        selectionDiv.style.setProperty("--size", `${lastTileSize}px`);
 
         drawSelection();
+    }
+
+    export function moveOnPalette(dirX: number, dirY: number, select: boolean) {
+        if (selectionStart.x === -100) {
+            selectionStart.x = 0;
+            selectionStart.y = 0;
+            selectionEnd.x = 0;
+            selectionEnd.y = 0;
+            drawSelection();
+            selectionDiv.scrollIntoView({ block: "start" });
+            buildMaterial();
+            return;
+        }
+
+        const multiselection = !isSingleSelection();
+        if (select) {
+            if (!multiselection) {
+                firstSelection = { ...selectionStart };
+            }
+        }
+
+        // Moving Right
+        if (dirX > 0) {
+            if (multiselection && selectionStart.x < firstSelection.x) {
+                selectionStart.x++;
+            } else {
+                // Get the current selectionEnd's x + 1
+                if (selectionEnd.x !== 7) selectionEnd.x++;
+            }
+
+            if (!select) {
+                if (!multiselection) selectionStart.x = selectionEnd.x;
+                else {
+                    selectionStart = { ...firstSelection };
+                    if (selectionStart.x !== 7) selectionStart.x++;
+                    selectionEnd = { ...selectionStart };
+                }
+            }
+        }
+        // Moving Left
+        else if (dirX < 0) {
+            if (multiselection && selectionEnd.x > firstSelection.x) {
+                selectionEnd.x--;
+            } else {
+                // Get the current selectionStart's x - 1
+                if (selectionStart.x !== 0) selectionStart.x--;
+            }
+
+            if (!select) {
+                if (!multiselection) selectionEnd.x = selectionStart.x;
+                else {
+                    selectionStart = { ...firstSelection };
+                    if (selectionStart.x !== 0) selectionStart.x--;
+                    selectionEnd = { ...selectionStart };
+                }
+            }
+        }
+        // Moving Down
+        else if (dirY > 0) {
+            if (multiselection && selectionStart.y < firstSelection.y) {
+                selectionStart.y++;
+            } else {
+                if (selectionEnd.y !== Math.ceil(tilesets.length / 8) - 1)
+                    selectionEnd.y++;
+            }
+
+            if (!select) {
+                if (!multiselection) selectionStart.y = selectionEnd.y;
+                else {
+                    selectionStart = { ...firstSelection };
+                    if (selectionStart.y !== Math.ceil(tilesets.length / 8) - 1)
+                        selectionStart.y++;
+                    selectionEnd = { ...selectionStart };
+                }
+            }
+        }
+        // Moving Up
+        else if (dirY < 0) {
+            if (multiselection && selectionEnd.y > firstSelection.y) {
+                selectionEnd.y--;
+            } else {
+                if (selectionStart.y !== 0) selectionStart.y--;
+            }
+
+            if (!select) {
+                if (!multiselection) selectionEnd.y = selectionStart.y;
+                else {
+                    selectionStart = { ...firstSelection };
+                    if (selectionStart.y !== 0) selectionStart.y--;
+                    selectionEnd = { ...selectionStart };
+                }
+            }
+        }
+
+        // If the selection is out of bounds, scroll to it
+        const selRect = selectionDiv.getBoundingClientRect();
+        const container = paletteContainer.parentElement;
+        const conRect = container.getBoundingClientRect();
+        drawSelection();
+        buildMaterial();
+
+        if (
+            selRect.y > conRect.bottom - lastTileSize * 2 ||
+            selRect.y < conRect.top + lastTileSize
+        ) {
+            selectionDiv.scrollIntoView({ block: "center" });
+        }
     }
 
     onMount(() => {
@@ -226,7 +341,12 @@
     });
 </script>
 
-<div class="palette" use:watchResize={onResized} on:mouseleave={onMouseLeave}>
+<div
+    class="palette"
+    use:watchResize={onResized}
+    on:mouseleave={onMouseLeave}
+    bind:this={paletteContainer}
+>
     <div class="canvas-container">
         <div
             class="selection"

@@ -33,13 +33,54 @@
         });
     }
 
+    let lastXOffset: number = 0;
+    const LAST_Y_LEVEL = 7;
     function selectLevel(level: number) {
         selected = level;
+        if (level !== null) {
+            const level = (selected % 256) % 4;
+            const obstacle = selected & 0x100;
+            lastXOffset = level + obstacle;
+        }
         buildMaterial();
     }
 
     function buildMaterial() {
         $material = new PaletteMaterial([[[null, selected]]]);
+    }
+
+    export function moveOnPalette(
+        dirX: number,
+        dirY: number,
+        _select: boolean
+    ) {
+        if (selected === null) {
+            if (dirY > 0) selectLevel(lastXOffset);
+            else if (dirY < 0) selectLevel(LAST_Y_LEVEL * 4 + lastXOffset);
+            else if (dirX < 0) selectLevel(LAST_Y_LEVEL * 4 + 256 + 3);
+            else selectLevel(0);
+        } else {
+            const level = selected % 256;
+            const isObstacle = selected & 0x100;
+            if (dirX > 0) {
+                if (level === 31 && isObstacle) return selectLevel(null);
+
+                if (isObstacle) selectLevel(level + 1);
+                else selectLevel(level + 256);
+            } else if (dirX < 0) {
+                if (level === 0 && !isObstacle) return selectLevel(null);
+
+                if (isObstacle) selectLevel(level);
+                else selectLevel(level + 255);
+            } else if (dirY > 0) {
+                if (Math.floor(level / 4) >= LAST_Y_LEVEL)
+                    return selectLevel(null);
+                selectLevel(selected + 4);
+            } else if (dirY < 0) {
+                if (Math.floor(level / 4) <= 0) return selectLevel(null);
+                selectLevel(selected - 4);
+            }
+        }
     }
 
     $: $material,

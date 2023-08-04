@@ -5,6 +5,12 @@
 
     export let levelMode: boolean;
     export let state: SidebarState;
+
+    let levelPalette: LevelPalette;
+
+    export function moveOnPalette(dirX: number, dirY: number, select: boolean) {
+        levelPalette.moveOnPalette(dirX, dirY, select);
+    }
 </script>
 
 <div
@@ -18,7 +24,7 @@
     }}
 >
     <div class="level-palette-container">
-        <LevelPalette />
+        <LevelPalette bind:this={levelPalette} />
     </div>
     <div class="resize-handle top" class:hidden={!levelMode} />
 </div>

@@ -81,6 +81,9 @@ export class MapEditorContext extends TabbedEditorContext {
     /** The changes that are applied to the tileset level editor */
     public tilesetLevelChanges: EditorChanges<null>;
 
+    // Keybindings callbacks
+    public moveOnPaletteCB: (dirX: number, dirY: number, select: boolean) => void = () => { };
+
 
     private tileset1Offset: number;
     private tileset2Offset: number;
@@ -465,7 +468,6 @@ export class MapEditorContext extends TabbedEditorContext {
     public redoTilesetChanges() {
         this.tilesetLevelChanges.redo();
     }
-
     public async undo() {
         if (get(this.editingBrushChanges) !== null)
             get(this.editingBrushChanges).undo();
@@ -477,6 +479,12 @@ export class MapEditorContext extends TabbedEditorContext {
             get(this.editingBrushChanges).redo();
         else
             super.redo();
+    }
+    public moveOnPalette(dirX: number, dirY: number, select: boolean) {
+        const tab = get(this.selectedTab);
+        if (tab !== "layout" && tab !== "level") return;
+
+        this.moveOnPaletteCB(dirX, dirY, select);
     }
 }
 
@@ -510,5 +518,29 @@ redefineBindings({
     },
     "map_editor/redo_tileset_level_changes": (view: MapEditorContext) => {
         view.redoTilesetChanges();
+    },
+    "map_editor/palette_move_up": (view: MapEditorContext) => {
+        view.moveOnPalette(0, -1, false);
+    },
+    "map_editor/palette_select_up": (view: MapEditorContext) => {
+        view.moveOnPalette(0, -1, true);
+    },
+    "map_editor/palette_move_down": (view: MapEditorContext) => {
+        view.moveOnPalette(0, 1, false);
+    },
+    "map_editor/palette_select_down": (view: MapEditorContext) => {
+        view.moveOnPalette(0, 1, true);
+    },
+    "map_editor/palette_move_left": (view: MapEditorContext) => {
+        view.moveOnPalette(-1, 0, false);
+    },
+    "map_editor/palette_select_left": (view: MapEditorContext) => {
+        view.moveOnPalette(-1, 0, true);
+    },
+    "map_editor/palette_move_right": (view: MapEditorContext) => {
+        view.moveOnPalette(1, 0, false);
+    },
+    "map_editor/palette_select_right": (view: MapEditorContext) => {
+        view.moveOnPalette(1, 0, true);
     },
 });

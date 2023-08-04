@@ -27,12 +27,22 @@
     export let levelMode: boolean;
     export let hidden: boolean;
 
+    let levelPalette: LevelPaletteContainer;
+    let tilePalette: TilePaletteContainer;
+
     const context: MapEditorContext = getContext("context");
     const editingBrush = context.editingBrush;
     const editingBrushChanges = context.editingBrushChanges;
     const editingBrushClone = context.editingBrushClone;
     const material = context.material;
     const brushes = context.brushes;
+
+    // Update the moveOnPalette callback
+    context.moveOnPaletteCB = (dirX: number, dirY: number, select: boolean) => {
+        if (levelMode || state === SidebarState.BrushLevel)
+            levelPalette.moveOnPalette(dirX, dirY, select);
+        else tilePalette.moveOnPalette(dirX, dirY, select);
+    };
 
     let state: SidebarState = SidebarState.Palette;
 
@@ -84,9 +94,9 @@
     <!-- Brush editing view -->
     <BrushEditor {levelMode} bind:state />
     <!-- Level Palette -->
-    <LevelPaletteContainer {levelMode} bind:state />
+    <LevelPaletteContainer {levelMode} bind:state bind:this={levelPalette} />
     <!-- Tile palette view -->
-    <TilePaletteContainer {levelMode} bind:state />
+    <TilePaletteContainer {levelMode} bind:state bind:this={tilePalette} />
     <!-- Palette Permissions Editing -->
     <TilesetLevelEditorContainer {levelMode} />
     <!-- Mutliselect preview -->

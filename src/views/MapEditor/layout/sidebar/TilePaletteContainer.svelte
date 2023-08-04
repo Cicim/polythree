@@ -6,9 +6,15 @@
     export let levelMode: boolean;
     export let state: SidebarState;
 
+    let tilePalette: TilePalette;
+
     let hoveringTile: number;
     let selectedTile: number | [number, number, number];
     let fitToContainer: boolean = false;
+
+    export function moveOnPalette(dirX: number, dirY: number, select: boolean) {
+        tilePalette.moveOnPalette(dirX, dirY, select);
+    }
 </script>
 
 <div
@@ -18,7 +24,12 @@
     class="tile-palette-view"
 >
     <div class="palette-container">
-        <TilePalette bind:fitToContainer bind:hoveringTile bind:selectedTile />
+        <TilePalette
+            bind:this={tilePalette}
+            bind:fitToContainer
+            bind:hoveringTile
+            bind:selectedTile
+        />
     </div>
 </div>
 <div
