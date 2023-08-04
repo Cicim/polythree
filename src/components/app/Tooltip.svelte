@@ -9,7 +9,11 @@
     /** The last targeted element */
     let lastTarget: HTMLElement = null;
     /** The timeout for opening */
-    let timeout: NodeJS.Timeout = null;
+    let openingTimeout: NodeJS.Timeout = null;
+
+    let canInstaOpen: boolean = false;
+    /** The timeout after which you cannot instantly open a tooltip anymore */
+    let closingTimeout: NodeJS.Timeout = null;
 
     let mouseX = 0;
 
@@ -77,8 +81,10 @@
         // Updates the lastTarget
         lastTarget = target;
 
+        const timeToOpen = canInstaOpen ? 0 : 500;
+
         // Start the timeout
-        timeout = setTimeout(() => {
+        openingTimeout = setTimeout(() => {
             // Show the tooltip
             tooltip.style.display = "block";
             // Get the attribute for tooltip
@@ -89,14 +95,23 @@
             tooltip.innerText = tooltipAttribute;
             // Place the tooltip
             placeTooltip(target, options.placement);
-        }, 500);
+        }, timeToOpen);
     }
 
     export function closeTooltip() {
+        // Start a timeout, after which you will reset a variable
+        canInstaOpen = true;
+
+        closingTimeout = setTimeout(() => {
+            canInstaOpen = false;
+            clearTimeout(closingTimeout);
+            closingTimeout = null;
+        }, 400);
+
         // Clear the lastTarget
         lastTarget = null;
         // Clear the interval
-        clearTimeout(timeout);
+        clearTimeout(openingTimeout);
         // Hide the tooltip
         tooltip.style.display = "none";
     }
@@ -134,6 +149,7 @@
         padding: 4px 8px;
         top: 0;
         left: 0;
+        min-width: 32px;
 
         text-align: center;
         background: var(--tooltip-bg);
