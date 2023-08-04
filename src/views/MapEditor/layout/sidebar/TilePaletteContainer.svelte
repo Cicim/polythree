@@ -8,7 +8,7 @@
 
     let hoveringTile: number;
     let selectedTile: number | [number, number, number];
-    let fitToContainer: boolean = true;
+    let fitToContainer: boolean = false;
 </script>
 
 <div
@@ -44,8 +44,8 @@
             class="toggle-size"
             on:click={() => (fitToContainer = !fitToContainer)}
         >
-            <iconify-icon icon="fluent:arrow-fit-16-regular" inline />
-            Reset Width
+            <iconify-icon icon="fluent:arrow-fit-16-regular" inline />Reset
+            Width
         </span>
     {:else}
         <span
@@ -54,8 +54,8 @@
             class="toggle-size"
             on:click={() => (fitToContainer = !fitToContainer)}
         >
-            <iconify-icon icon="fluent:arrow-fit-in-16-regular" inline />
-            Fit Width
+            <iconify-icon icon="fluent:arrow-fit-in-16-regular" inline />Fit
+            Width
         </span>
     {/if}
     {#if selectedTile != null}
@@ -104,6 +104,10 @@
             padding: 0 0.25em;
             cursor: pointer;
             border-radius: 2px;
+
+            iconify-icon {
+                padding-right: 4px;
+            }
 
             &:hover {
                 background: var(--light-shadow);
