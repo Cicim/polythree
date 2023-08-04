@@ -10,15 +10,15 @@
     class:hidden={levelMode || state !== SidebarState.Palette}
     class="topbar-view"
 >
-    <Button on:click={() => (state = SidebarState.Borders)}>
+    <Button color="secondary" on:click={() => (state = SidebarState.Borders)}>
         <iconify-icon icon="mdi:border-all" width="1.5em" />
         Borders
     </Button>
-    <Button on:click={() => (state = SidebarState.BrushList)}>
+    <Button color="secondary" on:click={() => (state = SidebarState.BrushList)}>
         <iconify-icon icon="mdi:format-list-bulleted" width="1.5em" />
         Brush List
     </Button>
-    <Button>
+    <Button color="secondary">
         <iconify-icon icon="mdi:puzzle" width="1.5em" />
         Edit Tilesets
     </Button>

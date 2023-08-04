@@ -51,42 +51,51 @@
 </script>
 
 <div class="palette">
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div
-        class="none-card any-level-card"
-        class:selected={selected === null}
-        on:click={() => selectLevel(null)}
-        use:tooltip
-        tooltip="Does not change the level"
-    />
-    {#each levels as { text, layer, color, level, obstacle } (level)}
+    <div class="palette-container">
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
-            class="level-card any-level-card"
-            class:obstacle
-            class:selected={level === selected}
-            style="background-color: {color}"
-            on:mousedown={() => selectLevel(level)}
+            class="none-card any-level-card"
+            class:selected={selected === null}
+            on:click={() => selectLevel(null)}
             use:tooltip
-            tooltip={`${layer === 0 ? "Junction Level" : `Level ${layer}`}, ${
-                obstacle ? "Obstacle" : "Traversable"
-            }`}
+            tooltip="Does not change the level"
         >
-            {text}
+            <iconify-icon inline icon="mdi:eraser" /> NONE
         </div>
-    {/each}
+        {#each levels as { text, layer, color, level, obstacle } (level)}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div
+                class="level-card any-level-card"
+                class:obstacle
+                class:selected={level === selected}
+                style="background-color: {color}"
+                on:mousedown={() => selectLevel(level)}
+                use:tooltip
+                tooltip={`${
+                    layer === 0 ? "Junction Level" : `Level ${layer}`
+                }, ${obstacle ? "Obstacle" : "Traversable"}`}
+            >
+                {text}
+            </div>
+        {/each}
+    </div>
 </div>
 
 <style lang="scss">
     .palette {
+        display: grid;
+        height: 100%;
+        place-content: center;
+    }
+
+    .palette-container {
         display: flex;
         flex-wrap: wrap;
         overflow-y: scroll;
         justify-content: center;
+        width: 300px;
         gap: 4px;
         padding: 4px 0;
-
-        container-type: inline-size;
     }
 
     .any-level-card {
@@ -138,22 +147,11 @@
         align-items: center;
         font-size: 20px;
         border-radius: 4px;
+        letter-spacing: 1px;
+        gap: 4px;
 
-        &:after {
-            content: "NONE";
-        }
         &.selected {
             color: var(--weak-fg);
-        }
-    }
-
-    @container (min-width: 308px) {
-        .none-card {
-            width: 30px;
-            &:after {
-                content: "○";
-                display: flex;
-            }
         }
     }
 </style>
