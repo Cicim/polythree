@@ -122,8 +122,11 @@ export function resizeY(node: HTMLElement, { startHeight, minHeight, maxHeight }
 
     function startResizing(event: MouseEvent) {
         const rect = node.getBoundingClientRect();
-        const offset = event.clientY - rect.y - rect.height + 5;
-        if (offset >= 0) {
+        const offset = event.clientY - rect.y - rect.height;
+
+        console.log(offset);
+
+        if (offset >= -5 && offset <= -2) {
             resizeOffsetY = offset;
             isResizing = true;
         }
@@ -135,17 +138,17 @@ export function resizeY(node: HTMLElement, { startHeight, minHeight, maxHeight }
     function resize(event: MouseEvent) {
         if (isResizing) {
             const rect = node.getBoundingClientRect();
-            setHeight(event.clientY - rect.y + resizeOffsetY);
+            setHeight(event.clientY - rect.y - resizeOffsetY);
         }
     }
     function onWindowResize() {
         setHeight(lastChosenHeight);
     }
 
-    node.addEventListener("mousedown", startResizing);
-    window.addEventListener("mouseup", stopResizing);
-    window.addEventListener("mouseleave", stopResizing);
-    window.addEventListener("mousemove", resize);
+    node.addEventListener("mousedown", startResizing, { capture: true });
+    window.addEventListener("mouseup", stopResizing, { capture: true });
+    window.addEventListener("mouseleave", stopResizing, { capture: true });
+    window.addEventListener("mousemove", resize, { capture: true });
     window.addEventListener("resize", onWindowResize);
 
     return {
