@@ -148,7 +148,13 @@
         for (let i = 0; i < height; i++) {
             const row = [];
             for (let j = 0; j < width; j++) {
-                row.push(tilesetBlocks[y + i][x + j]);
+                const tileIndex = (y + i) * 8 + x + j;
+                const tile =
+                    tileIndex >= tilesets.length
+                        ? [null, null]
+                        : tilesetBlocks[y + i][x + j];
+
+                row.push(tile);
             }
             blocks.push(row);
         }
@@ -328,10 +334,19 @@
         buildMaterial();
 
         if (
-            selRect.y > conRect.bottom - lastTileSize * 2 ||
+            selRect.bottom > conRect.bottom - lastTileSize ||
             selRect.y < conRect.top + lastTileSize
         ) {
-            selectionDiv.scrollIntoView({ block: "center" });
+            // If it's too big for the screen, focus on the bottom or top, depending on the direction you were going
+            if (selRect.height > conRect.height) {
+                if (dirY > 0) {
+                    selectionDiv.scrollIntoView({ block: "end" });
+                } else {
+                    selectionDiv.scrollIntoView({ block: "start" });
+                }
+            } else {
+                selectionDiv.scrollIntoView({ block: "center" });
+            }
         }
     }
 

@@ -250,11 +250,20 @@ export class MapEditorContext extends TabbedEditorContext {
         // Get the levels for these tilesets from config
         const importedTilesetLevels = await this.importTilesetsLevels();
         // Compose the block data for the tileset level editor
-        const tilesetBlocks = new Array(Math.ceil(allImages.length / 8));
+        const tilesetBlocks: BlockData[][] = new Array(Math.ceil(allImages.length / 8));
         for (let y = 0; y < tilesetBlocks.length; y++) {
             tilesetBlocks[y] = [];
-            for (let x = 0; x < 8; x++)
+            let inRow = 8;
+            if (y === tilesetBlocks.length - 1) {
+                // Get the amount of remaining x's
+                inRow = allImages.length % 8;
+            }
+            for (let x = 0; x < inRow; x++)
                 tilesetBlocks[y][x] = [y * 8 + x, importedTilesetLevels[y * 8 + x]];
+
+            for (let x = inRow; x < 8; x++) {
+                tilesetBlocks[y][x] = null;
+            }
         }
         this.tilesetBlocks = writable(tilesetBlocks);
         this.tilesetLevelChanges = new EditorChanges(null);

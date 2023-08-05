@@ -7,6 +7,7 @@
     const blocksStore = context.tilesetBlocks;
 </script>
 
+padding-bottom: 100px;
 <div class="palette">
     <div class="canvas-container">
         <MapCanvas
@@ -18,6 +19,7 @@
             allowPan={false}
             allowZoom={false}
             constantWidth={512}
+            nullBlocks={true}
         />
     </div>
 </div>
