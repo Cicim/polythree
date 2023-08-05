@@ -16,6 +16,7 @@
     const context: MapEditorContext = getContext("context");
     const brushes = context.brushes;
     const changes = context.brushesChanges;
+    const changed = changes.updateStore;
 
     let filterString: string = "";
     function clearFilter(event: KeyboardEvent) {
@@ -43,7 +44,7 @@
                 on:click={createBrush}
                 theme="transparent"
             />
-            {#key $brushes}
+            {#key $changed}
                 <ToolButton
                     icon="mdi:undo"
                     title="Undo"
@@ -55,7 +56,7 @@
         </div>
         <div class="center">BRUSH LIST</div>
         <div class="right">
-            {#key $brushes}
+            {#key $changed}
                 <ToolButton
                     icon="mdi:redo"
                     title="Redo"

@@ -20,6 +20,8 @@ export class EditorChanges<T> {
     public top: number = 0;
     /** The last time the editor was saved */
     public lastSaved: Change | null = null;
+    /** A store that is set when the state of the changes changes */
+    public updateStore: Writable<any>;
 
     public queue: Change[] = [];
 
@@ -29,6 +31,7 @@ export class EditorChanges<T> {
         this.unsaved = writable(false);
         this.saving = writable(false);
         this.locked = 0;
+        this.updateStore = writable({});
     }
 
     /** Pushes the change into the stack and applies it */
@@ -111,6 +114,7 @@ export class EditorChanges<T> {
     /** Updates the unsaved icon */
     public updateChanges() {
         this.unsaved.set(this.current() !== this.lastSaved);
+        this.updateStore.set({});
     }
 
     // ANCHOR Quick methods

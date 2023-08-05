@@ -9,6 +9,8 @@
     import type { MapEditorContext } from "../MapEditor";
 
     const context: MapEditorContext = getContext("context");
+    const changes = context.changes;
+    const changed = changes.updateStore;
     let selectedToolStore = context.selectedTool;
 
     // The currently open tab (layout, level or scripts)
@@ -42,6 +44,23 @@
             icon="mdi:wand"
             title="Replace"
         />
+        |
+        {#key $changed}
+            <ToolButton
+                icon="mdi:undo"
+                title="Undo ({changes.top})"
+                disabled={changes.top === 0}
+                on:click={() => context.undo()}
+            />
+        {/key}
+        {#key $changed}
+            <ToolButton
+                icon="mdi:redo"
+                title="Redo ({changes.stack.length - changes.top})"
+                disabled={changes.stack.length === changes.top}
+                on:click={() => context.redo()}
+            />
+        {/key}
     </div>
     <div class="area">
         <LayoutViewArea editLevels={$activeTab === "level"} />
@@ -96,6 +115,8 @@
         background: var(--main-bg);
         box-shadow: 0 1px 0 var(--light-shadow);
         z-index: 1;
+
+        color: transparent;
 
         &::-webkit-scrollbar {
             -webkit-appearance: none;
