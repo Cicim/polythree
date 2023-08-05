@@ -85,10 +85,12 @@
 
         // Start the timeout
         openingTimeout = setTimeout(() => {
-            // Show the tooltip
-            tooltip.style.display = "block";
             // Get the attribute for tooltip
             const tooltipAttribute = target.getAttribute("tooltip");
+
+            if (tooltipAttribute === "") return;
+            // Show the tooltip
+            tooltip.style.display = "block";
             // If the attribute is a falsy value, return
             if (!tooltipAttribute) return;
             // Update the tooltip

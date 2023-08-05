@@ -50,7 +50,7 @@
         {#if tileset1Options}
             Choose Primary Tileset:
             <Select
-                showValue="offset"
+                valueTag="offset"
                 bind:value={tileset1}
                 options={tileset1Options}
             />
@@ -59,7 +59,7 @@
         {#if tileset2Options}
             Choose Secondary Tileset:
             <Select
-                showValue="offset"
+                valueTag="offset"
                 bind:value={tileset2}
                 options={tileset2Options}
             />

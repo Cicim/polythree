@@ -1,5 +1,9 @@
 <script context="module" lang="ts">
     export type SelectValueType = string | number;
+    export enum ScrollingMode {
+        Keyboard = 0,
+        Mouse = 1,
+    }
 </script>
 
 <script lang="ts">
@@ -12,463 +16,327 @@
     } from "svelte";
     import type { NavigatePath } from "src/systems/navigate";
     import type { EditorContext } from "src/systems/contexts";
-    import { writable, type Unsubscriber, type Writable } from "svelte/store";
+    import { writable, type Writable } from "svelte/store";
     import r from "src/systems/navigate";
     import { tooltip } from "src/systems/tooltip";
+    import type { EditorChanges } from "src/systems/changes";
 
-    /** The options list as a record of `(value => text)` */
-    export let options: [SelectValueType, string][];
-    /** The currently selected value */
+    // ANCHOR Consts
+    /** Margin from the top and bottom of the screen */
+    const MARGIN_V = 10;
+    /** Margin from the left and right of the screen */
+    const MARGIN_H = 0;
+    /** Number of options that should be visibile in the container */
+    const OPTIONS_COUNT = 10;
+
+    const dispatch = createEventDispatcher();
+
+    // ANCHOR Exports
+    /** An ordered array of [key, value] options */
+    export let options: [key: SelectValueType, name: string][] = [];
+    /** The current value of the select */
     export let value: SelectValueType = options[0][0];
-    /** The path to the object this select updates */
+    /** The path to navigate to when an option is selected */
     export let edits: NavigatePath = null;
-
+    /** A style to put before the options */
+    export let valueTag: "off" | "number" | "offset" = "off";
+    /** The preferred vertical spawning position */
+    export let biasedSpawn: "top" | "bottom" | "auto" = "auto";
+    /** True if the value is not a valid value */
     export let invalid: boolean = false;
 
-    export let showValue: "off" | "number" | "offset" = "off";
-
-    const dispatcher = createEventDispatcher();
-
-    $: invalid = O.findIndex((o) => value === o.value) === -1;
-
-    let context: EditorContext = getContext("context");
-    let data: Writable<any> = getContext("data");
-
-    export const MAX_OPTIONS_HEIGHT = 10;
-
-    // Extract the options into an object
-    $: O = options.map(([key, v]) => {
-        return {
-            value: key,
-            text: v,
-            selected: key === value,
-        };
-    });
-
-    let open = false;
-
-    /** The select element */
+    // ANCHOR Variables
+    /** The element of the select */
     let selectEl: HTMLButtonElement;
-    /** The options modal element that contains the container */
-    let optionsEl: HTMLDialogElement;
-    /** The options container */
-    let optionsContainer: HTMLDivElement;
+    /** The options list container */
+    let optionsContainerEl: HTMLDialogElement;
+    /** The element containing the list of options */
+    let optionsListEl: HTMLDivElement;
+    /** The selected key */
+    let selectedValue: SelectValueType = value;
 
-    /** True if scrolling with the mouse */
-    let scrollingMode = writable(true);
+    // ANCHOR Maps
+    /** Map of key => key's index in options */
+    $: optionMap = new Map(options.map(([key], i) => [key, i]));
 
-    /** The last value recorded before opening the options */
-    let lastValue = value;
-    /** The current search string */
-    let searchString = "";
-    /** The current search timeout */
-    let searchTimeout: NodeJS.Timeout = null;
-
-    /** To trigger the custom change event */
-    function triggerChange(previousValue: SelectValueType) {
-        // If the value is unchanged, don't trigger a change
-        if (previousValue === value) return;
-
-        // If this select edits some property, update it
-        if (edits !== null)
-            context.changes.setValue(edits as NavigatePath, value);
-
-        // Dispatch the change event
-        dispatcher("change", { value });
-        // Update the previous value
-        lastValue = value;
+    /** The index of the selected option */
+    function getOptionIndex(key: SelectValueType): number {
+        const index = optionMap.get(key);
+        return index;
     }
 
-    /** Scrolls the seledcted option into view */
-    function scrollToSelected() {
-        // Move the selected button into view
-        const selected =
-            optionsContainer.children[O.findIndex((option) => option.selected)];
-
-        if (selected === undefined) return;
-
-        // Place the scrolling position so that the selected
-        // option is in the middle of the options list
-        optionsEl.scrollTop =
-            selected.getBoundingClientRect().top -
-            optionsContainer.getBoundingClientRect().top -
-            optionsContainer.getBoundingClientRect().height / 2 +
-            selected.getBoundingClientRect().height / 2;
+    /** The name of the selected option */
+    function getOptionName(key: SelectValueType): string {
+        const index = getOptionIndex(key);
+        invalid = index === undefined;
+        return options[getOptionIndex(key)]?.[1] ?? key.toString();
     }
 
-    /** For opening the modal options */
-    function openOptions() {
-        if (open) return;
+    // ANCHOR Select Functions
+    /** The current vertical spawn direction */
+    let direction: "top" | "bottom" =
+        biasedSpawn !== "auto" ? biasedSpawn : "bottom";
 
-        optionsEl.showModal();
-        open = true;
+    /** True if the optionsContainer modal is shown */
+    let isOpen: boolean = false;
 
-        // Get the width of the select element
-        const width = selectEl.getBoundingClientRect().width;
-        // Set height of a single option
-        const buttonHeight =
-            optionsContainer.children[0].getBoundingClientRect().height;
+    /** Places the options on the screen based on the select's position */
+    function resizeAndPlaceOptions() {
+        const selectRect = selectEl.getBoundingClientRect();
+        const containerRect = optionsContainerEl.getBoundingClientRect();
+        // Get an option
+        const optionEl = optionsListEl.children[0] as HTMLButtonElement;
+        if (!optionEl) throw new Error("No options found");
+        const optionRect = optionEl.getBoundingClientRect();
+        // Add a small margin (better than having to scroll on less that OPTIONS_COUNT options)
+        const optionHeight = optionRect.height + 1;
 
-        // Set the width of the options list to the width of the select element
-        optionsEl.style.minWidth = `${width}px`;
-        // Get the height of an option element
-        const optionsHeight = Math.min(O.length, MAX_OPTIONS_HEIGHT);
-        // Set the height of the options list to a minumum between
-        // the number of options and the max options height
-        optionsEl.style.height = `${buttonHeight * optionsHeight + 2}px`;
+        // -- Choose a width that is the max between the width
+        // of the select and the width of the longest option
+        const width = Math.max(
+            selectRect.width,
+            Math.min(containerRect.width, window.innerWidth - MARGIN_H * 2)
+        );
+        // Apply the width to the container
+        optionsContainerEl.style.width = `${width}px`;
 
-        // Place the options list below the select element if there is enough space
-        // Otherwise, place it above the select element
-
-        // Get the direction that has the most space
-        const topSpace = selectEl.getBoundingClientRect().top;
-        const bottomSpace =
-            window.innerHeight - selectEl.getBoundingClientRect().bottom;
-
-        // Place the options in the largest of the two
-        if (topSpace > bottomSpace) {
-            const buttonsThatFit = Math.min(
-                MAX_OPTIONS_HEIGHT,
-                O.length,
-                Math.floor(topSpace / buttonHeight)
-            );
-            optionsEl.style.height = `${buttonHeight * buttonsThatFit + 2}px`;
-
-            optionsEl.style.top = `${
-                selectEl.getBoundingClientRect().top -
-                optionsEl.getBoundingClientRect().height
-            }px`;
+        // - Get the most optimal horizontal position
+        let left: number;
+        if (selectRect.left + width > window.innerWidth - MARGIN_H) {
+            left = window.innerWidth - MARGIN_H - width;
         } else {
-            optionsEl.style.top = `${
-                selectEl.getBoundingClientRect().bottom
-            }px`;
-            const buttonsThatFit = Math.min(
-                MAX_OPTIONS_HEIGHT,
-                O.length,
-                Math.floor(bottomSpace / buttonHeight)
-            );
-            optionsEl.style.height = `${buttonHeight * buttonsThatFit + 2}px`;
+            left = selectRect.left;
+        }
+        // Apply the left to the container
+        optionsContainerEl.style.left = `${left}px`;
+
+        // -- Get the best vertical spawn direction and position
+        let top: number;
+        let height: number;
+        const optionsViewed = Math.min(OPTIONS_COUNT, options.length);
+
+        if (biasedSpawn === "auto") {
+            direction =
+                selectRect.top > window.innerHeight / 2 ? "top" : "bottom";
         }
 
-        // See if there is enough space to place the options to the right
-        // of the select element
-        if (
-            selectEl.getBoundingClientRect().right +
-                optionsEl.getBoundingClientRect().width <
-            window.innerWidth
-        ) {
-            optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
+        // -- Get the optimal height of the container
+        if (direction === "top") {
+            const maxHeight = selectRect.top - MARGIN_V;
+            // Get the size
+            height = Math.min(optionHeight * optionsViewed, maxHeight);
+            top = selectRect.top - height;
+        } else if (direction === "bottom") {
+            const maxHeight = window.innerHeight - selectRect.bottom - MARGIN_V;
+            // Get the size
+            height = Math.min(optionHeight * optionsViewed, maxHeight);
+            top = selectRect.bottom;
         }
-        // The select couldn't fit in any place
-        else if (
-            optionsEl.getBoundingClientRect().width +
-                selectEl.getBoundingClientRect().width >
-            window.innerWidth
-        ) {
-            optionsEl.style.left = `${selectEl.getBoundingClientRect().left}px`;
-            optionsEl.style.width = `${
-                window.innerWidth - 2 * selectEl.getBoundingClientRect().left
-            }px`;
-        } else {
-            optionsEl.style.left = `${
-                selectEl.getBoundingClientRect().right -
-                optionsEl.getBoundingClientRect().width
-            }px`;
-        }
-
-        stopSearch();
-
-        selectValue(value);
-        // Move the selected button into view
-        scrollToSelected();
-        lastValue = value;
+        // Apply the height and top to the container
+        optionsContainerEl.style.height = `${height}px`;
+        optionsContainerEl.style.top = `${top}px`;
     }
-
+    /** Shows the dialog */
+    function showOptions() {
+        optionsContainerEl.showModal();
+        isOpen = true;
+        resizeAndPlaceOptions();
+        scrollToIndex(getOptionIndex(selectedValue));
+    }
+    /** Hides the dialog  */
     function closeOptions() {
-        // Focus the select element
-        optionsEl.close();
+        optionsContainerEl.close();
+        isOpen = false;
+    }
+    /** Updates the value and dispatches the events/changes */
+    function updateValue(key: SelectValueType) {
+        value = key;
+        selectedValue = key;
+        // Dispatch a change event
+        dispatch("change", key);
+
+        // If the changes aren't null, create a new change
+        if (changes !== null) {
+            changes.setValue(edits, key);
+        }
+    }
+
+    // ANCHOR Options Functions
+    /** Set to true if scrolling with the mouse, false if scrollign with the keyboard */
+    const scrollingMode: Writable<ScrollingMode> = writable(
+        ScrollingMode.Mouse
+    );
+    setContext("scrollingMode", scrollingMode);
+    function selectOption(key: SelectValueType) {
+        selectedValue = key;
+    }
+    setContext("select", selectOption);
+
+    /** Closes the Options and doesn't update the value */
+    function closeWithoutUpdating() {
+        selectOption(value);
+        closeOptions();
+    }
+
+    /** Close the options and set the value to the value to the key arg */
+    function closeAndUpdate(key: SelectValueType) {
+        updateValue(key);
+        closeOptions();
+    }
+    setContext("close", closeAndUpdate);
+
+    /** When you click out of bounds of the optionContainer's boundingRect */
+    function onClickOutside(event: MouseEvent) {
+        // Get the containerEl's bounding rect
+        const containerRect = optionsContainerEl.getBoundingClientRect();
+        // If the click is outside of the container
+        if (
+            event.clientX < containerRect.left ||
+            event.clientX > containerRect.right ||
+            event.clientY < containerRect.top ||
+            event.clientY > containerRect.bottom
+        ) {
+            closeWithoutUpdating();
+        }
+        // Focus the select event
         selectEl.focus();
     }
 
-    /** For closing the modal options */
-    function onClickOutside(event: MouseEvent) {
-        if (!open) return;
+    function scrollToIndex(index: number) {
+        // Find the selected option
+        const selected = optionsListEl.children[index];
+        // If the selected option doesn't exist, return
+        if (selected === undefined) return new Error("Option not found");
 
-        // Get the options list's bounding box
-        const optionsRect = optionsEl.getBoundingClientRect();
-        // Get the mouse's position
-        const mousePos = { x: event.clientX, y: event.clientY };
-
-        // Check if the click was outside the select element
-        if (
-            mousePos.x < optionsRect.left ||
-            mousePos.x > optionsRect.right ||
-            mousePos.y < optionsRect.top ||
-            mousePos.y > optionsRect.bottom
-        ) {
-            // Check if the click was outside the options list
-            // Close the options list
-            closeOptions();
-            open = false;
-
-            // Trigger a change if the value was changed
-            triggerChange(lastValue);
-        }
+        // Place the scrolling position so that the selected
+        // option is in the middle of the options list
+        optionsContainerEl.scrollTop =
+            selected.getBoundingClientRect().top -
+            optionsListEl.getBoundingClientRect().top -
+            optionsListEl.getBoundingClientRect().height / 2 +
+            selected.getBoundingClientRect().height / 2;
     }
 
-    /** Handles search */
-    function handleSearch(key: string) {
-        if (key.length !== 1 && key !== "Backspace") return;
-
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            searchString = "";
-            searchTimeout = null;
-        }, 1000);
-
-        // Handle backspace
-        if (key === "Backspace") searchString = searchString.slice(0, -1);
-        // Add the key
-        else searchString += key.toLowerCase();
-
-        if (searchString === " ") {
-            if (!open) return openOptions();
-        }
-
-        if (searchString === "") return;
-
-        // Look for the search string in the options
-        const index = O.findIndex((option) =>
-            option.text.toLowerCase().startsWith(searchString)
-        );
-
-        if (index === -1) return;
-
-        // Select the option
-        selectValue(O[index].value);
-        scrollToSelected();
-
-        let previousValue = value;
-        value = O[index].value;
-
-        if (document.activeElement === selectEl) triggerChange(previousValue);
-    }
-
-    /** Stops the search timeout */
-    function stopSearch() {
-        searchString = "";
-        searchTimeout = null;
-        clearTimeout(searchTimeout);
-    }
-
-    /** Handles keydown */
+    // ANCHOR Component Listeners
     function onKeyDown(event: KeyboardEvent) {
         switch (event.code) {
-            // Check if the escape key was pressed
-            case "Escape": {
-                if (!open) return;
-
+            case "Escape":
                 event.preventDefault();
-                event.stopPropagation();
-                // Close the options list
-                closeOptions();
-                open = false;
+                closeWithoutUpdating();
+                break;
+            case "Enter":
+                if (isOpen) event.preventDefault();
+                closeAndUpdate(selectedValue);
+                break;
+            case "ArrowUp": {
+                // Get the option's index
+                const index = getOptionIndex(selectedValue);
+                // If the index is 0, return
+                if (index === 0) return;
+                event.preventDefault();
+
+                if (!isOpen) {
+                    updateValue(options[index - 1][0]);
+                } else {
+                    // Set the scrollingMode to Keyboard
+                    scrollingMode.set(ScrollingMode.Keyboard);
+                    // Select the previous option
+                    selectOption(options[index - 1][0]);
+                    // Scroll to the option's position
+                    scrollToIndex(index - 1);
+                }
                 break;
             }
             case "ArrowDown": {
-                if (
-                    document.activeElement !== selectEl &&
-                    !optionsEl.contains(document.activeElement)
-                )
-                    return;
+                // Get the option's index
+                const index = getOptionIndex(selectedValue);
+                // If the index is 0, return
+                if (index === options.length - 1) return;
                 event.preventDefault();
 
-                // Set the scrolling mode to keyboard
-                scrollingMode.set(false);
-
-                // Select the next option
-                const nextOption = O.findIndex((option) => option.selected) + 1;
-                if (nextOption >= O.length) return;
-
-                O = O.map((option, i) => ({
-                    ...option,
-                    selected: i === nextOption,
-                }));
-
-                // Move the selected button into view
-                scrollToSelected();
-
-                const previousValue = value;
-                value = O[nextOption].value;
-
-                // If the active Element is the select, trigger a change
-                if (document.activeElement === selectEl)
-                    triggerChange(previousValue);
-
+                if (!isOpen) {
+                    updateValue(options[index + 1][0]);
+                } else {
+                    // Set the scrollingMode to Keyboard
+                    scrollingMode.set(ScrollingMode.Keyboard);
+                    // Select the previous option
+                    selectOption(options[index + 1][0]);
+                    // Scroll to the option's position
+                    scrollToIndex(index + 1);
+                }
                 break;
-            }
-            case "ArrowUp": {
-                if (
-                    document.activeElement !== selectEl &&
-                    !optionsEl.contains(document.activeElement)
-                )
-                    return;
-                event.preventDefault();
-
-                // Set the scrolling mode to keyboard
-                scrollingMode.set(false);
-                // Select the previous option
-                const prevOption = O.findIndex((option) => option.selected) - 1;
-                if (prevOption < 0) return;
-
-                selectValue(O[prevOption].value);
-
-                O = O.map((option, i) => ({
-                    ...option,
-                    selected: i === prevOption,
-                }));
-
-                // Move the selected button into view
-                scrollToSelected();
-
-                const previousValue = value;
-                value = O[prevOption].value;
-
-                // If the active Element is the select, trigger a change
-                if (document.activeElement === selectEl)
-                    triggerChange(previousValue);
-
-                break;
-            }
-            case "Enter": {
-                let selected = O.find((option) => option.selected);
-                if (!selected) return;
-                closeWithValue(selected.value);
-                break;
-            }
-            default: {
-                if (
-                    event.ctrlKey ||
-                    event.shiftKey ||
-                    event.altKey ||
-                    event.code === "Tab"
-                )
-                    return;
-
-                if (
-                    document.activeElement !== selectEl &&
-                    !optionsEl.contains(document.activeElement)
-                )
-                    return;
-
-                event.preventDefault();
-                handleSearch(event.key);
             }
         }
     }
 
-    /** Closes the options, sets the selected to the
-     * given value and dispatches an event */
-    function closeWithValue(v: SelectValueType) {
-        if (!open) return;
-
-        // Close the options list
-        closeOptions();
-        open = false;
-
-        // Set the value of the select element
-        value = v;
-        triggerChange(lastValue);
-    }
-
-    /** Closes the options without changing the current value */
-    function closeWithoutValue() {
-        if (!open) return;
-
-        // Close the options list
-        closeOptions();
-        open = false;
-
-        value = lastValue;
-    }
-
-    /** Sets the option with the given value as selected */
-    function selectValue(v: SelectValueType) {
-        // Modify the O element
-        O = O.map((option) => ({
-            ...option,
-            selected: option.value === v,
-        }));
-    }
-
-    // Set the context for the options
-    setContext("close", closeWithValue);
-    setContext("select", selectValue);
-    setContext("scrollingMode", scrollingMode);
-
-    // Set the subscriber for outside changes to the data
-    let unsub: Unsubscriber;
+    // ANCHOR Edits
+    let changes: EditorChanges<any> = null;
     if (edits !== null) {
-        // Subscribe to changes
-        unsub = data.subscribe((d) => {
-            value = r.get(d, edits as NavigatePath) as string;
+        /** The editor context */
+        const context: EditorContext = getContext("context");
+        changes = context.changes;
+        const data = context.data;
+
+        /** Listen to the data, and update the select when it changes */
+        const unsubscribeFromData = data.subscribe(() => {
+            // Update the value with the new data
+            const v = r.getStore(data, edits);
+            value = v;
+            selectedValue = v;
+            dispatch("change", v);
+        });
+
+        onDestroy(() => {
+            unsubscribeFromData();
         });
     }
-
-    // Destroy the subscriber and the search timeout
-    onDestroy(() => {
-        stopSearch();
-        if (unsub) unsub();
-    });
 </script>
 
 <svelte:window
-    on:click={onClickOutside}
-    on:resize={closeWithoutValue}
-    on:blur|stopPropagation={closeWithoutValue}
+    on:resize={closeWithoutUpdating}
+    on:blur|stopPropagation={closeWithoutUpdating}
 />
 
+<!-- Select Element -->
 <button
-    {...$$restProps}
-    bind:this={selectEl}
+    class:open={isOpen}
+    class:top={direction === "top"}
+    class:bottom={direction === "bottom"}
     class="select"
-    class:open
-    on:click|stopPropagation={openOptions}
+    bind:this={selectEl}
+    on:click|stopPropagation={showOptions}
     on:keydown={onKeyDown}
 >
-    <span class="selected-option">
-        {#if !invalid}
-            {O.find((o) => value === o.value).text}
-        {:else}
-            <span
-                use:tooltip
-                tooltip="This is not a valid value for this Select"
-                class="invalid">{value}</span
-            >
-        {/if}
-    </span>
-    {#if searchTimeout === null}
-        <iconify-icon class="icon-dropdown" icon="mdi:chevron-down" />
-    {:else}
-        <span class="search-string"
-            ><iconify-icon
-                class="icon-search"
-                icon="mdi-search"
-            />{searchString}</span
-        >
-    {/if}
+    <!-- Selected Options's Display -->
+    <div
+        class="selected-option"
+        class:invalid
+        tooltip={invalid ? "Invalid value" : ""}
+        use:tooltip
+    >
+        {getOptionName(value)}
+    </div>
+    <!-- Dropdown chevron -->
+    <iconify-icon class="icon-dropdown" icon="mdi:chevron-down" inline />
 </button>
 
 <dialog
-    bind:this={optionsEl}
-    class="options-list modal"
+    class:top={direction === "top"}
+    class:bottom={direction === "bottom"}
+    class="options-container modal"
+    bind:this={optionsContainerEl}
     on:mousedown|stopPropagation
-    on:keydown={onKeyDown}
+    on:keydown|capture={onKeyDown}
+    on:click|stopPropagation={onClickOutside}
 >
-    <div class="options-container" bind:this={optionsContainer}>
-        {#each O as option}
-            <Option {showValue} value={option.value} selected={option.selected}>
-                {option.text}
+    <div class="options-list" bind:this={optionsListEl}>
+        {#each options as [key, name], i (i)}
+            <Option
+                showValue={valueTag}
+                value={key}
+                selected={key === selectedValue}
+            >
+                {name}
             </Option>
         {/each}
     </div>
@@ -478,6 +346,7 @@
     .select {
         min-width: 30px;
         max-width: 100%;
+        max-height: calc(1em + 4px);
         overflow: hidden;
         border-radius: 4px;
         padding: 4px;
@@ -494,6 +363,7 @@
         border: 1px solid var(--sel-border);
 
         transition: outline 0.1s ease-in-out;
+        cursor: pointer;
         user-select: none;
 
         &:focus {
@@ -501,11 +371,19 @@
             outline-offset: 1px;
         }
         &.open {
-            outline: 1px solid var(--accent-fg);
-            outline-offset: 1px;
+            border-color: var(--accent-fg);
 
             .icon-dropdown {
                 transform: rotate(180deg);
+            }
+
+            &.top {
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+            }
+            &.bottom {
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
             }
         }
 
@@ -521,7 +399,6 @@
         }
 
         .icon-dropdown {
-            cursor: pointer;
             align-self: center;
             transition: transform 0.1s ease-in-out;
         }
@@ -533,13 +410,13 @@
         text-overflow: ellipsis;
         text-align: left;
 
-        .invalid {
+        &.invalid {
             color: var(--error-fg);
             text-decoration: underline;
         }
     }
 
-    .options-list {
+    .options-container {
         position: fixed;
         top: 0;
         left: 0;
@@ -552,6 +429,15 @@
         box-sizing: border-box;
         border: 1px solid var(--sel-border);
         border-radius: 4px;
+
+        &.top {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        &.bottom {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
 
         &::backdrop {
             background: transparent;
@@ -577,7 +463,7 @@
         }
     }
 
-    .options-container {
+    .options-list {
         display: flex;
         flex-direction: column;
 

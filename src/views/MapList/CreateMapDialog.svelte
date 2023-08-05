@@ -70,10 +70,7 @@
 
     // Update the indexes when the group changes
     function updateIndexes() {
-        indexOptions = freeGroups[group].map((i: number) => [
-            i,
-            i.toString(),
-        ]);
+        indexOptions = freeGroups[group].map((i: number) => [i, i.toString()]);
         index = indexOptions[0][0];
     }
 
@@ -200,7 +197,7 @@
                     <div class="select cols2">
                         {#if optionsReady}
                             <Select
-                                showValue="number"
+                                valueTag="number"
                                 bind:value={layout}
                                 options={layoutOptions}
                             />
@@ -227,7 +224,7 @@
                     <div class="select cols2">
                         {#if optionsReady}
                             <Select
-                                showValue="offset"
+                                valueTag="offset"
                                 bind:value={tileset1}
                                 options={tileset1Options}
                             />
@@ -239,7 +236,7 @@
                     <div class="select cols2">
                         {#if optionsReady}
                             <Select
-                                showValue="offset"
+                                valueTag="offset"
                                 bind:value={tileset2}
                                 options={tileset2Options}
                             />

@@ -35,7 +35,7 @@
         {#if layoutOptions}
             Choose:
             <Select
-                showValue="number"
+                valueTag="number"
                 bind:value={layout}
                 options={layoutOptions}
             />

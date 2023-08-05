@@ -2,7 +2,7 @@
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
     import OffsetLabel from "./OffsetLabel.svelte";
-    import type { SelectValueType } from "./Select.svelte";
+    import { ScrollingMode, type SelectValueType } from "./Select.svelte";
 
     export let value: SelectValueType;
     export let selected: boolean;
@@ -11,7 +11,7 @@
     // Get the select context
     let close = getContext("close") as Function;
     let select = getContext("select") as Function;
-    let scrollingMode = getContext("scrollingMode") as Writable<boolean>;
+    let scrollingMode: Writable<ScrollingMode> = getContext("scrollingMode");
 
     function onMouseEnter() {
         if (!$scrollingMode) return;
@@ -19,7 +19,7 @@
     }
 
     function onMouseMove() {
-        scrollingMode.set(true);
+        scrollingMode.set(ScrollingMode.Mouse);
     }
 
     function onClick() {
@@ -34,7 +34,7 @@
     on:click={onClick}
     on:mousemove|preventDefault={onMouseMove}
     on:mouseenter|preventDefault={onMouseEnter}
-    on:keydown|preventDefault={() => {}}
+    on:keydown|preventDefault
 >
     <span>
         {#if showValue === "number"}
