@@ -150,15 +150,18 @@
     }
     /** Updates the value and dispatches the events/changes */
     function updateValue(key: SelectValueType) {
-        value = key;
-        selectedValue = key;
-        // Dispatch a change event
-        dispatch("change", key);
-
+        dispatchOnChange(key);
         // If the changes aren't null, create a new change
         if (changes !== null) {
             changes.setValue(edits, key);
         }
+    }
+
+    function dispatchOnChange(key: SelectValueType) {
+        value = key;
+        selectedValue = key;
+        // Dispatch a change event
+        dispatch("change", key);
     }
 
     // ANCHOR Options Functions
@@ -217,15 +220,114 @@
             selected.getBoundingClientRect().height / 2;
     }
 
+    // ANCHOR Search Functions
+    /** The search string */
+    let searchString: string = "";
+    /** The search timout until it clears */
+    let searchTimeout: NodeJS.Timeout = null;
+    /** The index the search starts from */
+    let searchStart: number = -1;
+
+    function selectNextInstance(string: string) {
+        for (let i = searchStart + 1; i < options.length; i++) {
+            const optionName = options[i][1];
+
+            if (optionName.toLowerCase().startsWith(string)) {
+                // Select the option
+                if (isOpen) {
+                    selectOption(options[i][0]);
+                    scrollToIndex(i);
+                } else updateValue(options[i][0]);
+
+                // Update the searchStart
+                return i;
+            }
+        }
+
+        // If you have found nothing, loop
+        for (let i = 0; i < searchStart + 1; i++) {
+            const optionName = options[i][1];
+
+            if (optionName.toLowerCase().startsWith(string)) {
+                // Select the option
+                if (isOpen) {
+                    selectOption(options[i][0]);
+                    scrollToIndex(i);
+                } else updateValue(options[i][0]);
+
+                // Update the searchStart
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    function handleSearch(key: string) {
+        // Match the valid characters
+        if (!key.match(/^[a-zA-Z0-9\-\s]$/)) return;
+
+        scrollingMode.set(ScrollingMode.Keyboard);
+
+        // If the option you're on starts with the same letter you pressed
+        if (
+            selectedValue !== null &&
+            searchString.length <= 1 &&
+            key.toLowerCase() === getOptionName(selectedValue)[0].toLowerCase()
+        ) {
+            // Go to the next instance of a string starting with the key
+            const index = selectNextInstance(key.toLowerCase());
+            // If the index is -1, reset the search
+            if (index === -1) searchStart = -1;
+            else searchStart = index;
+            searchString = key.toLowerCase();
+
+            // Start the timeout
+            if (searchTimeout !== null) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => clearSearch, 1000);
+        } else {
+            // Append the key to the searchString
+            searchString += key.toLowerCase();
+            // Find a match for the searchString
+            const index = selectNextInstance(searchString);
+            // Start the timeout
+            if (searchTimeout !== null) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(clearSearch, 1000);
+
+            if (index < 0) searchString = searchString.slice(0, -1);
+        }
+    }
+
+    function clearSearch() {
+        searchString = "";
+        searchStart = -1;
+        searchTimeout = null;
+    }
+
     // ANCHOR Component Listeners
     function onKeyDown(event: KeyboardEvent) {
         switch (event.code) {
             case "Escape":
-                event.preventDefault();
-                closeWithoutUpdating();
+                if (searchTimeout !== null) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    clearTimeout(searchTimeout);
+                    clearSearch();
+                } else if (isOpen) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    closeWithoutUpdating();
+                }
                 break;
             case "Enter":
                 if (isOpen) event.preventDefault();
+                closeAndUpdate(selectedValue);
+                break;
+            case "Space":
+                if (searchTimeout !== null) {
+                    event.preventDefault();
+                    handleSearch(" ");
+                } else if (isOpen) event.preventDefault();
                 closeAndUpdate(selectedValue);
                 break;
             case "ArrowUp": {
@@ -266,6 +368,9 @@
                 }
                 break;
             }
+            default:
+                // Try to handle the search
+                handleSearch(event.key);
         }
     }
 
@@ -280,10 +385,7 @@
         /** Listen to the data, and update the select when it changes */
         const unsubscribeFromData = data.subscribe(() => {
             // Update the value with the new data
-            const v = r.getStore(data, edits);
-            value = v;
-            selectedValue = v;
-            dispatch("change", v);
+            dispatchOnChange(r.getStore(data, edits));
         });
 
         onDestroy(() => {
@@ -316,8 +418,17 @@
     >
         {getOptionName(value)}
     </div>
-    <!-- Dropdown chevron -->
-    <iconify-icon class="icon-dropdown" icon="mdi:chevron-down" inline />
+    {#if searchTimeout !== null}
+        <span class="search-string"
+            ><iconify-icon
+                class="icon-search"
+                icon="mdi-search"
+            />{searchString}</span
+        >
+    {:else}
+        <!-- Dropdown chevron -->
+        <iconify-icon class="icon-dropdown" icon="mdi:chevron-down" inline />
+    {/if}
 </button>
 
 <dialog
@@ -326,7 +437,7 @@
     class="options-container modal"
     bind:this={optionsContainerEl}
     on:mousedown|stopPropagation
-    on:keydown|capture={onKeyDown}
+    on:keydown={onKeyDown}
     on:click|stopPropagation={onClickOutside}
 >
     <div class="options-list" bind:this={optionsListEl}>

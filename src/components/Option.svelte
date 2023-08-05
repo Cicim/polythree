@@ -14,11 +14,12 @@
     let scrollingMode: Writable<ScrollingMode> = getContext("scrollingMode");
 
     function onMouseEnter() {
-        if (!$scrollingMode) return;
+        if ($scrollingMode === ScrollingMode.Keyboard) return;
         select(value);
     }
 
     function onMouseMove() {
+        console.log("Moving mouse");
         scrollingMode.set(ScrollingMode.Mouse);
     }
 
