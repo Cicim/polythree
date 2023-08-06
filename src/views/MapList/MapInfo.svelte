@@ -6,9 +6,12 @@
     import Button from "src/components/Button.svelte";
 
     import { MapEditorContext } from "../MapEditor";
-    import OffsetLabel from "src/components/OffsetLabel.svelte";
+    import OffsetLabel, {
+        prettyOffset,
+    } from "src/components/OffsetLabel.svelte";
     import { config } from "src/systems/global";
     import { tooltip } from "src/systems/tooltip";
+    import ClickableIcons from "src/components/ClickableIcons.svelte";
 
     export let selectedMaps: MapId[];
 
@@ -108,6 +111,27 @@
             <span class="title">offset</span>
             <span class="value">
                 <OffsetLabel offset={selectedProps.offset} />
+                <ClickableIcons
+                    vertical_alignment="bottom"
+                    icons={[
+                        {
+                            text: "Copy Number",
+                            icon: "mdi:clipboard-edit-outline",
+                            onclick: () =>
+                                navigator.clipboard.writeText(
+                                    selectedProps.offset.toString()
+                                ),
+                        },
+                        {
+                            text: "Copy",
+                            icon: "mdi:clipboard-outline",
+                            onclick: () =>
+                                navigator.clipboard.writeText(
+                                    prettyOffset(selectedProps.offset)
+                                ),
+                        },
+                    ]}
+                />
             </span>
             <span class="title">Layout</span>
             <span class="value">
@@ -121,6 +145,27 @@
                             "Unnamed"}</i
                     ><br />
                     <OffsetLabel offset={selectedProps.tileset1} /><br />
+                    <ClickableIcons
+                        vertical_alignment="top"
+                        icons={[
+                            {
+                                text: "Copy Number",
+                                icon: "mdi:clipboard-edit-outline",
+                                onclick: () =>
+                                    navigator.clipboard.writeText(
+                                        selectedProps.tileset1.toString()
+                                    ),
+                            },
+                            {
+                                text: "Copy",
+                                icon: "mdi:clipboard-outline",
+                                onclick: () =>
+                                    navigator.clipboard.writeText(
+                                        prettyOffset(selectedProps.tileset1)
+                                    ),
+                            },
+                        ]}
+                    />
                 </div>
                 <div class="tileset">
                     <i
@@ -128,6 +173,27 @@
                             "Unnamed"}</i
                     ><br />
                     <OffsetLabel offset={selectedProps.tileset2} />
+                    <ClickableIcons
+                        vertical_alignment="top"
+                        icons={[
+                            {
+                                text: "Copy Number",
+                                icon: "mdi:clipboard-edit-outline",
+                                onclick: () =>
+                                    navigator.clipboard.writeText(
+                                        selectedProps.tileset2.toString()
+                                    ),
+                            },
+                            {
+                                text: "Copy",
+                                icon: "mdi:clipboard-outline",
+                                onclick: () =>
+                                    navigator.clipboard.writeText(
+                                        prettyOffset(selectedProps.tileset2)
+                                    ),
+                            },
+                        ]}
+                    />
                 </div>
             </span>
             <span class="title">Music</span>
@@ -228,9 +294,18 @@
 
             .value {
                 align-self: center;
+                position: relative;
 
-                .tileset:first-child {
-                    margin-bottom: 0.5em;
+                :global(.icons-container) {
+                    top: 0;
+                }
+
+                .tileset {
+                    position: relative;
+
+                    &:first-child {
+                        margin-bottom: 0.5em;
+                    }
                 }
             }
 

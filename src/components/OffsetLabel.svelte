@@ -1,3 +1,9 @@
+<script lang="ts" context="module">
+    export function prettyOffset(offset: number) {
+        return offset.toString(16).toUpperCase().padStart(8, "0");
+    }
+</script>
+
 <script lang="ts">
     export let offset: number | string;
 
@@ -8,7 +14,7 @@
     {#if offsetNumber === null}
         ???
     {:else}
-        ${offsetNumber.toString(16).toUpperCase().padStart(8, "0")}
+        ${prettyOffset(offsetNumber)}
     {/if}
 </span>
 

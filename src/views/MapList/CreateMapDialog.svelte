@@ -30,6 +30,7 @@
     let freeGroups: Record<number, number[]> = {};
     let groupOptions: [number, string][];
     let indexOptions: [number, string][];
+    let layoutName: string = "";
 
     // Transform all into a map of group to its indexes
     const groupToIndex = all.reduce((acc, cur) => {
@@ -84,7 +85,10 @@
     let errored = false;
     let errorString = "";
 
-    $: notAllGood = width * height > 0x2800 || creating;
+    $: notAllGood =
+        width * height > 0x2800 ||
+        creating ||
+        (!usingLayout && !layoutName.match(/^([\w|\d]+[\s]*\b)+$/));
 
     async function createMap() {
         creating = true;
@@ -92,13 +96,27 @@
             let options = usingLayout
                 ? { Use: { layout } }
                 : {
-                      New: { tileset1, tileset2, width, height },
+                      New: {
+                          tileset1,
+                          tileset2,
+                          width,
+                          height,
+                          name: layoutName,
+                      },
                   };
             let res: MapHeaderDump = await invoke("create_map", {
                 group,
                 index,
                 layoutOptions: options,
             });
+
+            // If you use a new layout, update the name too
+            if (!usingLayout)
+                config.update((config) => {
+                    config.layout_names[res.header.map_layout_id + ""] =
+                        layoutName;
+                    return config;
+                });
 
             // Get the map card's data
             let cardProps = mapDumpToCardProps(res, $mapNames);
@@ -218,7 +236,10 @@
                 {#if !usingLayout}
                     <div class="title cols2">Name</div>
                     <div class="select cols2">
-                        <Input />
+                        <Input
+                            bind:value={layoutName}
+                            placeholder="Name for the layout"
+                        />
                     </div>
                     <div class="title cols2">Primary Tileset</div>
                     <div class="select cols2">

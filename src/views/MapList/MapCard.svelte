@@ -17,10 +17,12 @@
     import type { MapListContext, MapSelectionEvent } from "../MapList";
     import OffsetLabel from "src/components/OffsetLabel.svelte";
     import { fade } from "svelte/transition";
+    import { config } from "src/systems/global";
 
     export let group: number;
     export let index: number;
     export let name: string = null;
+    export let mapLayoutId: number = 0;
     export let offset: number;
     export let selected = false;
     export let lastSelected = false;
@@ -175,22 +177,21 @@
 >
     {#if loaded}
         <div class="left" in:fade={{ duration: 100 }}>
-            <span class="group">{group}</span>.<span class="index">{index}</span
-            >
+            <div class="number">
+                <span class="group">{group}</span>.<span class="index"
+                    >{index}</span
+                >
+            </div>
         </div>
         <div class="right" {...$$restProps} in:fade={{ duration: 100 }}>
             {#if name !== null}
-                <div class="pair">
-                    <span class="title">Name: </span>
-                    <span class="value">{name}</span>
-                </div>
+                <span class="title">Name: </span>
+                <span class="value">{name}</span>
             {/if}
-            <div class="pair">
-                <span class="title">Offset: </span>
-                <span class="value">
-                    <OffsetLabel {offset} />
-                </span>
-            </div>
+            <span class="title">Layout: </span>
+            <span class="value">
+                {@html $config.layout_names[mapLayoutId] ?? "<i>Unnamed</i>"}
+            </span>
         </div>
         <!-- Copy iconify icon -->
         <ClickableIcons
@@ -263,35 +264,45 @@
     }
 
     .left {
+        display: flex;
+        flex-flow: row nowrap;
         flex-shrink: 1;
         padding: 0 0.5em;
 
-        .group {
-            color: var(--accent-fg);
-            font-size: 32pt;
-            font-weight: bold;
-        }
-        .index {
-            font-size: 16pt;
+        place-content: last baseline;
+        .number {
+            .group {
+                color: var(--accent-fg);
+                font-size: 32pt;
+                font-weight: 600;
+            }
+            .index {
+                font-size: 16pt;
+            }
         }
     }
 
     .right {
-        align-self: center;
         display: flex;
         flex-direction: column;
         gap: 0.2em;
+        display: grid;
+        grid-template-columns: min-content 1fr;
+        align-content: space-evenly;
+        // align-content: center;
+        align-items: last baseline;
 
-        .pair {
-            .title {
-                color: var(--weak-fg);
-                font-size: 11pt;
-            }
+        .title {
+            color: var(--weak-fg);
+            font-size: 12px;
+            text-align: right;
+        }
 
-            .value {
-                color: var(--strong-fg);
-                overflow: hidden;
-            }
+        .value {
+            color: var(--strong-fg);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 </style>

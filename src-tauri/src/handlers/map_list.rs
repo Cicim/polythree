@@ -3,7 +3,10 @@ use std::collections::{HashMap, HashSet};
 use gba_types::pointers::PointedData;
 use poly3lib::maps::{header::MapHeaderDump, mapsec::MapSectionDump};
 
-use crate::state::{AppResult, AppState, AppStateFunctions, PolythreeState};
+use crate::{
+    config::update_config,
+    state::{AppResult, AppState, AppStateFunctions, PolythreeState},
+};
 use serde::{Deserialize, Serialize};
 
 #[tauri::command]
@@ -125,7 +128,7 @@ pub fn delete_maps(
     println!("Maps to Update: \n{:?}", maps_to_update);
     println!("Layouts to Delete: \n{:?}", layouts_to_delete);
 
-    state.update_rom(|rom| {
+    let res = state.update_rom(|rom| {
         let mut headers = rom.map_headers();
         let mut scripts_to_remove = vec![];
 
@@ -142,9 +145,9 @@ pub fn delete_maps(
 
         // Delete the layouts
         let mut layouts = rom.map_layouts();
-        for layout in layouts_to_delete {
+        for layout in layouts_to_delete.iter() {
             layouts
-                .delete_layout(layout)
+                .delete_layout(*layout)
                 .map_err(|e| format!("Error while deleting layout {}: {}", layout, e))?;
         }
 
@@ -184,7 +187,16 @@ pub fn delete_maps(
         }
 
         Ok(maps_to_delete)
-    })
+    })?;
+
+    update_config(state, |config| {
+        for layout in layouts_to_delete.iter() {
+            // Find and remove the name in the configs
+            config.layout_names.remove(layout);
+        }
+    })?;
+
+    Ok(res)
 }
 
 fn parse_u16(number: String) -> AppResult<u16> {
@@ -236,6 +248,7 @@ pub enum MapCreationLayoutOptions {
         height: i32,
         tileset1: u32,
         tileset2: u32,
+        name: String,
     },
 }
 
@@ -248,14 +261,17 @@ pub fn create_map(
 ) -> AppResult<MapHeaderDump> {
     use MapCreationLayoutOptions::*;
 
-    state.with_rom(|rom| {
-        let layout_id = match layout_options {
+    let mut layout_id = 0;
+
+    let res = state.with_rom(|rom| {
+        layout_id = match layout_options {
             Use { layout } => layout,
             New {
                 width,
                 height,
                 tileset1,
                 tileset2,
+                ..
             } => rom
                 .map_layouts()
                 .create_data(tileset1, tileset2, width, height)
@@ -284,5 +300,14 @@ pub fn create_map(
         rom.map_headers()
             .dump_header(group, index, offset, map_header)
             .ok_or("Error while dumping new map header".to_string())
-    })
+    })?;
+
+    update_config(state, |config| match layout_options {
+        MapCreationLayoutOptions::New { name, .. } => {
+            config.layout_names.insert(layout_id, name);
+        }
+        _ => {}
+    })?;
+
+    Ok(res)
 }
