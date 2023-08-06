@@ -1084,7 +1084,7 @@
         on:mousedown={onMouseDown}
         on:mouseup={onMouseUp}
         on:mousemove={onMouseMove}
-        on:wheel={onMouseWheel}
+        on:wheel|passive={onMouseWheel}
     />
 </div>
 

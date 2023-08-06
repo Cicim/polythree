@@ -7,7 +7,6 @@
     const blocksStore = context.tilesetBlocks;
 </script>
 
-padding-bottom: 100px;
 <div class="palette">
     <div class="canvas-container">
         <MapCanvas

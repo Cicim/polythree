@@ -86,7 +86,7 @@
     $: $material,
         (() => {
             if ($material instanceof PaletteMaterial && $material.isSingular) {
-                selected = $material.blocks[0][0][1];
+                selected = $material.blocks[0][0]?.[1] ?? null;
             }
         })();
 </script>

@@ -352,7 +352,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
     public async exportTilesetsLevels(): Promise<void> {
         // Get the tileset levels from the editor
-        const tilesetLevels = get(this.tilesetBlocks).flat().map(block => block[1]);
+        const tilesetLevels = get(this.tilesetBlocks).flat().map(block => block?.[1]);
         // Divide the two tilsets based on the lengths
         const t1Levels = tilesetLevels.slice(0, this.tileset1Length);
         const t2Levels = tilesetLevels.slice(this.tileset1Length, this.tileset1Length + this.tileset2Length);
