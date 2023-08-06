@@ -3,7 +3,6 @@
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
     import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
-    import type { z } from "@tauri-apps/api/path-c062430b";
 
     export let hoveringTile: number = null;
     export let selectedTile: number | [number, number, number] = null;
@@ -241,7 +240,7 @@
             selectionEnd.x = 0;
             selectionEnd.y = 0;
             drawSelection();
-            selectionDiv.scrollIntoView({ block: "start" });
+            selectionDiv.scrollIntoView({ block: "center" });
             buildMaterial();
             return;
         }

@@ -1,7 +1,7 @@
-import { Change, EditorChanges } from "src/systems/changes";
 import type { TilesetData } from "src/views/MapEditor";
-import { get, writable, type Writable } from "svelte/store";
-import { PaintingMaterial, PaletteMaterial } from "./materials";
+import { get, writable } from "svelte/store";
+import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
+import { PaintingMaterial } from "./materials";
 import type { PainterState } from "./painter_state";
 
 export enum BrushType {
@@ -13,7 +13,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
     /** Name of the brush (as it appears in the preview) */
     public name = "Unnamed Brush";
     /** The brush's type */
-    public abstract type: BrushType;
+    public readonly abstract type: BrushType;
     /** Whether the brush is pinned to the top in the brushes list */
     public pinned = writable(false);
     /** The blocks that are modified by MapCanvas in the BrushEditor */
@@ -22,6 +22,43 @@ export abstract class BrushMaterial extends PaintingMaterial {
     static icon: string = "";
     /** This brush type's name */
     static typeName: string = "";
+
+
+    public get width(): number {
+        return this.blocks?.[0]?.length ?? 0;
+    }
+
+    public set width(value: number) {
+        // Add or remove columns
+        if (value > this.width) {
+            // Add new columns
+            this.blocks = this.blocks.map((row) =>
+                [...row, ...new Array(value - this.width)
+                    .fill(0).map(_ => [0, null] as BlockData)]
+            );
+        } else {
+            // Remove Columns
+            this.blocks = this.blocks.map((row) => row.slice(0, value));
+        }
+    }
+
+    public get height(): number {
+        return this.blocks?.length ?? 0;
+    }
+
+    public set height(value: number) {
+        // Add or remove rows
+        if (value > this.height) {
+            // Add new rows
+            this.blocks = [...this.blocks, ...new Array(value - this.height)
+                .fill(0).map(_ => new Array(this.width)
+                    .fill(0).map(_ => [0, null] as BlockData))];
+        }
+        else {
+            // Remove rows
+            this.blocks = this.blocks.slice(0, value);
+        }
+    }
 
     /** Return the square metatile data matrix that appears in the thumbnail */
     public getThumbnailMetatile(): number[][] {
@@ -90,6 +127,36 @@ export abstract class BrushMaterial extends PaintingMaterial {
         // @ts-ignore
         return this.constructor.icon;
     }
+
+    /** Returns if this brush's blocks are all inside of the primary tileset given */
+    public onlyUsesPrimaryTiles(tileset1Length: number): boolean {
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                if (this.blocks[y]?.[x]?.[0] >= tileset1Length)
+                    return false;
+            }
+        }
+        return true;
+    }
+    /** Serializes a brush into a storable object */
+    public serialize(): SerializedBrush {
+        return {
+            blocks: this.blocks,
+            type: this.type,
+            name: this.name,
+            pinned: get(this.pinned),
+        };
+    }
+
+    public static deserialize(serialized: SerializedBrush): BrushMaterial {
+        switch (serialized.type) {
+            case BrushType.Simple:
+                return SimpleBrush.deserialize(serialized as SerializedSimpleBrush);
+            case BrushType.NinePatch:
+                return NinePatchBrush.deserialize(serialized as SerializedNinePatchBrush);
+        }
+        throw new Error("Invalid Brush type for serialized object");
+    }
 }
 
 export class SimpleBrush extends BrushMaterial {
@@ -99,47 +166,7 @@ export class SimpleBrush extends BrushMaterial {
     static typeName = "Simple Brush";
     static icon = "ep:brush-filled";
     public blocks: BlockData[][] = [[[42, null]]];
-    public type = BrushType.Simple;
-    public _width = 1;
-    public _height = 1;
-
-    public get width(): number {
-        return this._width;
-    }
-
-    public set width(value: number) {
-        // Add or remove columns
-        if (value > this._width) {
-            // Add new columns
-            this.blocks = this.blocks.map((row) =>
-                [...row, ...new Array(value - this._width)
-                    .fill(0).map(_ => [0, null] as BlockData)]
-            );
-        } else {
-            // Remove Columns
-            this.blocks = this.blocks.map((row) => row.slice(0, value));
-        }
-        this._width = value;
-    }
-
-    public get height(): number {
-        return this._height;
-    }
-
-    public set height(value: number) {
-        // Add or remove rows
-        if (value > this._height) {
-            // Add new rows
-            this.blocks = [...this.blocks, ...new Array(value - this._height)
-                .fill(0).map(_ => new Array(this._width)
-                    .fill(0).map(_ => [0, null] as BlockData))];
-        }
-        else {
-            // Remove rows
-            this.blocks = this.blocks.slice(0, value);
-        }
-        this._height = value;
-    }
+    public readonly type = BrushType.Simple;
 
     public apply(state: PainterState, x: number, y: number): void {
         const blocks = this.blocks;
@@ -153,8 +180,6 @@ export class SimpleBrush extends BrushMaterial {
 
     public clone(): SimpleBrush {
         const brush = new SimpleBrush();
-        brush._width = this._width;
-        brush._height = this._height;
         brush.blocks = this.blocks.map((row) => row.map((block) => [...block]));
         brush.name = this.name;
         brush.pinned = this.pinned;
@@ -165,6 +190,20 @@ export class SimpleBrush extends BrushMaterial {
         if (!super.equals(other)) return false;
 
         return this.width === other.width && this.height === other.height;
+    }
+
+    public serialize(): SerializedSimpleBrush {
+        return super.serialize() as SerializedSimpleBrush;
+    }
+
+    public static deserialize(serialized: SerializedSimpleBrush) {
+        const brush = new SimpleBrush();
+        brush.blocks = serialized.blocks.map((row) => row.map((block) => [...block]));
+        if (brush.width > SimpleBrush.MAX_WIDTH || brush.height > SimpleBrush.MAX_HEIGHT)
+            return null;
+        brush.name = serialized.name;
+        brush.pinned = writable(serialized.pinned);
+        return brush;
     }
 }
 
@@ -178,7 +217,7 @@ export class NinePatchBrush extends BrushMaterial {
             [42, null], [42, null], [42, null],
         ],
     ];
-    public type = BrushType.NinePatch;
+    public readonly type = BrushType.NinePatch;
     public hasCorners = false;
 
     public apply(state: PainterState, x: number, y: number): void {
@@ -205,119 +244,17 @@ export class NinePatchBrush extends BrushMaterial {
 
         return this.hasCorners === other.hasCorners;
     }
-}
 
-
-// ANCHOR Changes
-export type BrushesChangesData = [Writable<BrushMaterial[]>, Writable<PaintingMaterial>, () => BlockData];
-
-export class AddBrushChange extends Change {
-    protected addedBrush: BrushMaterial;
-    protected position: number;
-
-    constructor(public brush: BrushMaterial) {
-        super();
-        this.addedBrush = brush.clone();
+    public serialize(): SerializedNinePatchBrush {
+        return { ...super.serialize(), hasCorners: this.hasCorners } as SerializedNinePatchBrush;
     }
 
-    public updatePrev(changes: EditorChanges<BrushesChangesData>): boolean {
-        // Get the data
-        const brushes = get(changes.data[0]);
-        // Get the position the brush would finish at
-        this.position = brushes.length;
-        // Add the change
-        return false;
-    }
-    // Remove from brushes
-    public async revert(data: BrushesChangesData) {
-        data[0].update((brushes) => {
-            brushes.splice(this.position, 1);
-            return brushes;
-        });
-        // If the selection is the brush, remove it
-        if (get(data[1]) === this.addedBrush) {
-            // Set the data to 0,0
-            data[1].set(new PaletteMaterial([[data[2]()]]));
-        }
-    }
-    // Adds to brushes
-    public async apply(data: BrushesChangesData) {
-        data[0].update((brushes) => {
-            brushes.push(this.addedBrush.clone());
-            return brushes;
-        });
-    }
-}
-export class DeleteBrushChange extends Change {
-    public deletedBrush: BrushMaterial;
-    public position: number;
-
-    constructor(brush: BrushMaterial) {
-        super();
-        this.deletedBrush = brush;
-    }
-
-    public updatePrev(changes: EditorChanges<BrushesChangesData>): boolean {
-        // Get the brushes
-        const brushes = get(changes.data[0]);
-        // Get the brush's position in the array
-        this.position = brushes.indexOf(this.deletedBrush);
-        // If you can't find the brush, return
-        if (this.position === -1) return true;
-    }
-    // Adds to brushes
-    public async revert(data: BrushesChangesData): Promise<void> {
-        const clonedBrush = this.deletedBrush.clone();
-        // Add the brush back
-        data[0].update((brushes) => {
-            brushes.splice(this.position, 0, clonedBrush);
-            return brushes;
-        });
-        // Set the material to the selected brush if it isn't a brush already
-        data[1].update(material => {
-            if (!(material instanceof BrushMaterial)) {
-                return clonedBrush;
-            }
-            return material;
-        });
-    }
-    // Removes from brushes
-    public async apply(data: BrushesChangesData): Promise<void> {
-        // Delete the element at the position
-        data[0].update((brushes) => {
-            brushes.splice(this.position, 1);
-            return brushes;
-        });
-        // Select the empty tile
-        data[1].set(new PaletteMaterial([[data[2]()]]));
-    }
-
-}
-/** The edit brush change, takes as input an old clone of the brush, 
- * taken before starting to edit and the current editing brush */
-export class EditBrushChange extends Change {
-    constructor(public prevBrush: BrushMaterial, public nextBrush: BrushMaterial, public index: number) {
-        super();
-    }
-
-    public updatePrev(_changes: EditorChanges<BrushesChangesData>): boolean {
-        // Return if the brushes are the same
-        return this.prevBrush.equals(this.nextBrush);
-    }
-
-    /** Updates the brush at the index */
-    private updateBrush(data: BrushesChangesData, toInsert: BrushMaterial) {
-        data[0].update((brushes) => {
-            brushes[this.index] = toInsert.clone();
-            return brushes;
-        });
-    }
-
-    public async revert(data: BrushesChangesData) {
-        this.updateBrush(data, this.prevBrush);
-    }
-
-    public async apply(data: BrushesChangesData) {
-        this.updateBrush(data, this.nextBrush);
+    public static deserialize(serialized: SerializedNinePatchBrush) {
+        const brush = new NinePatchBrush();
+        brush.blocks = serialized.blocks.map((row) => row.map((block) => [...block]));
+        brush.name = serialized.name;
+        brush.hasCorners = serialized.hasCorners;
+        brush.pinned = writable(serialized.pinned);
+        return brush;
     }
 }

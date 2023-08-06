@@ -46,6 +46,7 @@ fn main() {
             get_config,
             set_config,
             update_tileset_level,
+            update_brushes,
             // Map list
             get_map_list,
             get_map_names,

@@ -6,10 +6,8 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
-    import {
-        DeleteBrushChange,
-        type BrushMaterial,
-    } from "../../../editor/brushes";
+    import type { BrushMaterial } from "../../../editor/brushes";
+    import { DeleteBrushChange } from "../../../editor/brush_changes";
     import { getContext, onMount, tick } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import { spawnDialog } from "src/systems/dialogs";

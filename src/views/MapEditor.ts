@@ -11,10 +11,12 @@ import { getPtrOffset } from "src/systems/rom";
 import TilesetPickerDialog from "./MapEditor/dialogs/TilesetPickerDialog.svelte";
 import { config } from "src/systems/global";
 import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
-import type { BrushMaterial, BrushesChangesData } from "./MapEditor/editor/brushes";
+import type { BrushMaterial } from "./MapEditor/editor/brushes";
+import type { BrushesChangesData } from "./MapEditor/editor/brush_changes";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 import type { SidebarState } from "./MapEditor/layout/LayoutSidebar.svelte";
+import { loadBrushesForTilesets, saveBrushesForTilesets } from "./MapEditor/editor/brush_serialization";
 
 export interface MapEditorProperties {
     group: number;
@@ -51,6 +53,12 @@ export class MapEditorContext extends TabbedEditorContext {
     declare public component: MapEditor;
     declare public data: Writable<MapEditorData>;
 
+    constructor(id: MapEditorProperties) {
+        // Create the editor element
+        super(MapEditor, { ...id });
+        this.subtitle.set(id.group + "." + id.index);
+        this.selectedTab.set("layout");
+    }
 
     // Drawing
     /** The currently selected material */
@@ -59,17 +67,17 @@ export class MapEditorContext extends TabbedEditorContext {
     public selectedTool: Writable<EditorTool>;
 
     // Brushes
-    /** The list of brushes loaded for this tileset */
+    /** The list of brushes loaded for these tilesets */
     public brushes: Writable<BrushMaterial[]>;
-    /** The brush you're currently editing, if any */
+    /** The brush that's being currently edited */
     public editingBrush: Writable<BrushMaterial>;
-    /** The state from which you entered the brush editing */
+    /** The state from which you entered brush editing */
     public editingBrushEnteredFromState: SidebarState;
-    /** The index of the editing brush withing the brushes */
+    /** The index of the editing brush within the brushes */
     public editingBrushIndex: number;
     /** The changes that are applied to the editing brush */
     public editingBrushChanges: Writable<EditorChanges<null>>;
-    /** A clone of the brush you've just started editing at the moment 
+    /** A clone of the brush you've just started editing right
      * before you made any edits to it */
     public editingBrushClone: Writable<BrushMaterial>;
     /** The changes that are applied to the brushes store */
@@ -84,7 +92,7 @@ export class MapEditorContext extends TabbedEditorContext {
     // Keybindings callbacks
     public moveOnPaletteCB: (dirX: number, dirY: number, select: boolean) => void = () => { };
 
-
+    // Tileset
     private tileset1Offset: number;
     private tileset2Offset: number;
     private tileset1Length: number;
@@ -126,8 +134,18 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     public async close(): Promise<boolean> {
-        if (!get(this.isLoading))
-            this.exportTilesetsLevels();
+        if (!get(this.isLoading)) {
+            try {
+                await this.exportTilesetsLevels();
+                await this.saveBrushesForTilesets();
+            }
+            catch (err) {
+                await spawnDialog(AlertDialog, {
+                    title: "Oops! Something went wrong!",
+                    message: err
+                });
+            }
+        }
         return super.close();
     }
 
@@ -149,16 +167,14 @@ export class MapEditorContext extends TabbedEditorContext {
                 title: "Failed to load map header",
                 message,
             });
-            this.isLoading.set(false);
             this.close();
             return;
         }
 
         // Load the map layout data
-        const layoutResults = await this.loadLayoutUntilValid(headerData.header.map_layout_id);
+        const layoutResults = await this.queryLayoutUntilValid(headerData.header.map_layout_id);
         if (layoutResults === null) {
             // If the user asked to quit, close the editor
-            this.isLoading.set(false);
             this.close();
             return;
         }
@@ -179,18 +195,16 @@ export class MapEditorContext extends TabbedEditorContext {
                 title: "Failed to update map header",
                 message,
             });
-            this.isLoading.set(false);
             this.close();
             return;
         }
 
-        const tilesetResults = await this.loadTilesetsUntilValid(
+        const tilesetResults = await this.queryTilesetsUntilValid(
             getPtrOffset(layoutData.header.primary_tileset),
             getPtrOffset(layoutData.header.secondary_tileset)
         );
         if (tilesetResults === null) {
             // If the user asked to quit, close the editor
-            this.isLoading.set(false);
             this.close();
             return;
         }
@@ -213,7 +227,6 @@ export class MapEditorContext extends TabbedEditorContext {
                 title: "Failed to update layout header",
                 message,
             });
-            this.isLoading.set(false);
             this.close();
             return;
         }
@@ -271,8 +284,8 @@ export class MapEditorContext extends TabbedEditorContext {
         this.material = writable(new PaletteMaterial([[tilesetBlocks[0][0]]]));
         this.selectedTool = writable(EditorTool.Pencil);
 
-        // TODO Get from configs
-        this.brushes = writable([]);
+        // Load brushes
+        await this.loadBrushesForTilesets();
         this.brushesChanges = new EditorChanges<BrushesChangesData>([this.brushes, this.material, () => get(this.tilesetBlocks)[0][0]]);
         // Set the currently editing brush
         this.editingBrush = writable(null);
@@ -286,8 +299,9 @@ export class MapEditorContext extends TabbedEditorContext {
         this.isLoading.set(false);
     }
 
+    // ANCHOR Error Handling
     /** Ask the user for a layout until that layout is valid for this map */
-    private async loadLayoutUntilValid(id?: number): Promise<[number, number, MapLayoutData]> {
+    private async queryLayoutUntilValid(id?: number): Promise<[number, number, MapLayoutData]> {
         while (true) {
             try {
                 // Get the layout offset
@@ -311,7 +325,7 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     /** Ask the user for tilesets until they are valid for this map */
-    private async loadTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, [string, string][]]> {
+    private async queryTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, [string, string][]]> {
         while (true) {
             try {
                 return [
@@ -334,6 +348,7 @@ export class MapEditorContext extends TabbedEditorContext {
         }
     }
 
+    // ANCHOR Utils
     /** Convert a string to an image */
     private async convertStringToImage(string: string): Promise<HTMLImageElement> {
         const image = new Image();
@@ -342,6 +357,7 @@ export class MapEditorContext extends TabbedEditorContext {
         return image;
     }
 
+    // ANCHOR Tileset Levels
     private async importTilesetsLevels(): Promise<number[]> {
         // Get the tileset levels
         const t1Levels = await this._parseTilesetLevels(this.tileset1Offset, this.tileset1Length);
@@ -436,11 +452,13 @@ export class MapEditorContext extends TabbedEditorContext {
         return levelChars;
     }
 
-    constructor(id: MapEditorProperties) {
-        // Create the editor element
-        super(MapEditor, { ...id });
-        this.subtitle.set(id.group + "." + id.index);
-        this.selectedTab.set("layout");
+    // ANCHOR Custom Brushes
+    private async loadBrushesForTilesets() {
+        this.brushes = writable(await loadBrushesForTilesets(this.tileset1Offset, this.tileset2Offset));
+    }
+
+    private async saveBrushesForTilesets() {
+        await saveBrushesForTilesets(this.tileset1Offset, this.tileset2Offset, get(this.brushes), this.tileset1Length);
     }
 
     // ANCHOR Editor Methods

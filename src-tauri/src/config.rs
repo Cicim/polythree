@@ -5,9 +5,16 @@ use std::{
 
 use poly3lib::rom::RomType;
 use serde::{Deserialize, Serialize, Serializer};
+use serde_json::Value;
 use tauri::AppHandle;
 
 use crate::state::{get_rom_path, AppResult, AppState};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PrimaryBrushStore {
+    brushes: Vec<Value>,
+    secondary: HashMap<u32, Vec<Value>>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RomConfig {
@@ -18,6 +25,7 @@ pub struct RomConfig {
     pub tileset_names: HashMap<u32, String>,
     #[serde(serialize_with = "ordered_map")]
     pub tileset_levels: HashMap<u32, String>,
+    pub brushes: HashMap<u32, PrimaryBrushStore>,
 }
 
 fn ordered_map<S, T>(value: &HashMap<T, String>, serializer: S) -> Result<S::Ok, S::Error>
@@ -74,13 +82,14 @@ impl RomConfig {
             layout_names: HashMap::new(),
             tileset_names: HashMap::new(),
             tileset_levels: HashMap::new(),
+            brushes: HashMap::new(),
         }
     }
 
     pub fn save(&self, config_path: String) -> AppResult<()> {
         let config_file = std::fs::File::create(config_path)
             .map_err(|e| format!("Could create config file: {}", e))?;
-        serde_json::to_writer_pretty(config_file, self)
+        serde_json::to_writer(config_file, self)
             .map_err(|e| format!("Could not write to config file: {}", e))?;
         Ok(())
     }
@@ -156,4 +165,45 @@ pub fn update_tileset_level(state: AppState, tileset: u32, levels: String) -> Ap
     update_config(state, |config| {
         config.tileset_levels.insert(tileset, levels);
     })
+}
+
+#[tauri::command]
+pub fn update_brushes(
+    state: AppState,
+    tileset1: u32,
+    tileset2: u32,
+    tileset1_brushes: Vec<Value>,
+    tileset2_brushes: Vec<Value>,
+) -> AppResult<()> {
+    if tileset1_brushes.len() == 0 && tileset2_brushes.len() == 0 {
+        Ok(())
+    } else {
+        update_config(state, |config| {
+            config.brushes.insert(
+                tileset1,
+                // Find if the tileset1 configs exist
+                match config.brushes.get(&tileset1) {
+                    // If it doesn't exist, create it
+                    None => {
+                        let mut secondary_store = HashMap::new();
+                        if tileset2_brushes.len() > 0 {
+                            secondary_store.insert(tileset2, tileset2_brushes);
+                        }
+                        PrimaryBrushStore {
+                            brushes: tileset1_brushes,
+                            secondary: secondary_store,
+                        }
+                    }
+                    Some(primary_brush_store) => {
+                        let mut primary_store = primary_brush_store.clone();
+                        primary_store.brushes = tileset1_brushes;
+                        if tileset2_brushes.len() > 0 {
+                            primary_store.secondary.insert(tileset2, tileset2_brushes);
+                        }
+                        primary_store.clone()
+                    }
+                },
+            );
+        })
+    }
 }

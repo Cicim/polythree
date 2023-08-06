@@ -4,10 +4,8 @@
     import { SidebarState } from "../../LayoutSidebar.svelte";
     import ToolButton from "../../../ToolButton.svelte";
     import BrushCard from "./BrushCard.svelte";
-    import {
-        AddBrushChange,
-        SimpleBrush,
-    } from "src/views/MapEditor/editor/brushes";
+    import { SimpleBrush } from "src/views/MapEditor/editor/brushes";
+    import { AddBrushChange } from "src/views/MapEditor/editor/brush_changes";
     import Input from "src/components/Input.svelte";
 
     export let state: SidebarState;

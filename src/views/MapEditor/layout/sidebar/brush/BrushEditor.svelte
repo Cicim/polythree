@@ -10,7 +10,7 @@
     import MapCanvas from "../../../editor/MapCanvas.svelte";
     import BrushPreview from "./BrushPreview.svelte";
     import BrushSettings from "./BrushSettings.svelte";
-    import { EditBrushChange } from "src/views/MapEditor/editor/brushes";
+    import { EditBrushChange } from "src/views/MapEditor/editor/brush_changes";
 
     export let state: SidebarState;
     export let levelMode: boolean;

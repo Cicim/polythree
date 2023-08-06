@@ -1,5 +1,11 @@
-import { invoke } from "@tauri-apps/api";
+import type { SerializedBrush } from "src/views/MapEditor/editor/brush_serialization";
 import { writable, type Writable } from "svelte/store";
+
+/** How the brushes are stored in the config file */
+type BrushStore = Record<number, {
+    brushes: SerializedBrush[];
+    secondary: Record<number, SerializedBrush[]>;
+}>;
 
 export interface Rom {
     path: string;
@@ -15,6 +21,8 @@ export interface Config {
     tileset_names: Record<number, string>;
     /** A map of tileset offsets to a base64 representation of each tile's levels */
     tileset_levels: Record<number, string>;
+    /** A Map of tileset to [secondary tileset | brushes] */
+    brushes: BrushStore;
 }
 
 /** The curretly open ROM */
