@@ -4,6 +4,7 @@
     import type { MapEditorContext } from "src/views/MapEditor";
     import { PaletteMaterial } from "../editor/materials";
     import { tooltip } from "src/systems/tooltip";
+    import { BlocksData, NULL } from "../editor/blocks_data";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
@@ -37,7 +38,7 @@
     const LAST_Y_LEVEL = 7;
     function selectLevel(level: number) {
         selected = level;
-        if (level !== null) {
+        if (level !== NULL) {
             const level = (selected % 256) % 4;
             const obstacle = selected & 0x100;
             lastXOffset = level + obstacle;
@@ -46,7 +47,7 @@
     }
 
     function buildMaterial() {
-        $material = new PaletteMaterial([[[null, selected]]]);
+        $material = new PaletteMaterial(new BlocksData(1, 1, null, selected));
     }
 
     export function moveOnPalette(
@@ -54,7 +55,7 @@
         dirY: number,
         _select: boolean
     ) {
-        if (selected === null) {
+        if (selected === NULL) {
             if (dirY > 0) selectLevel(lastXOffset);
             else if (dirY < 0) selectLevel(LAST_Y_LEVEL * 4 + lastXOffset);
             else if (dirX < 0) selectLevel(LAST_Y_LEVEL * 4 + 256 + 3);
@@ -63,21 +64,21 @@
             const level = selected % 256;
             const isObstacle = selected & 0x100;
             if (dirX > 0) {
-                if (level === 31 && isObstacle) return selectLevel(null);
+                if (level === 31 && isObstacle) return selectLevel(NULL);
 
                 if (isObstacle) selectLevel(level + 1);
                 else selectLevel(level + 256);
             } else if (dirX < 0) {
-                if (level === 0 && !isObstacle) return selectLevel(null);
+                if (level === 0 && !isObstacle) return selectLevel(NULL);
 
                 if (isObstacle) selectLevel(level);
                 else selectLevel(level + 255);
             } else if (dirY > 0) {
                 if (Math.floor(level / 4) >= LAST_Y_LEVEL)
-                    return selectLevel(null);
+                    return selectLevel(NULL);
                 selectLevel(selected + 4);
             } else if (dirY < 0) {
-                if (Math.floor(level / 4) <= 0) return selectLevel(null);
+                if (Math.floor(level / 4) <= 0) return selectLevel(NULL);
                 selectLevel(selected - 4);
             }
         }
@@ -86,7 +87,7 @@
     $: $material,
         (() => {
             if ($material instanceof PaletteMaterial && $material.isSingular) {
-                selected = $material.blocks[0][0]?.[1] ?? null;
+                selected = $material.blocks.levels[0];
             }
         })();
 </script>
@@ -96,8 +97,8 @@
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
             class="none-card any-level-card"
-            class:selected={selected === null}
-            on:click={() => selectLevel(null)}
+            class:selected={selected === NULL}
+            on:click={() => selectLevel(NULL)}
             use:tooltip
             tooltip="Does not change the level"
         >

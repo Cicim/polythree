@@ -3,9 +3,8 @@ import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { spawnDialog } from "src/systems/dialogs";
 import { config } from "src/systems/global";
 import { get } from "svelte/store";
+import type { SerializedBlocksData } from "./blocks_data";
 import { BrushMaterial, type BrushType } from "./brushes";
-
-type SerializedBlocks = BlockData[][];
 
 export interface SerializedBrush {
     /** The brushe's type */
@@ -13,7 +12,7 @@ export interface SerializedBrush {
     /** The brush name */
     name: string;
     /** The serialized blocks */
-    blocks: SerializedBlocks;
+    blocks: SerializedBlocksData;
     /** The current pinned state */
     pinned: boolean;
 }

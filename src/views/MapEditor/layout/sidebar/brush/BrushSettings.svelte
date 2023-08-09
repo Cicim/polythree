@@ -72,8 +72,26 @@
         if (brushType === $editingBrush.type) {
             // Apply all the apported changes to the editing brush
             for (const [key, value] of Object.entries(brushSettings)) {
+                if (key === "width" || key === "height") continue;
                 $editingBrush[key] = value;
             }
+
+            if (brushType === BrushType.Simple) {
+                // If the width or height changed
+                if (
+                    brushSettings.width !==
+                        ($editingBrush as SimpleBrush).width ||
+                    brushSettings.height !==
+                        ($editingBrush as SimpleBrush).height
+                ) {
+                    // Update the blocks
+                    $editingBrush.resizeBlocks(
+                        brushSettings.width,
+                        brushSettings.height
+                    );
+                }
+            }
+
             // Change the name
             $editingBrush.name = brush.name;
             // Update the current brush
@@ -94,8 +112,8 @@
     }
 
     // To get size from selection
-    let selectionWidth = ($material as PaletteMaterial)?.blocks[0]?.length;
-    let selectionHeight = ($material as PaletteMaterial)?.blocks?.length;
+    let selectionWidth = ($material as PaletteMaterial).blocks.width;
+    let selectionHeight = ($material as PaletteMaterial).blocks.height;
     function setSizeFromMaterial() {
         brushSettings.width = selectionWidth;
         brushSettings.height = selectionHeight;

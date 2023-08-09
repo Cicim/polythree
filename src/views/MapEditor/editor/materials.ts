@@ -1,3 +1,4 @@
+import type { BlocksData } from "./blocks_data";
 import type { PainterState } from "./painter_state";
 
 export abstract class PaintingMaterial {
@@ -14,21 +15,23 @@ export class PaletteMaterial extends PaintingMaterial {
     public name = "Palette Material";
     public isPaletteMaterial = true;
 
-    constructor(public blocks: BlockData[][]) {
+    constructor(public blocks: BlocksData) {
         super();
-        this.blocks = blocks;
     }
 
     public apply(state: PainterState, x: number, y: number): void {
-        for (let j = 0; j < this.blocks.length; j++) {
-            for (let i = 0; i < this.blocks[j].length; i++) {
-                state.set(x + i, y + j, this.blocks[j][i]);
+        for (let j = 0; j < this.blocks.height; j++) {
+            for (let i = 0; i < this.blocks.width; i++) {
+                state.set(x + i, y + j,
+                    this.blocks.metatiles[j * this.blocks.width + i],
+                    this.blocks.levels[j * this.blocks.width + i
+                    ]);
             }
         }
     }
 
     public get isSingular(): boolean {
-        return this.blocks.length === 1 && this.blocks[0].length === 1;
+        return this.blocks.width === 1 && this.blocks.width === this.blocks.height;
     }
 }
 
@@ -37,10 +40,10 @@ export class SelectionMaterial extends PaletteMaterial {
     public isPaletteMaterial = false;
 
     constructor(
-        tiles: BlockData[][],
+        blocks: BlocksData,
         public metatileCanvas: HTMLCanvasElement,
         public levelCanvas: HTMLCanvasElement
     ) {
-        super(tiles);
+        super(blocks);
     }
 }

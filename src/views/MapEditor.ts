@@ -17,6 +17,7 @@ import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 import type { SidebarState } from "./MapEditor/layout/LayoutSidebar.svelte";
 import { loadBrushesForTilesets, saveBrushesForTilesets } from "./MapEditor/editor/brush_serialization";
+import { BlocksData, NULL, type ImportedBlocksData } from "./MapEditor/editor/blocks_data";
 
 export interface MapEditorProperties {
     group: number;
@@ -33,8 +34,16 @@ export interface MapHeaderData {
 export interface MapLayoutData {
     index: number;
     bits_per_block: number;
-    map_data: BlockData[][];
-    border_data: BlockData[][];
+    map_data: BlocksData;
+    border_data: BlocksData;
+    header: MapLayout;
+}
+
+export interface ImportedMapLayoutData {
+    index: number;
+    bits_per_block: number;
+    map_data: ImportedBlocksData;
+    border_data: ImportedBlocksData;
     header: MapLayout;
 }
 
@@ -85,7 +94,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
     // Tileset Palette
     /** The block data for the tilset level editor */
-    public tilesetBlocks: Writable<BlockData[][]>;
+    public tilesetBlocks: Writable<BlocksData>;
     /** The changes that are applied to the tileset level editor */
     public tilesetLevelChanges: EditorChanges<null>;
 
@@ -178,9 +187,17 @@ export class MapEditorContext extends TabbedEditorContext {
             this.close();
             return;
         }
-        const [layoutId, layoutOffset, layoutData] = layoutResults;
+        const [layoutId, layoutOffset, importedLayoutData] = layoutResults;
         headerData.header.map_layout_id = layoutId;
         headerData.header.map_layout = { offset: layoutOffset };
+        // Convert the imported data to a map layout data
+        const layoutData: MapLayoutData = {
+            bits_per_block: importedLayoutData.bits_per_block,
+            header: importedLayoutData.header,
+            index: importedLayoutData.index,
+            border_data: BlocksData.fromImportedBlockData(importedLayoutData.border_data),
+            map_data: BlocksData.fromImportedBlockData(importedLayoutData.map_data),
+        };
 
         // Update the rom with the new layout id
         try {
@@ -263,30 +280,33 @@ export class MapEditorContext extends TabbedEditorContext {
         // Get the levels for these tilesets from config
         const importedTilesetLevels = await this.importTilesetsLevels();
         // Compose the block data for the tileset level editor
-        const tilesetBlocks: BlockData[][] = new Array(Math.ceil(allImages.length / 8));
-        for (let y = 0; y < tilesetBlocks.length; y++) {
-            tilesetBlocks[y] = [];
-            let inRow = 8;
-            if (y === tilesetBlocks.length - 1) {
-                // Get the amount of remaining x's
-                inRow = allImages.length % 8;
-            }
-            for (let x = 0; x < inRow; x++)
-                tilesetBlocks[y][x] = [y * 8 + x, importedTilesetLevels[y * 8 + x]];
+        const tilesetLength = allImages.length;
+        const tilesetBlocks = new BlocksData(8, Math.ceil(tilesetLength / 8))
+        // Set the blockData for the tilesets to be the ascending number of tiles 
+        // with the permissions you've read from the configs
+        for (let y = 0; y < tilesetBlocks.height; y++) {
+            let rowEnd = y === tilesetBlocks.height - 1 ? tilesetLength % 8 : 8;
 
-            for (let x = inRow; x < 8; x++) {
-                tilesetBlocks[y][x] = null;
-            }
+            for (let x = 0; x < rowEnd; x++)
+                tilesetBlocks.set(x, y, y * 8 + x, importedTilesetLevels[y * 8 + x]);
+
+            for (let x = rowEnd; x < 8; x++)
+                tilesetBlocks.set(x, y, NULL, NULL);
         }
         this.tilesetBlocks = writable(tilesetBlocks);
         this.tilesetLevelChanges = new EditorChanges(null);
 
-        this.material = writable(new PaletteMaterial([[tilesetBlocks[0][0]]]));
+        this.material = writable(new PaletteMaterial(
+            BlocksData.fromBlockData(get(this.tilesetBlocks).get(0, 0))
+        ));
         this.selectedTool = writable(EditorTool.Pencil);
 
         // Load brushes
         await this.loadBrushesForTilesets();
-        this.brushesChanges = new EditorChanges<BrushesChangesData>([this.brushes, this.material, () => get(this.tilesetBlocks)[0][0]]);
+        this.brushesChanges = new EditorChanges<BrushesChangesData>([
+            this.brushes, this.material,
+            () => BlocksData.fromBlockData(get(this.tilesetBlocks).get(0, 0))
+        ]);
         // Set the currently editing brush
         this.editingBrush = writable(null);
         this.editingBrushClone = writable(null);
@@ -301,7 +321,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
     // ANCHOR Error Handling
     /** Ask the user for a layout until that layout is valid for this map */
-    private async queryLayoutUntilValid(id?: number): Promise<[number, number, MapLayoutData]> {
+    private async queryLayoutUntilValid(id?: number): Promise<[number, number, ImportedMapLayoutData]> {
         while (true) {
             try {
                 // Get the layout offset
@@ -368,7 +388,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
     public async exportTilesetsLevels(): Promise<void> {
         // Get the tileset levels from the editor
-        const tilesetLevels = get(this.tilesetBlocks).flat().map(block => block?.[1]);
+        const tilesetLevels = get(this.tilesetBlocks).levels;
         // Divide the two tilsets based on the lengths
         const t1Levels = tilesetLevels.slice(0, this.tileset1Length);
         const t2Levels = tilesetLevels.slice(this.tileset1Length, this.tileset1Length + this.tileset2Length);
@@ -386,7 +406,7 @@ export class MapEditorContext extends TabbedEditorContext {
         await invoke("update_tileset_level", { tileset: this.tileset2Offset, levels: t2LevelChars });
     }
 
-    private async _parseTilesetLevels(tilesetOffset: number, tilesetLength: number) {
+    private async _parseTilesetLevels(tilesetOffset: number, tilesetLength: number): Promise<Uint16Array> {
         const levelChars = get(config).tileset_levels[tilesetOffset];
 
         // If you can't find the levelChars, return a list of null as long as the tileset
@@ -397,15 +417,15 @@ export class MapEditorContext extends TabbedEditorContext {
                 return config;
             });
             await invoke("update_tileset_level", { tileset: tilesetOffset, levels: "" })
-            return new Array(tilesetLength).fill(null);
+            return new Uint16Array(tilesetLength).fill(NULL);
         }
         // Otherwise, read the data from the levelChars
         else {
-            const data = new Array(tilesetLength).fill(null);
+            const data = new Uint16Array(tilesetLength).fill(NULL);
 
             for (let i = 0; i < levelChars.length; i++) {
                 const char = levelChars[i];
-                if (char === "=") data[i] = null;
+                if (char === "=") data[i] = NULL;
                 else {
                     if (char === "/") data[i] = 29;
                     else data[i] = levelChars.charCodeAt(i) - 63;
@@ -416,20 +436,18 @@ export class MapEditorContext extends TabbedEditorContext {
                     else
                         data[i] = Math.floor(data[i] / 2) + 0x100;
                 }
-
-
             }
 
             return data;
         }
     }
 
-    private _encodeTilesetLevels(levels: number[]) {
+    private _encodeTilesetLevels(levels: Uint16Array) {
         let levelChars = "";
         let nullsEncountered = 0;
 
         for (const level of levels) {
-            if (level === null) {
+            if (level === NULL) {
                 nullsEncountered++;
                 continue;
             }
@@ -441,8 +459,6 @@ export class MapEditorContext extends TabbedEditorContext {
                 let compressedLevel = (level & 0xFF) * 2;
                 if (level & 0x100)
                     compressedLevel++;
-                if (level === null)
-                    compressedLevel = null;
 
                 if (compressedLevel === 29) levelChars += "/";
                 else levelChars += String.fromCharCode(compressedLevel + 63);

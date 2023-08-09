@@ -3,6 +3,7 @@
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
     import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
+    import { BlocksData, NULL } from "../editor/blocks_data";
 
     export let hoveringTile: number = null;
     export let selectedTile: number | [number, number, number] = null;
@@ -40,7 +41,7 @@
                 $material.isSingular
             ) {
                 // Update the selection
-                const tile = $material.blocks[0][0][0];
+                const tile = $material.blocks.getMetatile(0, 0);
                 const x = tile % 8,
                     y = Math.floor(tile / 8);
                 selectionStart = { x, y };
@@ -51,7 +52,7 @@
             } else if (
                 $material instanceof PaletteMaterial &&
                 $material.isSingular &&
-                $material.blocks[0][0][0] === null
+                $material.blocks.metatiles[0] === NULL
             ) {
                 // Update the selection
                 hideSelection();
@@ -143,19 +144,23 @@
 
         const tilesetBlocks = $tilesetBlocksStore;
 
-        const blocks = [];
-        for (let i = 0; i < height; i++) {
-            const row = [];
-            for (let j = 0; j < width; j++) {
-                const tileIndex = (y + i) * 8 + x + j;
-                const tile =
-                    tileIndex >= tilesets.length
-                        ? [null, null]
-                        : tilesetBlocks[y + i][x + j];
+        let blocks = new BlocksData(width, height);
 
-                row.push(tile);
+        for (let j = 0; j < height; j++) {
+            for (let i = 0; i < width; i++) {
+                const tileIndex = blocks.index(x + i, y + j);
+
+                if (tileIndex >= tilesets.length) {
+                    blocks.set(i, j, NULL, NULL);
+                } else {
+                    blocks.set(
+                        i,
+                        j,
+                        tilesetBlocks.getMetatile(x + i, y + j),
+                        tilesetBlocks.getLevel(x + i, y + j)
+                    );
+                }
             }
-            blocks.push(row);
         }
         $material = new PaletteMaterial(blocks);
     }

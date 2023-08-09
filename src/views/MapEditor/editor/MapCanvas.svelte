@@ -12,6 +12,7 @@
     import type { Tool } from "./tools";
     import { LEVEL_COLORS, LAYER_CHARS } from "./consts";
     import type { EditorChanges } from "src/systems/changes";
+    import { BlocksData, NULL } from "./blocks_data";
 
     interface MapCanvasText {
         text: string;
@@ -21,7 +22,7 @@
     }
 
     /** Blocks to edit */
-    export let blocks: BlockData[][];
+    export let blocks: BlocksData;
     /** The size of the chunks in which to divide the map for caching */
     export let chunkSize: number = 32;
     /** Whether or not to print the levels on top of the tiles */
@@ -56,10 +57,10 @@
     export let constantWidth: number = null;
 
     // Update the size when the blocks update
-    let blocksWidth: number = blocks[0].length;
-    let blocksHeight: number = blocks.length;
-    $: blocksWidth = blocks[0].length;
-    $: blocksHeight = blocks.length;
+    let blocksWidth: number = blocks.width;
+    let blocksHeight: number = blocks.height;
+    $: blocksWidth = blocks.width;
+    $: blocksHeight = blocks.height;
 
     // ANCHOR Constants
     /** Zoom levels the user can scroll through */
@@ -121,7 +122,7 @@
         x < blocksWidth &&
         y >= 0 &&
         y < blocksHeight &&
-        blocks[y][x] !== null;
+        !blocks.isNull(x, y);
 
     // ANCHOR Properties
     let containerEl: HTMLDivElement;
@@ -361,12 +362,12 @@
     }
 
     /** Convert a level information to its color and text */
-    function levelToColorAndString(index: number): [string, string] {
-        if (index === null) return ["#888888", ""];
+    function levelToColorAndString(level: number): [string, string] {
+        if (level === NULL) return ["#888888", ""];
 
-        const color = LEVEL_COLORS[index] ?? "#FFFFFF";
-        const layer = index & 0xff;
-        const obstacle = index >> 8;
+        const color = LEVEL_COLORS[level] ?? "#FFFFFF";
+        const layer = level & 0xff;
+        const obstacle = level >> 8;
 
         if (obstacle === 0) return [color, layer.toString()];
 
@@ -484,11 +485,13 @@
         for (let j = 0; j < chunkSize; j++) {
             for (let i = 0; i < chunkSize; i++) {
                 // Get the tile images
-                const block =
-                    blocks[cy * chunkSize + j]?.[cx * chunkSize + i]?.[0];
-                if (block === undefined) continue;
+                const metatile = blocks.getMetatileInBounds(
+                    cx * chunkSize + i,
+                    cy * chunkSize + j
+                );
+                if (metatile === undefined) continue;
 
-                const images = tilesetImages[block];
+                const images = tilesetImages[metatile];
                 if (images === null || images === undefined) continue;
 
                 const [bottomImage, topImage] = images;
@@ -550,8 +553,10 @@
         for (let j = 0; j < chunkSize; j++) {
             for (let i = 0; i < chunkSize; i++) {
                 // Get the level
-                const level =
-                    blocks[cy * chunkSize + j]?.[cx * chunkSize + i]?.[1];
+                const level = blocks.getLevelInBounds(
+                    cx * chunkSize + i,
+                    cy * chunkSize + j
+                );
                 if (level === undefined) continue;
 
                 // Draw the level with text
@@ -598,7 +603,7 @@
     /** Prints a pixel to the colorLevelMap corresponding to the level at the given offset */
     function updateLevelPixel(x: number, y: number) {
         // Get the level
-        const level = blocks[y]?.[x]?.[1];
+        const level = blocks.getLevelInBounds(x, y);
         if (level === undefined) return;
 
         // Get the color
@@ -678,7 +683,7 @@
         if (nullBlocks) {
             for (let i = y; i < y + height; i++)
                 for (let j = x; j < x + width; j++)
-                    if (blocks[i]?.[j] === null) return;
+                    if (blocks.isNull(i, j)) return;
         }
 
         // Update the selection
@@ -752,13 +757,15 @@
         }
 
         // Copy the selection
-        const selBlockData = [];
+        const selBlockData = new BlocksData(selection.width, selection.height);
         for (let y = 0; y < selection.height; y++) {
-            selBlockData[y] = [];
             for (let x = 0; x < selection.width; x++) {
-                const block = blocks[selection.y + y]?.[selection.x + x];
-                if (block === undefined) continue;
-                selBlockData[y][x] = [...block];
+                selBlockData.set(
+                    x,
+                    y,
+                    blocks.getMetatile(selection.x + x, selection.y + y),
+                    blocks.getLevel(selection.x + x, selection.y + y)
+                );
             }
         }
 
@@ -784,20 +791,18 @@
         nullLevels,
         update: () => draw(),
         canPaint: (x, y) => canPaintOnTile(x, y),
-        get: (x: number, y: number) => blocks[y][x],
-
+        getMetatile: (x: number, y: number) =>
+            blocks.metatiles[y * blocks.width + x],
+        getLevel: (x: number, y: number) => blocks.levels[y * blocks.width + x],
         forEach(callback) {
             for (let y = 0; y < blocksHeight; y++)
                 for (let x = 0; x < blocksWidth; x++)
-                    callback(x, y, blocks[y][x]);
+                    callback(x, y, this.getMetatile(x, y), this.getLevel(x, y));
         },
-
-        set(x: number, y: number, value: BlockData) {
+        set(x: number, y: number, metatile: number, level: number) {
             // Get the old value and for maximum efficiency, draw only what changes
-            const [oldMetatile, oldLevel] = blocks[y][x];
-            // Update the data with the new value
-            const [metatile, level] = value;
-            blocks[y][x] = [oldMetatile, oldLevel];
+            const oldMetatile = blocks.getMetatile(x, y);
+            const oldLevel = blocks.getLevel(x, y);
 
             // Get the correct chunk to update
             const cx = Math.floor(x / chunkSize);
@@ -809,7 +814,8 @@
                 oldMetatile !== metatile &&
                 !(editLevels && state === State.Painting)
             ) {
-                blocks[y][x][0] = metatile;
+                // Update the metatile
+                blocks.setMetatile(x, y, metatile);
                 // Get the metattile chunks
                 const metatileChunk = metatileChunks[cy][cx];
                 const botCtx = metatileChunk[0];
@@ -828,7 +834,8 @@
             }
 
             if (oldLevel !== level) {
-                blocks[y][x][1] = level;
+                // Update the level
+                blocks.setLevel(x, y, level);
                 // Get the level chunks
                 const levelChunk = textLevelChunks[cy][cx];
                 levelChunk.clearRect(

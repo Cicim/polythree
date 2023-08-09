@@ -38,5 +38,4 @@ interface TileSelection extends Point {
     height: number;
 }
 
-/** Information about a single block (metatile and level) */
 type BlockData = [metatile: number, level: number];

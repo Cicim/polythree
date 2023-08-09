@@ -1,9 +1,10 @@
 import { Change, type EditorChanges } from "src/systems/changes";
 import { type Writable, get } from "svelte/store";
+import type { BlocksData } from "./blocks_data";
 import { BrushMaterial } from "./brushes";
 import { type PaintingMaterial, PaletteMaterial } from "./materials";
 
-export type BrushesChangesData = [Writable<BrushMaterial[]>, Writable<PaintingMaterial>, () => BlockData];
+export type BrushesChangesData = [Writable<BrushMaterial[]>, Writable<PaintingMaterial>, () => BlocksData];
 
 export class AddBrushChange extends Change {
     protected addedBrush: BrushMaterial;
@@ -31,7 +32,7 @@ export class AddBrushChange extends Change {
         // If the selection is the brush, remove it
         if (get(data[1]) === this.addedBrush) {
             // Set the data to 0,0
-            data[1].set(new PaletteMaterial([[data[2]()]]));
+            data[1].set(new PaletteMaterial(data[2]()));
         }
     }
     // Adds to brushes
@@ -83,7 +84,7 @@ export class DeleteBrushChange extends Change {
             return brushes;
         });
         // Select the empty tile
-        data[1].set(new PaletteMaterial([[data[2]()]]));
+        data[1].set(new PaletteMaterial(data[2]()));
     }
 
 }

@@ -1,5 +1,6 @@
 import type { TilesetData } from "src/views/MapEditor";
 import { get, writable } from "svelte/store";
+import { BlocksData } from "./blocks_data";
 import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
 import { PaintingMaterial } from "./materials";
 import type { PainterState } from "./painter_state";
@@ -17,58 +18,31 @@ export abstract class BrushMaterial extends PaintingMaterial {
     /** Whether the brush is pinned to the top in the brushes list */
     public pinned = writable(false);
     /** The blocks that are modified by MapCanvas in the BrushEditor */
-    public blocks: BlockData[][];
+    public blocks: BlocksData;
     /** This brush type's icon */
     static icon: string = "";
     /** This brush type's name */
     static typeName: string = "";
 
-
     public get width(): number {
-        return this.blocks?.[0]?.length ?? 0;
+        return this.blocks.width;
     }
-
-    public set width(value: number) {
-        // Add or remove columns
-        if (value > this.width) {
-            // Add new columns
-            this.blocks = this.blocks.map((row) =>
-                [...row, ...new Array(value - this.width)
-                    .fill(0).map(_ => [0, null] as BlockData)]
-            );
-        } else {
-            // Remove Columns
-            this.blocks = this.blocks.map((row) => row.slice(0, value));
-        }
-    }
-
     public get height(): number {
-        return this.blocks?.length ?? 0;
+        return this.blocks.height;
     }
-
-    public set height(value: number) {
-        // Add or remove rows
-        if (value > this.height) {
-            // Add new rows
-            this.blocks = [...this.blocks, ...new Array(value - this.height)
-                .fill(0).map(_ => new Array(this.width)
-                    .fill(0).map(_ => [0, null] as BlockData))];
-        }
-        else {
-            // Remove rows
-            this.blocks = this.blocks.slice(0, value);
-        }
+    public resizeBlocks(newWidth: number, newHeight: number) {
+        this.blocks = this.blocks.resize(newWidth, newHeight);
     }
 
     /** Return the square metatile data matrix that appears in the thumbnail */
     public getThumbnailMetatile(): number[][] {
         const metatiles = [];
-        let side = Math.min(this.blocks.length, this.blocks[0].length);
+        let side = Math.min(this.width, this.height);
 
         for (let y = 0; y < side; y++) {
             metatiles[y] = [];
             for (let x = 0; x < side; x++)
-                metatiles[y][x] = this.blocks?.[y]?.[x]?.[0] ?? 0;
+                metatiles[y][x] = this.blocks.getMetatileInBounds(x, y) ?? 0;
         }
         return metatiles;
     }
@@ -141,7 +115,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
     /** Serializes a brush into a storable object */
     public serialize(): SerializedBrush {
         return {
-            blocks: this.blocks,
+            blocks: this.blocks.toSerialized(),
             type: this.type,
             name: this.name,
             pinned: get(this.pinned),
@@ -165,22 +139,22 @@ export class SimpleBrush extends BrushMaterial {
 
     static typeName = "Simple Brush";
     static icon = "ep:brush-filled";
-    public blocks: BlockData[][] = [[[42, null]]];
+    public blocks: BlocksData = new BlocksData(1, 1, 0, null);
     public readonly type = BrushType.Simple;
 
     public apply(state: PainterState, x: number, y: number): void {
         const blocks = this.blocks;
-        const width = blocks[0].length;
-        const height = blocks.length;
+        const width = blocks.width;
+        const height = blocks.height;
 
         for (let dy = 0; dy < height; dy++)
             for (let dx = 0; dx < width; dx++)
-                state.set(x + dx, y + dy, blocks[dy][dx]);
+                state.set(x + dx, y + dy, blocks.getMetatile(dx, dy), blocks.getLevel(dx, dy));
     }
 
     public clone(): SimpleBrush {
         const brush = new SimpleBrush();
-        brush.blocks = this.blocks.map((row) => row.map((block) => [...block]));
+        brush.blocks = this.blocks.clone();
         brush.name = this.name;
         brush.pinned = this.pinned;
         return brush;
@@ -189,7 +163,8 @@ export class SimpleBrush extends BrushMaterial {
     public equals(other: SimpleBrush): boolean {
         if (!super.equals(other)) return false;
 
-        return this.width === other.width && this.height === other.height;
+        return this.width === other.width &&
+            this.height === other.height;
     }
 
     public serialize(): SerializedSimpleBrush {
@@ -198,7 +173,7 @@ export class SimpleBrush extends BrushMaterial {
 
     public static deserialize(serialized: SerializedSimpleBrush) {
         const brush = new SimpleBrush();
-        brush.blocks = serialized.blocks.map((row) => row.map((block) => [...block]));
+        brush.blocks = BlocksData.fromSerialized(serialized.blocks);
         if (brush.width > SimpleBrush.MAX_WIDTH || brush.height > SimpleBrush.MAX_HEIGHT)
             return null;
         brush.name = serialized.name;
@@ -210,29 +185,23 @@ export class SimpleBrush extends BrushMaterial {
 export class NinePatchBrush extends BrushMaterial {
     static typeName = "Nine Patch Brush";
     static icon = "icon-park-outline:nine-key";
-    public blocks: BlockData[][] = [
-        [
-            [42, null], [42, null], [42, null],
-            [42, null], [42, null], [42, null],
-            [42, null], [42, null], [42, null],
-        ],
-    ];
+    public blocks: BlocksData = new BlocksData(3, 3, 0, null);
     public readonly type = BrushType.NinePatch;
     public hasCorners = false;
 
     public apply(state: PainterState, x: number, y: number): void {
         const blocks = this.blocks;
-        const width = blocks[0].length;
-        const height = blocks.length;
+        const width = blocks.width;
+        const height = blocks.height;
 
         for (let dy = 0; dy < height; dy++)
             for (let dx = 0; dx < width; dx++)
-                state.set(x + dx, y + dy, blocks[dy][dx]);
+                state.set(x + dx, y + dy, blocks.getMetatile(dx, dy), blocks.getLevel(dx, dy));
     }
 
     public clone(): NinePatchBrush {
         const brush = new NinePatchBrush();
-        brush.blocks = this.blocks.map((row) => row.map((block) => [...block]));
+        brush.blocks = this.blocks.clone();
         brush.name = this.name;
         brush.hasCorners = this.hasCorners;
         brush.pinned = this.pinned;
@@ -251,7 +220,7 @@ export class NinePatchBrush extends BrushMaterial {
 
     public static deserialize(serialized: SerializedNinePatchBrush) {
         const brush = new NinePatchBrush();
-        brush.blocks = serialized.blocks.map((row) => row.map((block) => [...block]));
+        brush.blocks = BlocksData.fromSerialized(serialized.blocks);
         brush.name = serialized.name;
         brush.hasCorners = serialized.hasCorners;
         brush.pinned = writable(serialized.pinned);
