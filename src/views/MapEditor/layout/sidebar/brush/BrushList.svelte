@@ -80,27 +80,26 @@
         />
     </div>
     <div class="brush-container">
-        {#key $brushes}
-            {#each $brushes as brush, i}
-                <BrushCard
-                    show={brush.name
-                        .toLowerCase()
-                        .includes(filterString.toLowerCase())}
-                    {brush}
-                />
-            {:else}
-                <div class="no-brushes">There are no brushes</div>
-            {/each}
-        {/key}
+        {#each $brushes as brush (brush.uid)}
+            <BrushCard
+                show={brush.name
+                    .toLowerCase()
+                    .includes(filterString.toLowerCase())}
+                {brush}
+            />
+        {:else}
+            <div class="no-brushes">There are no brushes</div>
+        {/each}
     </div>
 </div>
 
 <style lang="scss">
     .brush-list-view {
         display: grid;
-        grid-template-rows: max-content max-content calc(100vh - 104px);
+        grid-template-rows: max-content max-content 1fr;
         border-bottom: none !important;
         container-type: inline-size;
+        overflow: hidden;
 
         .no-brushes {
             grid-column: 1 / -1;

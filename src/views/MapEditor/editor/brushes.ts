@@ -11,6 +11,8 @@ export enum BrushType {
 }
 
 export abstract class BrushMaterial extends PaintingMaterial {
+    static LAST_UID = 0;
+
     /** Name of the brush (as it appears in the preview) */
     public name = "Unnamed Brush";
     /** The brush's type */
@@ -19,6 +21,9 @@ export abstract class BrushMaterial extends PaintingMaterial {
     public pinned = writable(false);
     /** The blocks that are modified by MapCanvas in the BrushEditor */
     public blocks: BlocksData;
+    /** Unique identifier for svelte each */
+    public uid: number = BrushMaterial.LAST_UID++;
+
     /** This brush type's icon */
     static icon: string = "";
     /** This brush type's name */

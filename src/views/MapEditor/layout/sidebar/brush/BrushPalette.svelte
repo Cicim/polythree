@@ -22,11 +22,9 @@
     }}
 >
     <div class="brushes" class:no-brushes={$brushes.length === 0}>
-        {#key $brushes}
-            {#each $brushes as brush, i}
-                <BrushCard small={true} {brush} />
-            {/each}
-        {/key}
+        {#each $brushes as brush (brush.uid)}
+            <BrushCard small={true} {brush} />
+        {/each}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class="view-all" on:click={() => (state = SidebarState.BrushList)}>
             <iconify-icon icon="material-symbols:list" width="2em" />

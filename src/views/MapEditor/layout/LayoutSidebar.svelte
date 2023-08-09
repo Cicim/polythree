@@ -109,10 +109,6 @@
         user-select: none;
         display: flex;
         overflow: hidden;
-
-        flex: 1;
-
-        display: flex;
         flex-direction: column;
         flex-wrap: wrap;
         align-items: stretch;
