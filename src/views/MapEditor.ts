@@ -285,14 +285,15 @@ export class MapEditorContext extends TabbedEditorContext {
         // Set the blockData for the tilesets to be the ascending number of tiles 
         // with the permissions you've read from the configs
         for (let y = 0; y < tilesetBlocks.height; y++) {
-            let rowEnd = y === tilesetBlocks.height - 1 ? tilesetLength % 8 : 8;
-
-            for (let x = 0; x < rowEnd; x++)
+            for (let x = 0; x < 8; x++)
                 tilesetBlocks.set(x, y, y * 8 + x, importedTilesetLevels[y * 8 + x]);
-
-            for (let x = rowEnd; x < 8; x++)
-                tilesetBlocks.set(x, y, NULL, NULL);
         }
+
+        // Set the tiles after the last block in the last row to null
+        if (tilesetLength % 8 !== 0)
+            for (let x = tilesetLength % 8; x < 8; x++)
+                tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL, NULL);
+
         this.tilesetBlocks = writable(tilesetBlocks);
         this.tilesetLevelChanges = new EditorChanges(null);
 
