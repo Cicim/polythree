@@ -1,4 +1,4 @@
-use crate::{Color, DrawingData, Metatile, Tile};
+use crate::data::{Color, Metatile, Tile, TilesetData};
 
 const NORMAL: u8 = 0;
 const COVERED: u8 = 1;
@@ -19,13 +19,13 @@ enum TransparencyType {
 }
 
 pub(crate) fn render(
-    context: &DrawingData,
+    context: &TilesetData,
 
     bot_layer_image_data: &mut [Color],
     top_layer_image_data: &mut [Color],
     blocks_data: &[u16],
     blocks_width: usize,
-    blocks_height: usize,
+    pixels_width: usize,
 
     start_x: usize,
     start_y: usize,
@@ -62,6 +62,7 @@ pub(crate) fn render(
                 offset_x,
                 offset_y,
                 &[0; 4],
+                pixels_width,
                 TransparencyType::Transparent,
             );
 
@@ -76,6 +77,7 @@ pub(crate) fn render(
                         offset_x,
                         offset_y,
                         bot,
+                        pixels_width,
                         TransparencyType::Opaque,
                     );
                     draw_metatile_layer(
@@ -84,6 +86,7 @@ pub(crate) fn render(
                         offset_x,
                         offset_y,
                         top,
+                        pixels_width,
                         TransparencyType::Transparent,
                     );
                 }
@@ -95,6 +98,7 @@ pub(crate) fn render(
                         offset_x,
                         offset_y,
                         bot,
+                        pixels_width,
                         TransparencyType::Opaque,
                     );
                     draw_metatile_layer(
@@ -103,6 +107,7 @@ pub(crate) fn render(
                         offset_x,
                         offset_y,
                         top,
+                        pixels_width,
                         TransparencyType::FallThrough,
                     );
                 }
@@ -113,6 +118,7 @@ pub(crate) fn render(
                         offset_x,
                         offset_y,
                         bot,
+                        pixels_width,
                         TransparencyType::Opaque,
                     );
                     draw_metatile_layer(
@@ -121,6 +127,7 @@ pub(crate) fn render(
                         offset_x,
                         offset_y,
                         top,
+                        pixels_width,
                         TransparencyType::FallThrough,
                     );
 
@@ -137,6 +144,7 @@ pub(crate) fn render(
                         offset_x,
                         offset_y,
                         top,
+                        pixels_width,
                         TransparencyType::Transparent,
                     );
                 }
@@ -151,11 +159,12 @@ pub(crate) fn render(
 /// Draws a metatile layer (top or bottom) with or without transparency
 /// at the given position in the given image data.
 fn draw_metatile_layer(
-    context: &DrawingData,
+    context: &TilesetData,
     buffer: &mut [Color],
     offset_x: usize,
     offset_y: usize,
     metatile_layer: &[u16; 4],
+    pixels_width: usize,
     transparency: TransparencyType,
 ) {
     // For each tile on this layer
@@ -180,7 +189,7 @@ fn draw_metatile_layer(
                     let x = if hflip { 7 - x } else { x };
                     let y = if vflip { 7 - y } else { y };
                     let buffer_index =
-                        (offset_y + y + inner_y) * context.pixels_width + offset_x + x + inner_x;
+                        (offset_y + y + inner_y) * pixels_width + offset_x + x + inner_x;
 
                     // Set the buffer to transparent
                     buffer[buffer_index] = Color {
@@ -197,8 +206,7 @@ fn draw_metatile_layer(
                 // Get the actual x and y based on the flip
                 let x = if hflip { 7 - x } else { x };
                 let y = if vflip { 7 - y } else { y };
-                let buffer_index =
-                    (offset_y + y + inner_y) * context.pixels_width + offset_x + x + inner_x;
+                let buffer_index = (offset_y + y + inner_y) * pixels_width + offset_x + x + inner_x;
 
                 // Get the color
                 let color = context.palettes[palette][color_id & 0xF];

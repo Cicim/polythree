@@ -18,7 +18,7 @@ import { EditorChanges } from "src/systems/changes";
 import type { SidebarState } from "./MapEditor/layout/LayoutSidebar.svelte";
 import { loadBrushesForTilesets, saveBrushesForTilesets } from "./MapEditor/editor/brush_serialization";
 import { BlocksData, NULL, type ImportedBlocksData } from "./MapEditor/editor/blocks_data";
-import initWasmFunctions, { render_blocks_data } from "src/wasm/map-canvas/pkg";
+import initWasmFunctions, { load_tileset, render_blocks_data } from "src/wasm/map-canvas/pkg";
 
 export interface MapEditorProperties {
     group: number;
@@ -267,6 +267,9 @@ export class MapEditorContext extends TabbedEditorContext {
             return;
         }
 
+        // Load the wasm functions
+        await initWasmFunctions();
+
         // Convert tilesetData to images
         const tilesets = this.loadTilesetsData(tilesetsData);
         this.data.set({ header: headerData, layout: layoutData, tilesets });
@@ -298,9 +301,6 @@ export class MapEditorContext extends TabbedEditorContext {
             for (let x = 0; x < 8; x++)
                 tilesetBlocks.set(x, y, y * 8 + x, importedTilesetLevels[y * 8 + x]);
         }
-
-        // Load the wasm functions
-        await initWasmFunctions();
 
         // Set the tiles after the last block in the last row to null
         if (tilesetLength % 8 !== 0)
@@ -342,11 +342,9 @@ export class MapEditorContext extends TabbedEditorContext {
         // Metatiles need to be flattened
         const metatiles = new Uint16Array(imported.metatiles.length * 8);
         let written = 0;
-        for (const metatile of imported.metatiles) {
-            for (const tile of metatile) {
+        for (const metatile of imported.metatiles)
+            for (const tile of metatile)
                 metatiles[written++] = tile;
-            }
-        }
 
         // Palettes are more complicated, since colors need to be extracted
         const palettes = new Uint8Array(16 * 16 * 4);
@@ -369,13 +367,14 @@ export class MapEditorContext extends TabbedEditorContext {
         // Tiles need to be flattened
         const tiles = new Uint8Array(8 * 8 * imported.tiles.length);
         written = 0;
-        for (const tile of imported.tiles) {
-            for (const row of tile) {
-                for (const pixel of row) {
+        for (const tile of imported.tiles)
+            for (const row of tile)
+                for (const pixel of row)
                     tiles[written++] = pixel;
-                }
-            }
-        }
+
+        // Initialize the renderer with the data
+        load_tileset(this.tileset1Offset, this.tileset2Offset,
+            metatiles, metatileLayers, tiles, palettes);
 
         return {
             metatiles,
@@ -539,13 +538,6 @@ export class MapEditorContext extends TabbedEditorContext {
 
     // ANCHOR Editor Methods
     public renderMetatiles(bottomImageData: ImageData, topImageData: ImageData, blocksData: BlocksData, range: TileSelection = null) {
-        // Get the data
-        let tilesetsData = get(this.data).tilesets;
-        let metatiles = tilesetsData.metatiles;
-        let metatileLayers = tilesetsData.metatileLayers;
-        let tiles = tilesetsData.tiles;
-        let palettes = tilesetsData.palettes;
-
         if (range === null) {
             range = {
                 x: 0,
@@ -559,7 +551,7 @@ export class MapEditorContext extends TabbedEditorContext {
             bottomImageData.data as unknown as Uint8Array,
             topImageData.data as unknown as Uint8Array,
             blocksData.metatiles, blocksData.width, blocksData.height,
-            metatiles, metatileLayers, tiles, palettes,
+            this.tileset1Offset, this.tileset2Offset,
             range.x, range.y, range.x + range.width, range.y + range.height);
     }
 
