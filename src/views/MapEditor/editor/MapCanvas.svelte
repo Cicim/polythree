@@ -177,8 +177,11 @@
     /** The painting state for reverting and committing */
     let paintingState: PainterState = null;
 
-    /** Canvases containing the chunks in which the metatile map is divided */
-    let metatileChunks: [ChunkData, ChunkData][][] = null;
+    /** Contexts containing the two prerendered layers of the map. */
+    let metatileBuffers: [ChunkData, ChunkData] = [null, null];
+    /** Image data of the `metatileContexts` */
+    let metatileBufferData = [null, null];
+
     /** Canvases containing the chunks for rendering the level data with colors and text. */
     let textLevelChunks: ChunkData[][] = null;
     /** Canvases containing the chunks for rendering the level data with colors only. */
@@ -187,7 +190,7 @@
     const unsubscribeFromData = data.subscribe((value) => {
         initialized = false;
         tilesetImages = value.tilesets;
-        buildChunks();
+        initMetatileBuffers();
         buildLevelChunks();
         initialized = true;
         draw();
@@ -204,9 +207,9 @@
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-        // Find how many squares of size 16x16 can fit in the canvas
-        drawBottomLayer();
-        drawTopLayer();
+        const [botCtx, topCtx] = metatileBuffers;
+        drawMetatileLayer(botCtx);
+        drawMetatileLayer(topCtx);
         if (editLevels) drawLevels();
 
         // Draw the texts on the canvas
@@ -233,55 +236,17 @@
     }
 
     // ANCHOR Tile and lavel drawing functions
-    /** Draws the bottom layer of the blocks */
-    const drawBottomLayer = () => drawTileLayer(true);
-    /** Draws the top layer of the blocks */
-    const drawTopLayer = () => drawTileLayer(false);
+    function drawMetatileLayer(layer: ChunkData) {
+        const canvas = layer.canvas;
 
-    function drawTileLayer(bottomLayer: boolean) {
-        const [start, end] = getVisibleBlocks();
-
-        // Compute the chunk coordinates that are visible in the map
-        const chunkStart = point(
-            Math.floor(start.x / chunkSize),
-            Math.floor(start.y / chunkSize)
+        const position = mapToCanvas(point(0, 0));
+        ctx.drawImage(
+            canvas,
+            position.x,
+            position.y,
+            canvas.width * zoom,
+            canvas.height * zoom
         );
-
-        const chunkEnd = point(
-            Math.ceil(end.x / chunkSize),
-            Math.ceil(end.y / chunkSize)
-        );
-
-        // Draw the chunks
-        for (let x = chunkStart.x; x < chunkEnd.x; x++) {
-            for (let y = chunkStart.y; y < chunkEnd.y; y++) {
-                const chunk = metatileChunks[y]?.[x];
-                // If the chunk is undefined, it's an empty chunk
-                if (chunk === undefined) continue;
-                const [bottom, top] = chunk;
-
-                // Draw the chunk
-                const pos = mapToCanvas(
-                    point(x * chunkSize * 16, y * chunkSize * 16)
-                );
-                if (bottomLayer)
-                    ctx.drawImage(
-                        bottom.canvas,
-                        pos.x,
-                        pos.y,
-                        bottom.canvas.width * zoom,
-                        bottom.canvas.height * zoom
-                    );
-                else
-                    ctx.drawImage(
-                        top.canvas,
-                        pos.x,
-                        pos.y,
-                        top.canvas.width * zoom,
-                        top.canvas.height * zoom
-                    );
-            }
-        }
     }
 
     /** Draws the level data on top of the canvas. */
@@ -442,67 +407,84 @@
     }
 
     // ANCHOR Chunking
-    /** Build the chunks from the blocks data. */
-    function buildChunks() {
-        if (chunkSize === 0) return;
+    /** Rebuilds the entire buffers when the map is loaded or resized. */
+    function initMetatileBuffers() {
+        if (mainCanvas) console.log(blocksWidth, blocksHeight);
 
-        // Get the number of chunks in each direction
-        const chunksX = Math.ceil(blocksWidth / chunkSize);
-        const chunksY = Math.ceil(blocksHeight / chunkSize);
+        const bot = document.createElement("canvas");
+        bot.width = blocksWidth * 16;
+        bot.height = blocksHeight * 16;
+        const botCtx = bot.getContext("2d");
 
-        // Create the chunks
-        metatileChunks = new Array(chunksY);
+        const top = document.createElement("canvas");
+        top.width = blocksWidth * 16;
+        top.height = blocksHeight * 16;
+        const topCtx = top.getContext("2d");
 
-        // Fill the chunks
-        for (let cy = 0; cy < chunksY; cy++) {
-            metatileChunks[cy] = new Array(chunksX);
-            for (let cx = 0; cx < chunksX; cx++) {
-                // Get the chunk data
-                const chunk = getChunk(cx, cy);
-                // Save the chunk
-                metatileChunks[cy][cx] = chunk;
-            }
-        }
+        // Store the canvases
+        metatileBuffers = [botCtx, topCtx];
+
+        // Get their image data
+        const botData = botCtx.getImageData(0, 0, bot.width, bot.height);
+        const topData = topCtx.getImageData(0, 0, top.width, top.height);
+        metatileBufferData = [botData, topData];
+
+        const time = performance.now();
+        // First render
+        updateMetatileBuffers();
+        if (mainCanvas)
+            console.log(`Took ${performance.now() - time}ms to init buffers`);
     }
 
-    /** Renders the chunk at the given chunk coordinates */
-    function getChunk(cx: number, cy: number): [ChunkData, ChunkData] {
-        // Create the canvases for this chunk
-        const botCanvas = document.createElement("canvas");
-        const topCanvas = document.createElement("canvas");
+    /** Updates the entire buffer. A slow and temporary solution */
+    function updateMetatileBuffers(range: TileSelection = null) {
+        const time = performance.now();
+        // if (mainCanvas) console.clear();
 
-        // Set the size of the canvas
-        botCanvas.width = chunkSize * 16;
-        botCanvas.height = chunkSize * 16;
-        topCanvas.width = chunkSize * 16;
-        topCanvas.height = chunkSize * 16;
+        const [botCtx, topCtx] = metatileBuffers;
+        const [botData, topData] = metatileBufferData;
 
-        // Get the context
-        const botCtx = botCanvas.getContext("2d");
-        const topCtx = topCanvas.getContext("2d");
-
-        // Draw the chunks
-        for (let j = 0; j < chunkSize; j++) {
-            for (let i = 0; i < chunkSize; i++) {
-                // Get the tile images
-                const metatile = blocks.getMetatileInBounds(
-                    cx * chunkSize + i,
-                    cy * chunkSize + j
-                );
-                if (metatile === undefined) continue;
-
-                const images = tilesetImages[metatile];
-                if (images === null || images === undefined) continue;
-
-                const [bottomImage, topImage] = images;
-
-                // Compute the actual coordinates
-                botCtx.drawImage(bottomImage, i * 16, j * 16, 16, 16);
-                topCtx.drawImage(topImage, i * 16, j * 16, 16, 16);
-            }
+        if (range === null) {
+            range = {
+                x: 0,
+                y: 0,
+                width: blocksWidth,
+                height: blocksHeight,
+            };
         }
 
-        return [botCtx, topCtx];
+        const time2 = performance.now();
+        // Clear the top canvas
+        context.renderMetatiles(botData, topData, blocks, range);
+        const total2 = performance.now() - time2;
+
+        const time3 = performance.now();
+        // Draw the metatiles
+        botCtx.putImageData(
+            botData,
+            0,
+            0,
+            range.x * 16,
+            range.y * 16,
+            range.width * 16,
+            range.height * 16
+        );
+        topCtx.putImageData(
+            topData,
+            0,
+            0,
+            range.x * 16,
+            range.y * 16,
+            range.width * 16,
+            range.height * 16
+        );
+        const total3 = performance.now() - time3;
+
+        if (mainCanvas) {
+            console.log(`Took ${performance.now() - time}ms to update buffers`);
+            console.log(` : Took ${total2}ms to render metatiles`);
+            console.log(` : Took ${total3}ms to apply imagedata`);
+        }
     }
 
     /** Build the chunks for caching the level data. */
@@ -704,6 +686,31 @@
         selCanvas.height = selection.height * 16;
         const ctx = selCanvas.getContext("2d");
 
+        // Build the metatile canvas
+        const [botCtx, topCtx] = metatileBuffers;
+        ctx.drawImage(
+            botCtx.canvas,
+            selection.x * 16,
+            selection.y * 16,
+            selCanvas.width,
+            selCanvas.height,
+            0,
+            0,
+            selCanvas.width,
+            selCanvas.height
+        );
+        ctx.drawImage(
+            topCtx.canvas,
+            selection.x * 16,
+            selection.y * 16,
+            selCanvas.width,
+            selCanvas.height,
+            0,
+            0,
+            selCanvas.width,
+            selCanvas.height
+        );
+
         // Draw the blocks on this ctx
         const csx = Math.floor(selection.x / chunkSize);
         const csy = Math.floor(selection.y / chunkSize);
@@ -713,21 +720,6 @@
         // Get the offset in the first chunk
         const ox = selection.x % chunkSize;
         const oy = selection.y % chunkSize;
-
-        // Build the metatile canvas
-        for (let cy = 0; cy <= cey - csy; cy++) {
-            for (let cx = 0; cx <= cex - csx; cx++) {
-                // Get the chunk
-                const chunk = metatileChunks[csy + cy]?.[csx + cx];
-                if (chunk === undefined) continue;
-
-                // Draw the chunk (subtracting the offset)
-                const rx = cx * chunkSize * 16 - ox * 16;
-                const ry = cy * chunkSize * 16 - oy * 16;
-                ctx.drawImage(chunk[0].canvas, rx, ry);
-                ctx.drawImage(chunk[1].canvas, rx, ry);
-            }
-        }
 
         // Build the levels canvas
         const lvCanvas = document.createElement("canvas");
@@ -804,36 +796,24 @@
             const oldMetatile = blocks.getMetatile(x, y);
             const oldLevel = blocks.getLevel(x, y);
 
-            // Get the correct chunk to update
-            const cx = Math.floor(x / chunkSize);
-            const cy = Math.floor(y / chunkSize);
-            const ox = x % chunkSize;
-            const oy = y % chunkSize;
-
             if (
                 oldMetatile !== metatile &&
                 !(editLevels && state === State.Painting)
             ) {
                 // Update the metatile
                 blocks.setMetatile(x, y, metatile);
-                // Get the metattile chunks
-                const metatileChunk = metatileChunks[cy][cx];
-                const botCtx = metatileChunk[0];
-                const topCtx = metatileChunk[1];
 
-                // Get the tile images
-                const images = tilesetImages[metatile];
-                if (images === null) return;
-                const [bottomImage, topImage] = images;
-
-                // Just draw the new tile on the bottom canvas
-                botCtx.drawImage(bottomImage, ox * 16, oy * 16, 16, 16);
-                // For the top canvas, you first need to clear the spot
-                topCtx.clearRect(ox * 16, oy * 16, 16, 16);
-                topCtx.drawImage(topImage, ox * 16, oy * 16, 16, 16);
+                // Re-render everything
+                updateMetatileBuffers({ x, y, width: 1, height: 1 });
             }
 
             if (oldLevel !== level) {
+                // Get the correct chunk to update
+                const cx = Math.floor(x / chunkSize);
+                const cy = Math.floor(y / chunkSize);
+                const ox = x % chunkSize;
+                const oy = y % chunkSize;
+
                 // Update the level
                 blocks.setLevel(x, y, level);
                 // Get the level chunks
@@ -1057,10 +1037,8 @@
 
         // Unset all things that could use memory
         context = null;
-        for (const row of metatileChunks)
-            for (const chunk of row)
-                for (const ctx of chunk) ctx.canvas.remove();
-        metatileChunks = null;
+        metatileBufferData = [null, null];
+        metatileBuffers = [null, null];
 
         for (const row of textLevelChunks)
             for (const ctx of row) ctx.canvas.remove();

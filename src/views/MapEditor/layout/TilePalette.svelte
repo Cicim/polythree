@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MapEditorContext, TilesetData } from "src/views/MapEditor";
+    import type { MapEditorContext, TilesetsData } from "src/views/MapEditor";
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
     import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
@@ -11,15 +11,14 @@
 
     const context: MapEditorContext = getContext("context");
     // Get the data
-    const data = context.data;
     const material = context.material;
-    // Get the tilesets
-    const tilesets: TilesetData = $data.tilesets;
     // Get the block data for this map
     const tilesetBlocksStore = context.tilesetBlocks;
+    /** Height of the tileset in blocks */
+    let tilesetHeight: number = 0;
 
-    // Get the canvas
-    let paletteCanvas: HTMLCanvasElement;
+    /** Palette canvas with the drawn tiles. */
+    let canvas: HTMLCanvasElement;
     let selectionDiv: HTMLDivElement;
     let paletteContainer: HTMLDivElement;
 
@@ -69,20 +68,33 @@
 
     /** Compose the canvas image for the palette */
     function drawPalette() {
-        const ctx = paletteCanvas.getContext("2d");
+        // Get the blocks to draw
+        const blocks: BlocksData = $tilesetBlocksStore;
+
+        const ctx = canvas.getContext("2d");
         // Set the canvas size
-        paletteCanvas.width = 8 * 16;
-        paletteCanvas.height = Math.ceil(tilesets.length / 8) * 16;
+        canvas.width = blocks.width * 16;
+        canvas.height = blocks.height * 16;
+        // Save the tileset height
+        tilesetHeight = blocks.height;
 
-        for (let i = 0; i < tilesets.length; i++) {
-            const tileset = tilesets[i];
+        // Build the top canvas
+        const topCanvas = document.createElement("canvas");
+        topCanvas.width = blocks.width * 16;
+        topCanvas.height = blocks.height * 16;
+        const topCtx = topCanvas.getContext("2d");
 
-            // Draw the bottom image
-            const x = (i % 8) * 16;
-            const y = Math.floor(i / 8) * 16;
-            ctx.drawImage(tileset[0], x, y);
-            ctx.drawImage(tileset[1], x, y);
-        }
+        // Get the image data for both canvases
+        const bot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const top = topCtx.getImageData(0, 0, canvas.width, canvas.height);
+        // Render the metatiles on the two layers
+        context.renderMetatiles(bot, top, $tilesetBlocksStore);
+        // Put the image data back on both canvases
+        ctx.putImageData(bot, 0, 0);
+        topCtx.putImageData(top, 0, 0);
+
+        // Draw the top canvas on top of the bottom one
+        ctx.drawImage(topCanvas, 0, 0);
     }
 
     function sortSelection(): TileSelection {
@@ -109,9 +121,9 @@
         selectionDiv.style.setProperty("--height", `${height}`);
 
         // Get the left offset if fitToContainer is set
-        const rect = paletteCanvas.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         // Get the container's width
-        const containerWidth = paletteCanvas.parentElement.clientWidth;
+        const containerWidth = canvas.parentElement.clientWidth;
         // Get the left offset
         const left = (containerWidth - rect.width) / 2;
         selectionDiv.style.setProperty("--left", `${left}px`);
@@ -125,12 +137,12 @@
 
     function scrollToTile(tileY: number) {
         const scrollableElement =
-            paletteCanvas?.parentElement?.parentElement?.parentElement;
+            canvas?.parentElement?.parentElement?.parentElement;
         if (!scrollableElement) return;
 
-        const rect = paletteCanvas.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         const height = rect.height;
-        const tileSize = height / Math.ceil(tilesets.length / 8);
+        const tileSize = height / tilesetHeight;
         const scrollY = tileY * tileSize;
         scrollableElement.scrollTo({
             top: scrollY,
@@ -150,7 +162,7 @@
             for (let i = 0; i < width; i++) {
                 const tileIndex = blocks.index(x + i, y + j);
 
-                if (tileIndex >= tilesets.length) {
+                if (tileIndex >= tilesetHeight) {
                     blocks.set(i, j, NULL, NULL);
                 } else {
                     blocks.set(
@@ -177,13 +189,13 @@
         // Get the pixel coordinates
         const x = Math.floor(event.offsetX);
         const y = Math.floor(event.offsetY);
-        const rect = paletteCanvas.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
 
         // Get the tile index
         const tileX = Math.floor((x / width) * 8);
-        const tileY = Math.floor((y / height) * Math.ceil(tilesets.length / 8));
+        const tileY = Math.floor((y / height) * tilesetHeight);
 
         return {
             x: tileX,
@@ -226,9 +238,9 @@
     }
 
     function onResized() {
-        if (!paletteCanvas || !selectionDiv) return;
+        if (!canvas || !selectionDiv) return;
         // Get the canvas's rect width
-        const rect = paletteCanvas.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         const width = rect.width;
         // Calculate the new tile size
         lastTileSize = width / 8;
@@ -298,15 +310,14 @@
             if (multiselection && selectionStart.y < firstSelection.y) {
                 selectionStart.y++;
             } else {
-                if (selectionEnd.y !== Math.ceil(tilesets.length / 8) - 1)
-                    selectionEnd.y++;
+                if (selectionEnd.y !== tilesetHeight - 1) selectionEnd.y++;
             }
 
             if (!select) {
                 if (!multiselection) selectionStart.y = selectionEnd.y;
                 else {
                     selectionStart = { ...firstSelection };
-                    if (selectionStart.y !== Math.ceil(tilesets.length / 8) - 1)
+                    if (selectionStart.y !== tilesetHeight - 1)
                         selectionStart.y++;
                     selectionEnd = { ...selectionStart };
                 }
@@ -375,7 +386,7 @@
         <canvas
             class:stretch={fitToContainer}
             class="palette-canvas"
-            bind:this={paletteCanvas}
+            bind:this={canvas}
             on:mousedown={onMouseDown}
             on:mouseup={onMouseUp}
             on:mousemove={onMouseMove}

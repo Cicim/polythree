@@ -1,7 +1,8 @@
 use poly3lib::maps::{
     header::{MapHeader, MapHeaderData},
     layout::{MapLayout, MapLayoutData},
-    render::{RenderedMetatile, TilesetsPair},
+    render::TilesetsPair,
+    tileset::TilesetsRenderData,
 };
 
 use crate::state::{AppResult, AppState, AppStateFunctions};
@@ -25,16 +26,21 @@ pub fn get_map_layout_data(state: AppState, id: u16) -> AppResult<MapLayoutData>
 }
 
 #[tauri::command]
-pub fn get_rendered_tilesets(
+pub fn get_tilesets_rendering_data(
     state: AppState,
     tileset1: usize,
     tileset2: usize,
-) -> AppResult<Vec<RenderedMetatile>> {
+) -> AppResult<TilesetsRenderData> {
     state.with_rom(|rom| {
+        // Get the tileset
         let tilesets = TilesetsPair::new(rom, tileset1, tileset2)
             .map_err(|e| format!("Error while loading tilesets: {}", e))?;
+        // Get the render data
+        let render_data = tilesets
+            .get_render_data(&rom)
+            .map_err(|e| format!("Error getting tileset render data: {}", e))?;
 
-        Ok(tilesets.render())
+        Ok(render_data)
     })
 }
 

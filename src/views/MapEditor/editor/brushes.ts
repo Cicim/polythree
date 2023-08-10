@@ -1,4 +1,4 @@
-import type { TilesetData } from "src/views/MapEditor";
+import type { TilesetsData } from "src/views/MapEditor";
 import { get, writable } from "svelte/store";
 import { BlocksData } from "./blocks_data";
 import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
@@ -53,7 +53,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
     }
 
     /** Returns the canvas with the rendered thumbnail */
-    public renderThumbnail(tilesetData: TilesetData): HTMLCanvasElement {
+    public renderThumbnail(tilesetData: TilesetsData): HTMLCanvasElement {
         // Obtain the thumbnail metatile
         const metatiles = this.getThumbnailMetatile();
         const width = metatiles[0].length;
@@ -78,7 +78,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
     }
 
     /** Creates a base64 image for preview */
-    public createPreviewImage(tilesetData: TilesetData): string {
+    public createPreviewImage(tilesetData: TilesetsData): string {
         const canvas = this.renderThumbnail(tilesetData);
         return canvas.toDataURL();
     }

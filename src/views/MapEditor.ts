@@ -18,6 +18,7 @@ import { EditorChanges } from "src/systems/changes";
 import type { SidebarState } from "./MapEditor/layout/LayoutSidebar.svelte";
 import { loadBrushesForTilesets, saveBrushesForTilesets } from "./MapEditor/editor/brush_serialization";
 import { BlocksData, NULL, type ImportedBlocksData } from "./MapEditor/editor/blocks_data";
+import initWasmFunctions, { render_blocks_data } from "src/wasm/map-canvas/pkg";
 
 export interface MapEditorProperties {
     group: number;
@@ -47,12 +48,30 @@ export interface ImportedMapLayoutData {
     header: MapLayout;
 }
 
-export type TilesetData = [HTMLImageElement, HTMLImageElement][];
+interface ImportedTilesetsData {
+    tiles: number[][][];
+    metatiles: number[][];
+    metatile_layers: number[];
+    palettes: number[][];
+
+    tile_limit: number;
+    metatile_limit: number;
+}
+
+export interface TilesetsData {
+    tiles: Uint8Array;
+    metatiles: Uint16Array;
+    metatileLayers: Uint8Array;
+    palettes: Uint8Array;
+
+    tileLimit: number;
+    metatileLimit: number;
+}
 
 export interface MapEditorData {
     header: MapHeaderData,
     layout?: MapLayoutData,
-    tilesets?: TilesetData,
+    tilesets?: TilesetsData,
 }
 
 export class MapEditorContext extends TabbedEditorContext {
@@ -225,7 +244,7 @@ export class MapEditorContext extends TabbedEditorContext {
             this.close();
             return;
         }
-        const [tileset1, tileset2, tilesetData] = tilesetResults;
+        const [tileset1, tileset2, tilesetsData] = tilesetResults;
         this.tileset1Offset = tileset1;
         this.tileset2Offset = tileset2;
         layoutData.header.primary_tileset = { offset: tileset1 };
@@ -249,17 +268,8 @@ export class MapEditorContext extends TabbedEditorContext {
         }
 
         // Convert tilesetData to images
-        const lowPromises: Promise<HTMLImageElement>[] = [];
-        const hiPromises: Promise<HTMLImageElement>[] = [];
-        for (const metatile of tilesetData) {
-            lowPromises.push(this.convertStringToImage(metatile[0]));
-            hiPromises.push(this.convertStringToImage(metatile[1]));
-        }
-        const lowImages = await Promise.all(lowPromises);
-        const hiImages = await Promise.all(hiPromises);
-        const allImages: TilesetData = lowImages.map((low, i) => [low, hiImages[i]])
-
-        this.data.set({ header: headerData, layout: layoutData, tilesets: allImages });
+        const tilesets = this.loadTilesetsData(tilesetsData);
+        this.data.set({ header: headerData, layout: layoutData, tilesets });
 
         // Get the tilesets lengths
         try {
@@ -280,7 +290,7 @@ export class MapEditorContext extends TabbedEditorContext {
         // Get the levels for these tilesets from config
         const importedTilesetLevels = await this.importTilesetsLevels();
         // Compose the block data for the tileset level editor
-        const tilesetLength = allImages.length;
+        const tilesetLength = tilesetsData.metatiles.length;
         const tilesetBlocks = new BlocksData(8, Math.ceil(tilesetLength / 8))
         // Set the blockData for the tilesets to be the ascending number of tiles 
         // with the permissions you've read from the configs
@@ -288,6 +298,9 @@ export class MapEditorContext extends TabbedEditorContext {
             for (let x = 0; x < 8; x++)
                 tilesetBlocks.set(x, y, y * 8 + x, importedTilesetLevels[y * 8 + x]);
         }
+
+        // Load the wasm functions
+        await initWasmFunctions();
 
         // Set the tiles after the last block in the last row to null
         if (tilesetLength % 8 !== 0)
@@ -320,6 +333,61 @@ export class MapEditorContext extends TabbedEditorContext {
         this.isLoading.set(false);
     }
 
+    /** Constructs the tileset data used by the renderers from the `ImportedTilesetsData` */
+    private loadTilesetsData(imported: ImportedTilesetsData): TilesetsData {
+        // Compress everything to UIntArrays
+        // Metatile layers are straightforward
+        const metatileLayers = Uint8Array.from(imported.metatile_layers);
+
+        // Metatiles need to be flattened
+        const metatiles = new Uint16Array(imported.metatiles.length * 8);
+        let written = 0;
+        for (const metatile of imported.metatiles) {
+            for (const tile of metatile) {
+                metatiles[written++] = tile;
+            }
+        }
+
+        // Palettes are more complicated, since colors need to be extracted
+        const palettes = new Uint8Array(16 * 16 * 4);
+        written = 0;
+        for (const palette of imported.palettes) {
+            for (const color of palette) {
+                // Get the color from GBA format
+                const r = (color & 0x1F) << 3;
+                const g = ((color >> 5) & 0x1F) << 3;
+                const b = ((color >> 10) & 0x1F) << 3;
+
+                // Save them in RGBA format
+                palettes[written++] = r;
+                palettes[written++] = g;
+                palettes[written++] = b;
+                palettes[written++] = 255;
+            }
+        }
+
+        // Tiles need to be flattened
+        const tiles = new Uint8Array(8 * 8 * imported.tiles.length);
+        written = 0;
+        for (const tile of imported.tiles) {
+            for (const row of tile) {
+                for (const pixel of row) {
+                    tiles[written++] = pixel;
+                }
+            }
+        }
+
+        return {
+            metatiles,
+            metatileLayers,
+            palettes,
+            tiles,
+
+            tileLimit: imported.tile_limit,
+            metatileLimit: imported.metatile_limit,
+        };
+    }
+
     // ANCHOR Error Handling
     /** Ask the user for a layout until that layout is valid for this map */
     private async queryLayoutUntilValid(id?: number): Promise<[number, number, ImportedMapLayoutData]> {
@@ -346,12 +414,12 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     /** Ask the user for tilesets until they are valid for this map */
-    private async queryTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, [string, string][]]> {
+    private async queryTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, ImportedTilesetsData]> {
         while (true) {
             try {
                 return [
                     tileset1, tileset2,
-                    await invoke('get_rendered_tilesets', { tileset1, tileset2 })
+                    await invoke('get_tilesets_rendering_data', { tileset1, tileset2 })
                 ];
             }
             catch (message) {
@@ -367,15 +435,6 @@ export class MapEditorContext extends TabbedEditorContext {
                 [tileset1, tileset2] = tilesets;
             }
         }
-    }
-
-    // ANCHOR Utils
-    /** Convert a string to an image */
-    private async convertStringToImage(string: string): Promise<HTMLImageElement> {
-        const image = new Image();
-        image.src = string;
-        await new Promise(resolve => image.onload = resolve);
-        return image;
     }
 
     // ANCHOR Tileset Levels
@@ -479,6 +538,31 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     // ANCHOR Editor Methods
+    public renderMetatiles(bottomImageData: ImageData, topImageData: ImageData, blocksData: BlocksData, range: TileSelection = null) {
+        // Get the data
+        let tilesetsData = get(this.data).tilesets;
+        let metatiles = tilesetsData.metatiles;
+        let metatileLayers = tilesetsData.metatileLayers;
+        let tiles = tilesetsData.tiles;
+        let palettes = tilesetsData.palettes;
+
+        if (range === null) {
+            range = {
+                x: 0,
+                y: 0,
+                width: blocksData.width,
+                height: blocksData.height
+            }
+        }
+
+        render_blocks_data(
+            bottomImageData.data as unknown as Uint8Array,
+            topImageData.data as unknown as Uint8Array,
+            blocksData.metatiles, blocksData.width, blocksData.height,
+            metatiles, metatileLayers, tiles, palettes,
+            range.x, range.y, range.x + range.width, range.y + range.height);
+    }
+
     public get toolClass(): typeof Tool {
         return toolFunctions[get(this.selectedTool)];
     }
