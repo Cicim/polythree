@@ -112,6 +112,15 @@ export class MapEditorContext extends TabbedEditorContext {
     public brushesChanges: EditorChanges<BrushesChangesData>;
 
     // Tileset Palette
+    /** Tileset bottom tiles for quick drawing */
+    public botTiles: CanvasRenderingContext2D;
+    /** Tileset top tiles for quick drawing */
+    public topTiles: CanvasRenderingContext2D;
+    /** The image data of the bottom tiles */
+    public botTilesData: ImageData;
+    /** The image data of the top tiles */
+    public topTilesData: ImageData;
+
     /** The block data for the tilset level editor */
     public tilesetBlocks: Writable<BlocksData>;
     /** The changes that are applied to the tileset level editor */
@@ -376,6 +385,9 @@ export class MapEditorContext extends TabbedEditorContext {
         load_tileset(this.tileset1Offset, this.tileset2Offset,
             metatiles, metatileLayers, tiles, palettes);
 
+        // Render the tilesets onto the cache
+        this.initTilesetCache(imported.metatiles.length);
+
         return {
             metatiles,
             metatileLayers,
@@ -385,6 +397,42 @@ export class MapEditorContext extends TabbedEditorContext {
             tileLimit: imported.tile_limit,
             metatileLimit: imported.metatile_limit,
         };
+    }
+
+    private initTilesetCache(size: number) {
+        // Create the top and bottom canvas
+        const top = document.createElement("canvas");
+        this.topTiles = top.getContext("2d");
+
+        const bot = document.createElement("canvas");
+        top.width = bot.width = 16 * size;
+        top.height = bot.height = 16;
+        this.botTiles = bot.getContext("2d");
+
+        // Get the image datas
+        const topData = this.topTiles.getImageData(0, 0, top.width, top.height);
+        const botData = this.botTiles.getImageData(0, 0, bot.width, bot.height);
+        this.topTilesData = topData;
+        this.botTilesData = botData;
+
+        // Create the blocks data to render
+        const metatiles = new Uint16Array(size);
+        for (let i = 0; i < size; i++)
+            metatiles[i] = i;
+
+        // Render the tiles
+        const time = performance.now();
+        this.renderMetatiles(botData, topData, {
+            metatiles,
+            width: size,
+            height: 1,
+        });
+
+        // Put the image data
+        this.topTiles.putImageData(topData, 0, 0);
+        this.botTiles.putImageData(botData, 0, 0);
+
+        console.info(`Rendered ${size} metatiles in ${performance.now() - time}ms`);
     }
 
     // ANCHOR Error Handling
@@ -537,7 +585,11 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     // ANCHOR Editor Methods
-    public renderMetatiles(bottomImageData: ImageData, topImageData: ImageData, blocksData: BlocksData, range: TileSelection = null) {
+    public renderMetatiles(bottomImageData: ImageData, topImageData: ImageData, blocksData: {
+        metatiles: Uint16Array,
+        width: number,
+        height: number
+    }, range: TileSelection = null) {
         if (range === null) {
             range = {
                 x: 0,

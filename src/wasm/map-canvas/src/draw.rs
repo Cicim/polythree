@@ -53,18 +53,19 @@ pub(crate) fn render(
             let offset_x = bx * 16;
             let offset_y = by * 16;
 
-            // In any case, start by clearing the top layer
-            // since it is transparent and may have been dirtied
-            // by previous updates
-            draw_metatile_layer(
-                context,
-                top_layer_image_data,
-                offset_x,
-                offset_y,
-                &[0; 4],
-                pixels_width,
-                TransparencyType::Transparent,
-            );
+            macro_rules! clear_top_layer {
+                () => {
+                    draw_metatile_layer(
+                        context,
+                        top_layer_image_data,
+                        offset_x,
+                        offset_y,
+                        &[0; 4],
+                        pixels_width,
+                        TransparencyType::Transparent,
+                    );
+                };
+            }
 
             // Get the layer type
             match context.layer_types[metatile_id] {
@@ -110,6 +111,7 @@ pub(crate) fn render(
                         pixels_width,
                         TransparencyType::FallThrough,
                     );
+                    clear_top_layer!();
                 }
                 THREELAYERS => {
                     draw_metatile_layer(
@@ -133,7 +135,10 @@ pub(crate) fn render(
 
                     // Get the next metatile
                     let next_metatile = match blocks_data[index + 1] {
-                        id if id > metatiles_len => continue,
+                        id if id > metatiles_len => {
+                            clear_top_layer!();
+                            continue;
+                        }
                         id => id as usize,
                     };
                     let Metatile { bot: _, top } = &context.metatiles[next_metatile];

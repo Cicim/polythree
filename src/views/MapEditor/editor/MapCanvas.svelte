@@ -180,7 +180,7 @@
     /** Contexts containing the two prerendered layers of the map. */
     let metatileBuffers: [ChunkData, ChunkData] = [null, null];
     /** Image data of the `metatileContexts` */
-    let metatileBufferData = [null, null];
+    let metatileBufferData: [ImageData, ImageData] = [null, null];
 
     /** Canvases containing the chunks for rendering the level data with colors and text. */
     let textLevelChunks: ChunkData[][] = null;
@@ -409,8 +409,6 @@
     // ANCHOR Chunking
     /** Rebuilds the entire buffers when the map is loaded or resized. */
     function initMetatileBuffers() {
-        if (mainCanvas) console.log(blocksWidth, blocksHeight);
-
         const bot = document.createElement("canvas");
         bot.width = blocksWidth * 16;
         bot.height = blocksHeight * 16;
@@ -429,18 +427,12 @@
         const topData = topCtx.getImageData(0, 0, top.width, top.height);
         metatileBufferData = [botData, topData];
 
-        const time = performance.now();
         // First render
         updateMetatileBuffers();
-        if (mainCanvas)
-            console.log(`Took ${performance.now() - time}ms to init buffers`);
     }
 
     /** Updates the entire buffer. A slow and temporary solution */
     function updateMetatileBuffers(range: TileSelection = null) {
-        const time = performance.now();
-        // if (mainCanvas) console.clear();
-
         const [botCtx, topCtx] = metatileBuffers;
         const [botData, topData] = metatileBufferData;
 
@@ -452,13 +444,9 @@
                 height: blocksHeight,
             };
         }
-
-        const time2 = performance.now();
         // Clear the top canvas
         context.renderMetatiles(botData, topData, blocks, range);
-        const total2 = performance.now() - time2;
 
-        const time3 = performance.now();
         // Draw the metatiles
         botCtx.putImageData(
             botData,
@@ -478,13 +466,6 @@
             range.width * 16,
             range.height * 16
         );
-        const total3 = performance.now() - time3;
-
-        if (mainCanvas) {
-            console.log(`Took ${performance.now() - time}ms to update buffers`);
-            console.log(` : Took ${total2}ms to render metatiles`);
-            console.log(` : Took ${total3}ms to apply imagedata`);
-        }
     }
 
     /** Build the chunks for caching the level data. */
@@ -800,11 +781,10 @@
                 oldMetatile !== metatile &&
                 !(editLevels && state === State.Painting)
             ) {
+                // Re-render everything
+                drawSingleMetatile(x, y, metatile);
                 // Update the metatile
                 blocks.setMetatile(x, y, metatile);
-
-                // Re-render everything
-                updateMetatileBuffers({ x, y, width: 1, height: 1 });
             }
 
             if (oldLevel !== level) {
@@ -831,6 +811,64 @@
             }
         },
     };
+
+    function drawSingleMetatile(x: number, y: number, metatile: number) {
+        // Get the canvases where to draw the tile
+        const [botCtx, topCtx] = metatileBuffers;
+
+        // Draw both bottom and top of those tiles to the metatileBuffers
+        botCtx.drawImage(
+            context.botTiles.canvas,
+            metatile * 16,
+            0,
+            16,
+            16,
+            x * 16,
+            y * 16,
+            16,
+            16
+        );
+        topCtx.clearRect(x * 16, y * 16, 16, 16);
+        topCtx.drawImage(
+            context.topTiles.canvas,
+            metatile * 16,
+            0,
+            16,
+            16,
+            x * 16,
+            y * 16,
+            16,
+            16
+        );
+
+        // Copy the image data to the two buffers
+        const [botData, topData] = metatileBufferData;
+
+        const mapWidth = botData.width;
+        const cacheWidth = context.botTilesData.width;
+
+        const cacheTop = context.topTilesData;
+        const cacheBot = context.botTilesData;
+
+        // Get the image data
+        for (let i = 0; i < 16; i++) {
+            for (let j = 0; j < 16; j++) {
+                const ci = (i * cacheWidth + j * metatile * 16) * 4;
+                const mi = ((y * 16 + i) * mapWidth + x * 16 + j) * 4;
+
+                // Copy the data
+                botData.data[mi] = cacheBot.data[ci];
+                botData.data[mi + 1] = cacheBot.data[ci + 1];
+                botData.data[mi + 2] = cacheBot.data[ci + 2];
+                botData.data[mi + 3] = cacheBot.data[ci + 3];
+
+                topData.data[mi] = cacheTop.data[ci];
+                topData.data[mi + 1] = cacheTop.data[ci + 1];
+                topData.data[mi + 2] = cacheTop.data[ci + 2];
+                topData.data[mi + 3] = cacheTop.data[ci + 3];
+            }
+        }
+    }
 
     // ANCHOR Mouse Event handlers
     function onMouseDown(event: MouseEvent) {
