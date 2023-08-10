@@ -117,10 +117,12 @@ export class MapEditorContext extends TabbedEditorContext {
     /** Tileset top tiles for quick drawing */
     public topTiles: CanvasRenderingContext2D;
     /** The image data of the bottom tiles */
-    public botTilesData: ImageData;
+    private botTilesData: ImageData;
     /** The image data of the top tiles */
-    public topTilesData: ImageData;
+    private topTilesData: ImageData;
 
+    /** Length of the two tilesets (might not be a multiple of 8) */
+    public tilesetsLength: number;
     /** The block data for the tilset level editor */
     public tilesetBlocks: Writable<BlocksData>;
     /** The changes that are applied to the tileset level editor */
@@ -302,8 +304,9 @@ export class MapEditorContext extends TabbedEditorContext {
         // Get the levels for these tilesets from config
         const importedTilesetLevels = await this.importTilesetsLevels();
         // Compose the block data for the tileset level editor
-        const tilesetLength = tilesetsData.metatiles.length;
-        const tilesetBlocks = new BlocksData(8, Math.ceil(tilesetLength / 8))
+        const tilesetsLength = tilesetsData.metatiles.length;
+        this.tilesetsLength = tilesetsLength;
+        const tilesetBlocks = new BlocksData(8, Math.ceil(tilesetsLength / 8))
         // Set the blockData for the tilesets to be the ascending number of tiles 
         // with the permissions you've read from the configs
         for (let y = 0; y < tilesetBlocks.height; y++) {
@@ -312,8 +315,8 @@ export class MapEditorContext extends TabbedEditorContext {
         }
 
         // Set the tiles after the last block in the last row to null
-        if (tilesetLength % 8 !== 0)
-            for (let x = tilesetLength % 8; x < 8; x++)
+        if (tilesetsLength % 8 !== 0)
+            for (let x = tilesetsLength % 8; x < 8; x++)
                 tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL, NULL);
 
         this.tilesetBlocks = writable(tilesetBlocks);
@@ -421,7 +424,6 @@ export class MapEditorContext extends TabbedEditorContext {
             metatiles[i] = i;
 
         // Render the tiles
-        const time = performance.now();
         this.renderMetatiles(botData, topData, {
             metatiles,
             width: size,
@@ -432,7 +434,26 @@ export class MapEditorContext extends TabbedEditorContext {
         this.topTiles.putImageData(topData, 0, 0);
         this.botTiles.putImageData(botData, 0, 0);
 
-        console.info(`Rendered ${size} metatiles in ${performance.now() - time}ms`);
+        this.updateTilesetCache();
+    }
+
+    public updateTilesetCache() {
+        const size = this.botTilesData.width / 16;
+
+        // Create the blocks data to render
+        const metatiles = new Uint16Array(size);
+        for (let i = 0; i < size; i++)
+            metatiles[i] = i;
+
+        this.renderMetatiles(this.botTilesData, this.topTilesData, {
+            metatiles,
+            width: size,
+            height: 1,
+        });
+
+        // Put the image data
+        this.topTiles.putImageData(this.topTilesData, 0, 0);
+        this.botTiles.putImageData(this.botTilesData, 0, 0);
     }
 
     // ANCHOR Error Handling

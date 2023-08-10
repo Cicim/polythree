@@ -78,23 +78,30 @@
         // Save the tileset height
         tilesetHeight = blocks.height;
 
-        // Build the top canvas
-        const topCanvas = document.createElement("canvas");
-        topCanvas.width = blocks.width * 16;
-        topCanvas.height = blocks.height * 16;
-        const topCtx = topCanvas.getContext("2d");
-
-        // Get the image data for both canvases
-        const bot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const top = topCtx.getImageData(0, 0, canvas.width, canvas.height);
-        // Render the metatiles on the two layers
-        context.renderMetatiles(bot, top, $tilesetBlocksStore);
-        // Put the image data back on both canvases
-        ctx.putImageData(bot, 0, 0);
-        topCtx.putImageData(top, 0, 0);
-
-        // Draw the top canvas on top of the bottom one
-        ctx.drawImage(topCanvas, 0, 0);
+        for (let j = 0; j < blocks.height; j++) {
+            ctx.drawImage(
+                context.botTiles.canvas,
+                j * 16 * 8,
+                0,
+                16 * 8,
+                16,
+                0,
+                j * 16,
+                16 * 8,
+                16
+            );
+            ctx.drawImage(
+                context.topTiles.canvas,
+                j * 16 * 8,
+                0,
+                16 * 8,
+                16,
+                0,
+                j * 16,
+                16 * 8,
+                16
+            );
+        }
     }
 
     function sortSelection(): TileSelection {
@@ -162,7 +169,7 @@
             for (let i = 0; i < width; i++) {
                 const tileIndex = blocks.index(x + i, y + j);
 
-                if (tileIndex >= tilesetHeight) {
+                if (tileIndex >= context.tilesetsLength) {
                     blocks.set(i, j, NULL, NULL);
                 } else {
                     blocks.set(
