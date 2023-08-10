@@ -338,7 +338,7 @@ pub fn spawn_iconify_server_thread(icons_path: PathBuf) {
                     if cfg!(debug_assertions) {
                         &b"http://localhost:1420"[..]
                     } else {
-                        &b"https://tauri.localhost"[..]
+                        &b"*"[..]
                     },
                 )
                 .unwrap(),
