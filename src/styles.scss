@@ -137,6 +137,8 @@ body {
     max-width: 500px;
   }
 
+  overflow: hidden;
+
   >.dialog-content {
     color: var(--main-fg);
     display: grid;
@@ -144,6 +146,7 @@ body {
     width: 100%;
     min-width: 400px;
     max-height: 90vh;
+    overflow: hidden;
 
     >.title {
       color: var(--weak-fg);
@@ -177,10 +180,12 @@ body {
       padding: 0.66em 0.5em;
       padding-top: 1em;
       border-top: 1px solid var(--light-shadow);
+      display: grid;
+      overflow-y: scroll;
 
       &.form {
         display: flex;
-        flex-flow: column wrap;
+        flex-flow: column nowrap;
         gap: 8px;
 
         input,
