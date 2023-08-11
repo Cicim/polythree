@@ -65,12 +65,6 @@
      */
     export let constantWidth: number = null;
 
-    // Update the size when the blocks update
-    let blocksWidth: number = blocks.width;
-    let blocksHeight: number = blocks.height;
-    $: blocksWidth = blocks.width;
-    $: blocksHeight = blocks.height;
-
     // ANCHOR Constants
     /** Zoom levels the user can scroll through */
     const ZOOM_LEVELS = [1, 1.5, 2, 3, 4, 5, 6, 8, 16];
@@ -136,9 +130,9 @@
      */
     const canPaintOnTile = (x: number, y: number): boolean =>
         x >= 0 &&
-        x < blocksWidth &&
+        x < blocks.width &&
         y >= 0 &&
-        y < blocksHeight &&
+        y < blocks.height &&
         !blocks.isNull(x, y);
 
     // ANCHOR Properties
@@ -322,8 +316,8 @@
             colorLevelMap.canvas,
             pos.x,
             pos.y,
-            blocksWidth * zoom * 16,
-            blocksHeight * zoom * 16
+            blocks.width * zoom * 16,
+            blocks.height * zoom * 16
         );
     }
 
@@ -337,12 +331,12 @@
         const bottomRight = canvasToMap(point(canvasWidth, canvasHeight));
 
         // Get the lower bound tile-wise
-        let x0 = clamp(Math.floor(topLeft.x / 16), 0, blocksWidth);
-        let y0 = clamp(Math.floor(topLeft.y / 16), 0, blocksHeight);
+        let x0 = clamp(Math.floor(topLeft.x / 16), 0, blocks.width);
+        let y0 = clamp(Math.floor(topLeft.y / 16), 0, blocks.height);
 
         // Get the upper bound tile-wise
-        let x1 = clamp(Math.ceil(bottomRight.x / 16), 0, blocksWidth);
-        let y1 = clamp(Math.ceil(bottomRight.y / 16), 0, blocksHeight);
+        let x1 = clamp(Math.ceil(bottomRight.x / 16), 0, blocks.width);
+        let y1 = clamp(Math.ceil(bottomRight.y / 16), 0, blocks.height);
 
         return [point(x0, y0), point(x1, y1)];
     }
@@ -401,9 +395,9 @@
         const start = mapToCanvas({ x: 0, y: 0 });
 
         let width =
-            state === State.Resizing ? resizedMapSize.width : blocksWidth;
+            state === State.Resizing ? resizedMapSize.width : blocks.width;
         let height =
-            state === State.Resizing ? resizedMapSize.height : blocksHeight;
+            state === State.Resizing ? resizedMapSize.height : blocks.height;
 
         ctx.strokeRect(start.x, start.y, width * 16 * zoom, height * 16 * zoom);
     }
@@ -458,8 +452,8 @@
     /** Rebuilds the entire buffers when the map is loaded or resized. */
     function buildMetatileChunks() {
         // Get the number of chunks in each direction
-        const chunksX = Math.ceil(blocksWidth / chunkSize);
-        const chunksY = Math.ceil(blocksHeight / chunkSize);
+        const chunksX = Math.ceil(blocks.width / chunkSize);
+        const chunksY = Math.ceil(blocks.height / chunkSize);
         // Create the canvas for each tile
         botTileChunks = new Array(chunksY);
         topTileChunks = new Array(chunksY);
@@ -527,8 +521,8 @@
         if (chunkSize === 0) return;
 
         // Get the number of chunks in each direction
-        const chunksX = Math.ceil(blocksWidth / chunkSize);
-        const chunksY = Math.ceil(blocksHeight / chunkSize);
+        const chunksX = Math.ceil(blocks.width / chunkSize);
+        const chunksY = Math.ceil(blocks.height / chunkSize);
 
         // Create the chunks
         textLevelChunks = new Array(chunksY);
@@ -546,13 +540,13 @@
 
         // Build the color level map
         const canvas = document.createElement("canvas");
-        canvas.width = blocksWidth;
-        canvas.height = blocksHeight;
+        canvas.width = blocks.width;
+        canvas.height = blocks.height;
         colorLevelMap = canvas.getContext("2d");
         colorLevelMap.globalAlpha = LEVEL_BACKGROUND_ALPHA;
 
-        for (let j = 0; j < blocksHeight; j++)
-            for (let i = 0; i < blocksWidth; i++) updateLevelPixel(i, j);
+        for (let j = 0; j < blocks.height; j++)
+            for (let i = 0; i < blocks.width; i++) updateLevelPixel(i, j);
     }
 
     /** Renders the chunk at the given coordinates containing the render levels */
@@ -688,8 +682,8 @@
         private redraw(_blocks: BlocksData) {
             initialized = false;
             blocks = _blocks;
-            blocksWidth = blocks.width;
-            blocksHeight = blocks.height;
+            blocks.width = blocks.width;
+            blocks.height = blocks.height;
             // Update the chunks
             buildMetatileChunks();
             buildLevelChunks();
@@ -711,10 +705,10 @@
 
         // Right border rectangle
         const rightBorderRect = {
-            x: blocksWidth * 16,
+            x: blocks.width * 16,
             y: 0,
             width: resizeOptions.border,
-            height: blocksHeight * 16,
+            height: blocks.height * 16,
         };
 
         if (
@@ -728,8 +722,8 @@
         // Bottom border rectangle
         const bottomBorderRect = {
             x: 0,
-            y: blocksHeight * 16,
-            width: blocksWidth * 16,
+            y: blocks.height * 16,
+            width: blocks.width * 16,
             height: resizeOptions.border,
         };
 
@@ -743,8 +737,8 @@
 
         // Bottom-right border rectangle
         const bottomRightBorderRect = {
-            x: blocksWidth * 16,
-            y: blocksHeight * 16,
+            x: blocks.width * 16,
+            y: blocks.height * 16,
             width: resizeOptions.border,
             height: resizeOptions.border,
         };
@@ -771,10 +765,10 @@
         const dx = mx - mouseResizeStart.x;
         const dy = my - mouseResizeStart.y;
         // Convert the deltas to tiles
-        const dtx = Math.floor(dx / 16 / zoom);
-        const dty = Math.floor(dy / 16 / zoom);
+        const dtx = Math.round(dx / 16 / zoom);
+        const dty = Math.round(dy / 16 / zoom);
 
-        let newSize = { width: blocksWidth, height: blocksHeight };
+        let newSize = { width: blocks.width, height: blocks.height };
 
         // Get the new size
         switch (resizeDirection) {
@@ -816,7 +810,7 @@
     }
     /** Resizes the map */
     function resizeMap(width: number, height: number) {
-        if (width === blocksWidth && height === blocksHeight) return;
+        if (width === blocks.width && height === blocks.height) return;
 
         const oldBlocks = blocks;
         const newBlocks = blocks.resize(width, height);
@@ -834,10 +828,10 @@
         let { x: ex, y: ey } = hoveredTile();
 
         // Modify both all elements so that they are in bounds
-        sx = clamp(sx, 0, blocksWidth - 1);
-        sy = clamp(sy, 0, blocksHeight - 1);
-        ex = clamp(ex, 0, blocksWidth - 1);
-        ey = clamp(ey, 0, blocksHeight - 1);
+        sx = clamp(sx, 0, blocks.width - 1);
+        sy = clamp(sy, 0, blocks.height - 1);
+        ex = clamp(ex, 0, blocks.width - 1);
+        ey = clamp(ey, 0, blocks.height - 1);
 
         const x = Math.min(sx, ex);
         const y = Math.min(sy, ey);
@@ -978,8 +972,8 @@
             blocks.metatiles[y * blocks.width + x],
         getLevel: (x: number, y: number) => blocks.levels[y * blocks.width + x],
         forEach(callback) {
-            for (let y = 0; y < blocksHeight; y++)
-                for (let x = 0; x < blocksWidth; x++)
+            for (let y = 0; y < blocks.height; y++)
+                for (let x = 0; x < blocks.width; x++)
                     callback(x, y, this.getMetatile(x, y), this.getLevel(x, y));
         },
         set(x: number, y: number, metatile: number, level: number) {
@@ -1245,8 +1239,8 @@
         canvas.height = canvasHeight;
 
         if (centerOnResize) {
-            const mapWidth = blocksWidth * 16;
-            const mapHeight = blocksHeight * 16;
+            const mapWidth = blocks.width * 16;
+            const mapHeight = blocks.height * 16;
 
             // Compute the biggest zoom that will make the whole map fit
             const biggestZoom = Math.min(
@@ -1286,10 +1280,10 @@
         else {
             canvasWidth = constantWidth;
             // Compute the height based on the width
-            canvasHeight = canvasWidth * (blocksHeight / blocksWidth);
+            canvasHeight = canvasWidth * (blocks.height / blocks.width);
             // Change the zoom so that the whole map width fits in the canvas
             zoomIndex = null;
-            zoom = canvasWidth / (blocksWidth * 16);
+            zoom = canvasWidth / (blocks.width * 16);
 
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
