@@ -11,7 +11,18 @@
 </script>
 
 <div class="container">
-    <MapCanvas {editLevels} {blocks} mainCanvas={true} debug={true} />
+    <MapCanvas
+        {editLevels}
+        {blocks}
+        mainCanvas={true}
+        resizeOptions={{
+            border: 4,
+            maxWidth: 255,
+            maxHeight: 255,
+            maxArea: 0x2800,
+        }}
+        debug={true}
+    />
 </div>
 
 <style lang="scss">

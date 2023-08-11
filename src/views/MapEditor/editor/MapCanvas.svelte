@@ -11,7 +11,7 @@
     } from "./painter_state";
     import type { Tool } from "./tools";
     import { LEVEL_COLORS, LAYER_CHARS } from "./consts";
-    import type { EditorChanges } from "src/systems/changes";
+    import { Change, type EditorChanges } from "src/systems/changes";
     import { BlocksData, NULL } from "./blocks_data";
 
     interface MapCanvasText {
@@ -19,6 +19,13 @@
         x: number;
         y: number;
         maxWidth?: number;
+    }
+
+    interface MapResizingOptions {
+        border: number;
+        maxWidth: number;
+        maxHeight: number;
+        maxArea: number;
     }
 
     /** Blocks to edit */
@@ -44,6 +51,8 @@
     export let allowZoom: boolean = true;
     /** Whether panning is allowed */
     export let allowPan: boolean = true;
+    /** Whether resizing is allowed */
+    export let resizeOptions: MapResizingOptions = null;
     /** Center and zoom the map when the canvas is resized */
     export let centerOnResize: boolean = false;
 
@@ -87,6 +96,14 @@
         Panning,
         Painting,
         Selecting,
+        Resizing,
+    }
+
+    enum ResizeDirection {
+        None,
+        Right,
+        Bottom,
+        BottomRight,
     }
 
     /** Function to easily construct a point */
@@ -131,7 +148,6 @@
 
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
-    let tilesetImages = $data.tilesets;
 
     /** The object that will contain all the changes applied to this editor */
     export let changes: EditorChanges<any> = context.changes;
@@ -162,6 +178,17 @@
     /** Canvas offset when the pan starts */
     let mapPanStart: Point = point();
 
+    // Resizing
+    /** Mouse coordinates when the resizing starts */
+    let mouseResizeStart = point();
+    /** Map size computed while resizing */
+    let resizedMapSize: { width: number; height: number } = {
+        width: 0,
+        height: 0,
+    };
+    /** What border you're hovering on */
+    let resizeDirection: ResizeDirection = ResizeDirection.None;
+
     // Selection
     /** The tile where the selection starts */
     let selectionStart: Point = point();
@@ -188,7 +215,6 @@
 
     const unsubscribeFromData = data.subscribe((value) => {
         initialized = false;
-        tilesetImages = value.tilesets;
         buildMetatileChunks();
         buildLevelChunks();
         initialized = true;
@@ -212,6 +238,8 @@
         drawMetatiles(botTileChunks, startChunk, endChunk);
         drawMetatiles(topTileChunks, startChunk, endChunk);
         if (editLevels) drawLevels(startChunk, endChunk);
+
+        drawResizeBorder();
 
         // Draw the texts on the canvas
         for (const text of texts) drawText(text);
@@ -346,7 +374,7 @@
         return [color, LAYER_CHARS[layer]];
     }
 
-    // ANCHOR Text drawing function
+    // ANCHOR Misc drawing function
     function drawText({ text, x, y, maxWidth }: MapCanvasText) {
         // Get the actual position of the text on the canvas
         const pos = mapToCanvas({ x: x * 16, y: y * 16 });
@@ -364,6 +392,20 @@
             pos.y,
             maxWidth === undefined ? undefined : maxWidth * 16 * zoom
         );
+    }
+
+    function drawResizeBorder() {
+        // Draw a border around the whole map
+        ctx.strokeStyle = "#888";
+        ctx.lineWidth = 5;
+        const start = mapToCanvas({ x: 0, y: 0 });
+
+        let width =
+            state === State.Resizing ? resizedMapSize.width : blocksWidth;
+        let height =
+            state === State.Resizing ? resizedMapSize.height : blocksHeight;
+
+        ctx.strokeRect(start.x, start.y, width * 16 * zoom, height * 16 * zoom);
     }
 
     // ANCHOR Debug drawing functions
@@ -624,6 +666,165 @@
         draw();
     }
 
+    // ANCHOR Resizing
+    class MapResizeChange extends Change {
+        constructor(
+            private oldBlocks: BlocksData,
+            private newBlocks: BlocksData
+        ) {
+            super();
+        }
+
+        public updatePrev(): boolean {
+            return false;
+        }
+        public async revert(): Promise<void> {
+            this.redraw(this.oldBlocks);
+        }
+        public async apply(): Promise<void> {
+            this.redraw(this.newBlocks);
+        }
+
+        private redraw(_blocks: BlocksData) {
+            initialized = false;
+            blocks = _blocks;
+            blocksWidth = blocks.width;
+            blocksHeight = blocks.height;
+            // Update the chunks
+            buildMetatileChunks();
+            buildLevelChunks();
+            // Updates the cursor
+            resizeDirection = getResizeDirection();
+            cursorStyle = getCursor();
+
+            initialized = true;
+            draw();
+        }
+    }
+
+    /** Returns whether the mouse is on a resizing border */
+    function getResizeDirection(): ResizeDirection {
+        if (!resizeOptions) return ResizeDirection.None;
+
+        // Convert the mouse position to the map position
+        const { x, y } = canvasToMap(mousePosition);
+
+        // Right border rectangle
+        const rightBorderRect = {
+            x: blocksWidth * 16,
+            y: 0,
+            width: resizeOptions.border,
+            height: blocksHeight * 16,
+        };
+
+        if (
+            x >= rightBorderRect.x &&
+            x <= rightBorderRect.x + rightBorderRect.width &&
+            y >= rightBorderRect.y &&
+            y <= rightBorderRect.y + rightBorderRect.height
+        )
+            return ResizeDirection.Right;
+
+        // Bottom border rectangle
+        const bottomBorderRect = {
+            x: 0,
+            y: blocksHeight * 16,
+            width: blocksWidth * 16,
+            height: resizeOptions.border,
+        };
+
+        if (
+            x >= bottomBorderRect.x &&
+            x <= bottomBorderRect.x + bottomBorderRect.width &&
+            y >= bottomBorderRect.y &&
+            y <= bottomBorderRect.y + bottomBorderRect.height
+        )
+            return ResizeDirection.Bottom;
+
+        // Bottom-right border rectangle
+        const bottomRightBorderRect = {
+            x: blocksWidth * 16,
+            y: blocksHeight * 16,
+            width: resizeOptions.border,
+            height: resizeOptions.border,
+        };
+        if (
+            x >= bottomRightBorderRect.x &&
+            x <= bottomRightBorderRect.x + bottomRightBorderRect.width &&
+            y >= bottomRightBorderRect.y &&
+            y <= bottomRightBorderRect.y + bottomRightBorderRect.height
+        )
+            return ResizeDirection.BottomRight;
+
+        return ResizeDirection.None;
+    }
+    /** Updates `resizedMapSize` on mouse movement */
+    function doResizing() {
+        if (!resizeOptions) return;
+
+        // Save the old size for more efficient drawing
+        const { width: prevWidth, height: prevHeight } = resizedMapSize;
+
+        // Get the current mouse position
+        const { x: mx, y: my } = mousePosition;
+        // Get the difference between the start and the end
+        const dx = mx - mouseResizeStart.x;
+        const dy = my - mouseResizeStart.y;
+        // Convert the deltas to tiles
+        const dtx = Math.floor(dx / 16 / zoom);
+        const dty = Math.floor(dy / 16 / zoom);
+
+        let newSize = { width: blocksWidth, height: blocksHeight };
+
+        // Get the new size
+        switch (resizeDirection) {
+            case ResizeDirection.Bottom:
+                newSize.height += dty;
+                break;
+            case ResizeDirection.Right:
+                newSize.width += dtx;
+                break;
+            case ResizeDirection.BottomRight:
+                newSize.width += dtx;
+                newSize.height += dty;
+                break;
+        }
+
+        // Make sure you're still in bounds
+        // Min side sizes
+        if (newSize.width < 1) newSize.width = 1;
+        if (newSize.height < 1) newSize.height = 1;
+        // Max side sizes
+        if (newSize.width > resizeOptions.maxWidth)
+            newSize.width = resizeOptions.maxWidth;
+        if (newSize.height > resizeOptions.maxHeight)
+            newSize.height = resizeOptions.maxHeight;
+        // Max area
+        if (newSize.width * newSize.height > resizeOptions.maxArea) {
+            // If the width is too big, set it to the max
+            if (newSize.width > resizeOptions.maxWidth)
+                newSize.width = resizeOptions.maxWidth;
+            // Then set the height to the max
+            newSize.height = Math.floor(resizeOptions.maxArea / newSize.width);
+        }
+
+        if (newSize.width !== prevWidth || newSize.height !== prevHeight) {
+            resizedMapSize = newSize;
+            // Draw the map with the new size
+            draw();
+        }
+    }
+    /** Resizes the map */
+    function resizeMap(width: number, height: number) {
+        if (width === blocksWidth && height === blocksHeight) return;
+
+        const oldBlocks = blocks;
+        const newBlocks = blocks.resize(width, height);
+
+        const change = new MapResizeChange(oldBlocks, newBlocks);
+        context.changes.push(change);
+    }
+
     // ANCHOR Selection
     /** Computes the selection rectangle */
     function computeSelectionRectangle() {
@@ -865,19 +1066,37 @@
         // If the user is already doing something, ignore this event
         if (state !== State.Idle) return;
 
-        // Painting starts with the left mouse button (0)
-        if (event.button === 0 && material !== null) {
-            // Get the current tile coordinates
-            const { x, y } = hoveredTile();
-            // If the tile are not in bounds, don't start anything
-            if (!canPaintOnTile(x, y)) return;
-            state = State.Painting;
+        if (event.button === 0) {
+            // Resizing starts if you are hovering over a border of the map
+            if (resizeDirection !== ResizeDirection.None) {
+                mouseResizeStart.y = event.offsetY;
+                mouseResizeStart.x = event.offsetX;
 
-            // Create the painting state
-            paintingState = new PainterState(PAINTER_METHODS);
-            tool = new context.toolClass(paintingState, $material);
-            changes.locked++;
-            tool.startStroke(x, y);
+                // Save the current map size
+                resizedMapSize = {
+                    width: blocks.width,
+                    height: blocks.height,
+                };
+
+                changes.locked++;
+                state = State.Resizing;
+                return;
+            }
+
+            // Painting starts if a material is present
+            if (material !== null) {
+                // Get the current tile coordinates
+                const { x, y } = hoveredTile();
+                // If the tile are not in bounds, don't start anything
+                if (!canPaintOnTile(x, y)) return;
+                state = State.Painting;
+
+                // Create the painting state
+                paintingState = new PainterState(PAINTER_METHODS);
+                tool = new context.toolClass(paintingState, $material);
+                changes.locked++;
+                tool.startStroke(x, y);
+            }
         }
 
         // Panning starts with the middle mouse button (1)
@@ -935,21 +1154,34 @@
 
                 tool.moveStroke(x, y);
                 break;
+            case State.Resizing:
+                doResizing();
+                break;
             case State.Idle:
+                resizeDirection = getResizeDirection();
                 break;
         }
     }
     function onMouseUp(event: MouseEvent | { button: number }) {
-        if (event.button === 0 && state === State.Painting) {
-            // Get the current tile coordinates
-            const { x, y } = hoveredTile();
-            // Don't care if the tile is in bounds, the stroke should always end
-            changes.locked--;
-            tool.endStroke(x, y);
+        if (event.button === 0) {
+            if (state === State.Painting) {
+                // Get the current tile coordinates
+                const { x, y } = hoveredTile();
+                // Don't care if the tile is in bounds, the stroke should always end
+                changes.locked--;
+                tool.endStroke(x, y);
 
-            // Create a brush edit
-            changes.push(new PaintChange(paintingState));
-
+                // Create a brush edit
+                changes.push(new PaintChange(paintingState));
+            } else if (state === State.Resizing) {
+                const { width, height } = resizedMapSize;
+                // Resize the map
+                changes.locked--;
+                resizeMap(width, height);
+                // Reset the resize state
+                resizeDirection = ResizeDirection.None;
+                resizedMapSize = null;
+            }
             state = State.Idle;
         } else if (event.button === 1 && state === State.Panning) {
             state = State.Idle;
@@ -982,11 +1214,22 @@
                 return "grabbing";
             case State.Selecting:
                 return "crosshair";
+            case State.Idle:
+            case State.Resizing:
+                switch (resizeDirection) {
+                    case ResizeDirection.Bottom:
+                        return "ns-resize";
+                    case ResizeDirection.Right:
+                        return "ew-resize";
+                    case ResizeDirection.BottomRight:
+                        return "nwse-resize";
+                }
             default:
                 return "default";
         }
     }
     $: state, (cursorStyle = getCursor());
+    $: resizeDirection, (cursorStyle = getCursor());
 
     // ANCHOR Other Event handlers
     /** Updates the canvas size and redraws the canvas. */
