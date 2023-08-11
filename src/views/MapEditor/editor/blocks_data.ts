@@ -120,8 +120,8 @@ export class BlocksData {
         return blocks;
     }
     /** Creates a copy of this blockData with its dimensions changed */
-    public resize(newWidth: number, newHeight: number): BlocksData {
-        const blocks = new BlocksData(newWidth, newHeight, 0);
+    public resize(newWidth: number, newHeight: number, level: number = NULL): BlocksData {
+        const blocks = new BlocksData(newWidth, newHeight, 0, level);
         for (let y = 0; y < Math.min(newHeight, this.height); y++) {
             for (let x = 0; x < Math.min(newWidth, this.width); x++) {
                 blocks.set(x, y, this.getMetatile(x, y), this.getLevel(x, y));

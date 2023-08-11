@@ -813,7 +813,7 @@
         if (width === blocks.width && height === blocks.height) return;
 
         const oldBlocks = blocks;
-        const newBlocks = blocks.resize(width, height);
+        const newBlocks = blocks.resize(width, height, nullLevels ? NULL : 0);
 
         const change = new MapResizeChange(oldBlocks, newBlocks);
         context.changes.push(change);
