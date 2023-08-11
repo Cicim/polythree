@@ -98,7 +98,6 @@
         display: grid;
         grid-template-rows: max-content max-content 1fr;
         border-bottom: none !important;
-        container-type: inline-size;
         overflow: hidden;
 
         .no-brushes {
@@ -126,15 +125,7 @@
             padding: 8px;
             overflow-x: hidden;
 
-            grid-template-columns: 1fr;
-
-            @container (min-width: 584px) {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            @container (min-width: 862px) {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         }
     }
 </style>

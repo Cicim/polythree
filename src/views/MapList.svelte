@@ -418,7 +418,6 @@
     .list {
         grid-area: list;
         overflow-y: auto;
-        container-type: inline-size;
 
         &::-webkit-scrollbar {
             background: transparent;

@@ -190,7 +190,7 @@
 <style lang="scss">
     .maps-container {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
         gap: 1em;
         margin-top: 1em;
         margin-bottom: 2em;
@@ -202,18 +202,6 @@
             margin-top: 2em;
 
             color: var(--weak-fg);
-        }
-
-        @container (min-width: 800px) {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        @container (min-width: 1200px) {
-            grid-template-columns: 1fr 1fr 1fr;
-        }
-
-        @container (min-width: 1600px) {
-            grid-template-columns: 1fr 1fr 1fr 1fr;
         }
     }
 </style>
