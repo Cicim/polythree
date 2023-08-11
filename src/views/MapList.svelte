@@ -203,6 +203,7 @@
         mapsContainer.add(card);
         // Select the card
         addMapToSelection(card.group, card.index);
+        await refresh();
     }
 
     export function deleteSelected() {

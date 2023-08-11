@@ -17,81 +17,133 @@
     import WarningDiv from "src/components/WarningDiv.svelte";
     import { MapEditorContext } from "../MapEditor";
 
-    export let options: CreateMapOptions;
-    export let context: MapListContext;
-    export let all: MapCardProps[];
+    enum State {
+        /** When the dialog loads, before it's finished loading */
+        Loading,
+        /** When the use layout option is selected */
+        Use,
+        /** When the new layout option is selected */
+        New,
+        /** When the new map is being created */
+        Creating,
+        /** When the creation has terminated with an error */
+        DoneError,
+        /** When the creation has terminated with a success */
+        Done,
+    }
+
+    /** The close function */
     export let close: (value: any) => void;
 
-    let group: number;
-    let index: number;
-    let layout: string;
-    let tileset1: number;
-    let tileset2: number;
-    let freeGroups: Record<number, number[]> = {};
-    let groupOptions: [number, string][];
-    let indexOptions: [number, string][];
-    let layoutName: string = "";
+    /** The input options when you create the map */
+    export let options: CreateMapOptions;
+    /** The map list context from which the dialog was opened */
+    export let context: MapListContext;
+    /** The list of all mapcard data */
+    export let all: MapCardProps[];
 
-    // Transform all into a map of group to its indexes
-    const groupToIndex = all.reduce((acc, cur) => {
-        if (!acc[cur.group]) acc[cur.group] = {};
-        acc[cur.group][cur.index] = true;
-        return acc;
+    /** The state */
+    let state: State = State.Loading;
+    /** The string of the error */
+    let errorMessage: string;
+
+    // ANCHOR Bound values
+    /** Group of the new map */
+    let group: number;
+    /** Index of the new map */
+    let index: number;
+    // If building by layout
+    /** Layout of the new map */
+    let layout: string;
+    // If creating new layout as well
+    /** Name of new layout */
+    let layoutName: string = "";
+    /** Tileset 1 offset of new layout */
+    let tileset1: number;
+    /** Tileset 2 offset of new layout */
+    let tileset2: number;
+    /** Width of the new layout */
+    let width: number = 20;
+    /** Height of the new layout */
+    let height: number = 20;
+    /** If the user wants to open the map in the editor after creating it */
+    let openInEditor: boolean = false;
+
+    // ANCHOR Calculated values
+    /** List of free indexes in each group */
+    let availableIndexesForGroups: Record<number, number[]> = {};
+    /** The group select's option */
+    let groupOptions: [number, string][];
+    /** The index select's option */
+    let indexOptions: [number, string][];
+
+    // From all maps, extract the used indexes from each group
+    const usedIndexesForGroups: Record<
+        number,
+        Record<number, boolean>
+    > = all.reduce((res, mapCard) => {
+        // If the res doesn't have the group, create an empty object for it
+        if (!res[mapCard.group]) res[mapCard.group] = {};
+        // Add the index to the group
+        res[mapCard.group][mapCard.index] = true;
+        return res;
     }, {});
 
-    // Loop though all the groups
+    // Loop though all the groups and add the inexces that
+    // aren't being used to the list of available inexces
     for (let i = 0; i <= 255; i++) {
         let indexes = [];
-        // If the group exists
-        if (groupToIndex[i]) {
+        // If the group is used, add the unused inexces
+        if (usedIndexesForGroups[i]) {
             for (let j = 0; j <= 255; j++) {
-                // If the index doesn't exist
-                if (!groupToIndex[i][j]) {
+                if (!usedIndexesForGroups[i][j]) {
                     indexes.push(j);
                 }
             }
-        } else {
-            indexes = Array.from({ length: 256 }, (_, i) => i);
-        }
-        freeGroups[i] = indexes;
+        } else indexes = Array.from({ length: 256 }, (_, i) => i);
+
+        availableIndexesForGroups[i] = indexes;
     }
 
     // Create the group options once
-    groupOptions = Object.entries(freeGroups).map(([k]) => [+k, k]);
-    // Initialize the group value, which will change with the select
+    groupOptions = Object.entries(availableIndexesForGroups).map(([group]) => [
+        +group,
+        group,
+    ]);
+    // Initialize the group value
     group = groupOptions[0][0];
+    // Update it if the options specifies a group that is in the list of available ones
     if (
         options?.group !== undefined &&
-        Object.keys(freeGroups).includes(options.group.toString())
+        Object.keys(availableIndexesForGroups).includes(
+            options.group.toString()
+        )
     ) {
         group = options.group;
     }
     // Initialize the indexes
     updateIndexes();
-
     // Update the indexes when the group changes
     function updateIndexes() {
-        indexOptions = freeGroups[group].map((i: number) => [i, i.toString()]);
+        indexOptions = availableIndexesForGroups[group].map((i: number) => [
+            i,
+            i.toString(),
+        ]);
         index = indexOptions[0][0];
     }
 
-    // Useful values
-    let width: number = 20;
-    let height: number = 20;
-    let openInEditor: boolean = true;
-
-    let usingLayout = true;
-    let creating = false;
-    let errored = false;
-    let errorString = "";
-
+    /** Condition for the OK button to become disabled */
     $: notAllGood =
         width * height > 0x2800 ||
-        creating ||
-        (!usingLayout && !layoutName.match(/^([\w|\d]+[\s]*\b)+$/));
+        state === State.Creating ||
+        (state === State.New && !layoutName.match(/^([\w|\d]+[\s]*\b)+$/));
 
+    /** OK Button onclick */
     async function createMap() {
-        creating = true;
+        const usingLayout = state === State.Use;
+        // Start creating
+        state = State.Creating;
+
         try {
             let options = usingLayout
                 ? { Use: { layout } }
@@ -129,17 +181,26 @@
             if (openInEditor) {
                 new MapEditorContext({ group, index }).create().select();
             }
+
+            state = State.Done;
         } catch (err) {
-            errored = true;
-            errorString = err;
+            state = State.DoneError;
+            errorMessage = err;
         }
-        creating = false;
     }
 
+    /** Switches the state (between creating and using) */
+    function switchToCreationState(newState: State) {
+        if (state === State.Loading || state === State.Creating) return;
+        state = newState;
+    }
+
+    /** The options for the tileset1 select */
     let tileset1Options: [number, string][];
+    /** The options for the tileset2 select */
     let tileset2Options: [number, string][];
+    /** The options layout select */
     let layoutOptions: [number, string][];
-    let optionsReady = false;
 
     onMount(async () => {
         const tilesets: { offset: number; is_primary: boolean }[] =
@@ -167,114 +228,100 @@
             $config.layout_names[v] ?? "Unnamed",
         ]);
 
-        optionsReady = true;
+        state = State.Use;
     });
 </script>
 
 <div class="dialog-content">
-    {#if creating}
+    {#if state === State.Creating}
         <div class="icon-title">
-            <iconify-icon icon="eos-icons:loading" />
+            <iconify-icon icon="eos-icons:loading" inline />
             <span>Creating...</span>
         </div>
     {:else}
         <div class="title">Create Map</div>
     {/if}
-    <div class="content">
-        {#if creating}
-            <div class="cols2">
+    <div class="content form">
+        <!-- While creating the map -->
+        {#if state === State.Creating}
+            <div class="row">
                 <WarningDiv>
                     Creating Map, do not close this program or data may be
                     corrupted!
                 </WarningDiv>
             </div>
-        {:else if errored}
-            <div class="cols2">
-                <ErrorDiv>{errorString}</ErrorDiv>
+            <!-- If creation was unsuccessful -->
+        {:else if state === State.DoneError}
+            <div class="row">
+                <ErrorDiv>{errorMessage}</ErrorDiv>
             </div>
+            <!-- At the beginning -->
         {:else}
-            <div class="title">Group</div>
-            <div class="title">Index</div>
-            <div class="select">
+            <div class="half-row">
+                <div class="subtitle">Group</div>
+                <div class="subtitle">Index</div>
                 <Select
                     bind:value={group}
                     on:change={updateIndexes}
                     options={groupOptions}
                 />
-            </div>
-            <div class="select">
                 <Select bind:value={index} options={indexOptions} />
             </div>
-            <div class="mode" class:closed={!usingLayout}>
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div class="header cols2" on:click={() => (usingLayout = true)}>
-                    Using a preexisting Layout
-                </div>
-                {#if usingLayout}
-                    <div class="title cols2">Layout</div>
-                    <div class="select cols2">
-                        {#if optionsReady}
-                            <Select
-                                valueTag="number"
-                                bind:value={layout}
-                                options={layoutOptions}
-                            />
-                        {:else}
-                            <div class="placeholder" />
-                        {/if}
+            {#if state !== State.Loading}
+                <div class="row dark mode" class:closed={state !== State.Use}>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <div
+                        class="title"
+                        on:click={() => switchToCreationState(State.Use)}
+                    >
+                        Using a preexisting Layout
                     </div>
-                {/if}
-            </div>
-            <div class="mode" class:closed={usingLayout}>
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    class="header cols2"
-                    on:click={() => (usingLayout = false)}
-                >
-                    Creating a new Layout
+                    {#if state === State.Use}
+                        <div class="hr" />
+                        <div class="subtitle">Layout</div>
+                        <Select
+                            valueTag="number"
+                            bind:value={layout}
+                            options={layoutOptions}
+                        />
+                    {/if}
                 </div>
-                {#if !usingLayout}
-                    <div class="title cols2">Name</div>
-                    <div class="select cols2">
+                <div class="row dark mode" class:closed={state !== State.New}>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <div
+                        class="row title"
+                        on:click={() => switchToCreationState(State.New)}
+                    >
+                        Creating a new Layout
+                    </div>
+                    {#if state === State.New}
+                        <div class="hr" />
+                        <div class="subtitle">Name</div>
                         <Input
                             bind:value={layoutName}
                             placeholder="Name for the layout"
                         />
-                    </div>
-                    <div class="title cols2">Primary Tileset</div>
-                    <div class="select cols2">
-                        {#if optionsReady}
-                            <Select
-                                valueTag="offset"
-                                bind:value={tileset1}
-                                options={tileset1Options}
-                            />
-                        {:else}
-                            <div class="placeholder" />
-                        {/if}
-                    </div>
-                    <div class="title cols2">Secondary Tileset</div>
-                    <div class="select cols2">
-                        {#if optionsReady}
-                            <Select
-                                valueTag="offset"
-                                bind:value={tileset2}
-                                options={tileset2Options}
-                            />
-                        {:else}
-                            <div class="placeholder" />
-                        {/if}
-                    </div>
-                    <div class="title">Width</div>
-                    <div class="title">Height</div>
-                    <div class="select">
-                        <Input type="number" bind:value={width} />
-                    </div>
-                    <div class="select">
-                        <Input type="number" bind:value={height} />
-                    </div>
-                {/if}
-            </div>
+                        <div class="subtitle">Primary Tileset</div>
+                        <Select
+                            valueTag="offset"
+                            bind:value={tileset1}
+                            options={tileset1Options}
+                        />
+                        <div class="subtitle">Secondary Tileset</div>
+                        <Select
+                            valueTag="offset"
+                            bind:value={tileset2}
+                            options={tileset2Options}
+                        />
+                        <div class="half-row">
+                            <div class="subtitle">Width</div>
+                            <div class="subtitle">Height</div>
+                            <Input type="number" bind:value={width} />
+                            <Input type="number" bind:value={height} />
+                        </div>
+                    {/if}
+                </div>
+            {/if}
             <div class="select cols2">
                 <CheckBox bind:checked={openInEditor}
                     >Open in Map Editor</CheckBox
@@ -283,11 +330,12 @@
         {/if}
     </div>
     <div class="buttons">
-        {#if errored}
+        {#if state === State.DoneError}
             <Button on:click={() => close(null)}>Ok</Button>
         {:else}
-            <Button on:click={() => close(null)} disabled={creating}
-                >Cancel</Button
+            <Button
+                on:click={() => close(null)}
+                disabled={state === State.Creating}>Cancel</Button
             >
             <Button color="secondary" on:click={createMap} disabled={notAllGood}
                 >Create Map</Button
@@ -302,71 +350,20 @@
         max-width: 434px;
     }
     .content {
-        min-height: 0;
-        overflow-y: auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.25em;
-
-        .title {
-            display: flex;
-            flex-direction: column;
-            place-items: center;
-            padding: 8px;
-        }
-
-        .cols2 {
-            grid-column: span 2;
-        }
+        user-select: none;
 
         .mode {
-            transition: height 1s;
-            display: grid;
-            grid-template-rows: 1fr 1fr;
-
-            &:not(.closed) {
-                background: var(--medium-bg);
+            .title {
+                cursor: default;
             }
-
             &.closed {
-                height: 26px;
-                overflow: hidden;
-                .header {
-                    color: var(--weak-fg);
+                .title:hover {
+                    text-decoration: underline;
+                    color: var(--main-fg);
                 }
-            }
-
-            .header {
-                display: flex;
-                flex-direction: column;
-                place-items: center;
-                padding: 0.5em;
-                border-bottom: 1px solid var(--light-shadow);
-                cursor: pointer;
-            }
-
-            grid-column: span 2;
-            place-self: stretch;
-            background: var(--main-bg);
-            padding: 0.5em 1em;
-            padding-top: 0;
-            border-radius: 8px;
-            margin-bottom: 0.5em;
-        }
-
-        .select {
-            display: flex;
-            flex-direction: column;
-            place-items: stretch;
-
-            .placeholder {
-                height: 28px;
-                background: var(--sel-bg);
-                margin: 2px;
-            }
-
-            :global(.select) {
-                font-size: 16px;
+                .title {
+                    cursor: pointer;
+                }
             }
         }
     }

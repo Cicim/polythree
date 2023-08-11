@@ -177,6 +177,66 @@ body {
       padding: 0.66em 0.5em;
       padding-top: 1em;
       border-top: 1px solid var(--light-shadow);
+
+      &.form {
+        display: flex;
+        flex-flow: column wrap;
+        gap: 8px;
+
+        input,
+        .select,
+        .option {
+          font-size: 14px;
+        }
+
+        .row {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          justify-content: center;
+          gap: 4px;
+        }
+
+        .half-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 4px;
+        }
+
+        .half-max-row {
+          display: grid;
+          grid-template-columns: 1fr max-content 1fr;
+          gap: 4px;
+        }
+
+        .hr {
+          width: 100%;
+          border-bottom: 1px solid var(--light-shadow);
+        }
+
+        .title {
+          text-transform: uppercase;
+          text-align: center;
+          color: var(--weak-fg);
+        }
+
+        .dark {
+          background: var(--medium-bg);
+          padding: 8px;
+          border-radius: 8px;
+        }
+
+        .subtitle {
+          text-align: center;
+          color: var(--weak-fg);
+        }
+
+        .padding {
+          color: transparent;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+      }
     }
 
 

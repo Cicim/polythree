@@ -122,7 +122,7 @@
 
 <div class="dialog-content">
     <div class="title">Brush Settings for <i>{$editingBrush.name}</i></div>
-    <div class="content">
+    <div class="content form">
         <div class="row">
             <span class="title"> Brush Name </span>
             <Input bind:value={brush.name} />
@@ -131,7 +131,7 @@
             <span class="title"> Brush Type </span>
             <Select bind:value={brushType} options={brushOptions} />
         </div>
-        <div class="row dark">
+        <div class="row dark mode">
             <div class="title">
                 <iconify-icon inline icon={brushToTypeClass[brushType].icon} />
                 {BrushType[brushType]} Brush Settings
@@ -203,58 +203,6 @@
 </div>
 
 <style lang="scss">
-    .content {
-        display: flex;
-        flex-flow: column wrap;
-        gap: 8px;
-
-        .row {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            justify-content: center;
-            gap: 4px;
-        }
-
-        .half-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-        }
-
-        .half-max-row {
-            display: grid;
-            grid-template-columns: 1fr max-content 1fr;
-            gap: 4px;
-        }
-
-        .hr {
-            width: 100%;
-            border-bottom: 1px solid var(--light-shadow);
-        }
-
-        .title {
-            text-transform: uppercase;
-            text-align: center;
-            color: var(--weak-fg);
-        }
-
-        .dark {
-            background: var(--medium-bg);
-            padding: 8px;
-            border-radius: 8px;
-        }
-        .subtitle {
-            text-align: center;
-        }
-
-        .padding {
-            color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-    }
-
     .buttons {
         display: flex;
         justify-content: flex-end;
