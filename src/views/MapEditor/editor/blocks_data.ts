@@ -26,7 +26,7 @@ export class BlocksData {
      * @param metaTilesFill The value that will fill the metatiles, null or undefined will fill with `NULL`
      * @param levelsFill The value that will fill the levels, null or undefined will fill with `NULL`
      */
-    constructor(width: number, height: number, metaTilesFill: number = NULL, levelsFill: number = NULL) {
+    constructor(width: number, height: number, metaTilesFill: number = 0, levelsFill: number = NULL) {
         this.width = width;
         this.height = height;
         this.metatiles = new Uint16Array(width * height)
@@ -121,7 +121,7 @@ export class BlocksData {
     }
     /** Creates a copy of this blockData with its dimensions changed */
     public resize(newWidth: number, newHeight: number): BlocksData {
-        const blocks = new BlocksData(newWidth, newHeight);
+        const blocks = new BlocksData(newWidth, newHeight, 0);
         for (let y = 0; y < Math.min(newHeight, this.height); y++) {
             for (let x = 0; x < Math.min(newWidth, this.width); x++) {
                 blocks.set(x, y, this.getMetatile(x, y), this.getLevel(x, y));

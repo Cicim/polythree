@@ -1,4 +1,4 @@
-import type { TilesetsData } from "src/views/MapEditor";
+import type { MapEditorContext, TilesetsData } from "src/views/MapEditor";
 import { get, writable } from "svelte/store";
 import { BlocksData } from "./blocks_data";
 import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
@@ -53,7 +53,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
     }
 
     /** Returns the canvas with the rendered thumbnail */
-    public renderThumbnail(tilesetData: TilesetsData): HTMLCanvasElement {
+    public renderThumbnail(botTiles: CanvasRenderingContext2D, topTiles: CanvasRenderingContext2D): HTMLCanvasElement {
         // Obtain the thumbnail metatile
         const metatiles = this.getThumbnailMetatile();
         const width = metatiles[0].length;
@@ -65,12 +65,23 @@ export abstract class BrushMaterial extends PaintingMaterial {
         canvas.height = height * 16;
         const ctx = canvas.getContext("2d");
 
+        const drawSingleMetatile = (source: CanvasImageSource,
+            metatile: number, x: number, y: number
+        ) => {
+            ctx.drawImage(
+                source,
+                metatile * 16, 0,
+                16, 16,
+                x * 16, y * 16,
+                16, 16
+            );
+        }
+
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const metatile = metatiles[y][x];
-                const [bottom, top] = tilesetData[metatile];
-                ctx.drawImage(bottom, x * 16, y * 16);
-                ctx.drawImage(top, x * 16, y * 16);
+                drawSingleMetatile(botTiles.canvas, metatile, x, y);
+                drawSingleMetatile(topTiles.canvas, metatile, x, y);
             }
         }
 
@@ -78,8 +89,9 @@ export abstract class BrushMaterial extends PaintingMaterial {
     }
 
     /** Creates a base64 image for preview */
-    public createPreviewImage(tilesetData: TilesetsData): string {
-        const canvas = this.renderThumbnail(tilesetData);
+    public createPreviewImage(botTiles: CanvasRenderingContext2D, topTiles: CanvasRenderingContext2D): string {
+        // TODO: Use a different image than the thumbnail
+        const canvas = this.renderThumbnail(botTiles, topTiles);
         return canvas.toDataURL();
     }
 

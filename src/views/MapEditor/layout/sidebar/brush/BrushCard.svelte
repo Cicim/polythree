@@ -62,7 +62,9 @@
     function updateThumbnail() {
         if (!previewContainer) return;
         previewContainer.innerHTML = "";
-        previewContainer.appendChild(brush.renderThumbnail($data.tilesets));
+        previewContainer.appendChild(
+            brush.renderThumbnail(context.botTiles, context.topTiles)
+        );
     }
 
     $: updateThumbnail();

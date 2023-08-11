@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MapEditorContext, TilesetsData } from "src/views/MapEditor";
+    import type { MapEditorContext } from "src/views/MapEditor";
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
     import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
@@ -30,9 +30,10 @@
 
     /** The first tile that was selected. Doesn't change after selection start */
     let firstSelection: Point = { x: 0, y: 0 };
-
+    /** The last side length of a tile in the canvas, aka `var(--size)` */
     let lastTileSize: number;
 
+    // Code to run every time the material changes
     $: $material,
         (() => {
             if (
@@ -45,7 +46,7 @@
                     y = Math.floor(tile / 8);
                 selectionStart = { x, y };
                 selectionEnd = { x, y };
-                drawSelection();
+                updateSelection();
                 scrollToTile(y);
                 selectedTile = tile;
             } else if (
@@ -104,6 +105,9 @@
         }
     }
 
+    /** Reorders the selection so that
+     * + `selectionStart` is on the top left corner
+     * + `selectionEnd` is on the top right */
     function sortSelection(): TileSelection {
         let minx = Math.min(selectionStart.x, selectionEnd.x);
         let miny = Math.min(selectionStart.y, selectionEnd.y);
@@ -117,7 +121,8 @@
         return { x, y, width, height };
     }
 
-    function drawSelection() {
+    /** Updates the css variables of the selection div to reposition the selection */
+    function updateSelection() {
         if (!selectionDiv) return;
 
         const { x, y, width, height } = sortSelection();
@@ -136,12 +141,15 @@
         selectionDiv.style.setProperty("--left", `${left}px`);
     }
 
+    /** Updates the selection start and end so that it
+     * is way off screen and hidden from view */
     function hideSelection() {
         selectionStart = { x: -100, y: 0 };
         selectionEnd = { x: -100, y: 0 };
-        drawSelection();
+        updateSelection();
     }
 
+    /** Scrolls the container to the specified tile's height */
     function scrollToTile(tileY: number) {
         const scrollableElement =
             canvas?.parentElement?.parentElement?.parentElement;
@@ -184,6 +192,7 @@
         $material = new PaletteMaterial(blocks);
     }
 
+    /** Checks if the selection is 1x1 */
     function isSingleSelection() {
         return (
             selectionStart.x === selectionEnd.x &&
@@ -210,11 +219,12 @@
         };
     }
 
+    // ANCHOR Listeners
     function onMouseDown(event: MouseEvent) {
         selectionStart = getTile(event);
         firstSelection = { ...selectionStart };
         selectionEnd = { ...selectionStart };
-        drawSelection();
+        updateSelection();
 
         if (event.buttons === 2) {
             rightClicking = true;
@@ -226,7 +236,7 @@
     function onMouseMove(event: MouseEvent) {
         if (rightClicking) {
             selectionEnd = getTile(event);
-            drawSelection();
+            updateSelection();
 
             const { x, y, width, height } = sortSelection();
             // Update the multiselection tile
@@ -236,14 +246,16 @@
         }
         hoveringTile = getTile(event).x + getTile(event).y * 8;
     }
-    function onMouseUp(event: MouseEvent) {
+    function onMouseUp() {
         rightClicking = false;
         buildMaterial();
     }
     function onMouseLeave() {
         hoveringTile = null;
+        onMouseUp();
     }
 
+    /** Recalculates the tileSize every time the sidebar's size changes */
     function onResized() {
         if (!canvas || !selectionDiv) return;
         // Get the canvas's rect width
@@ -254,16 +266,19 @@
         // Update the selection's position and size
         selectionDiv.style.setProperty("--size", `${lastTileSize}px`);
 
-        drawSelection();
+        updateSelection();
     }
 
+    // ANCHOR External functions
+    /** Moves the selection on the palette in the specified direction.
+     * If select is set to true it creates a multiselection in the specified direction */
     export function moveOnPalette(dirX: number, dirY: number, select: boolean) {
         if (selectionStart.x === -100) {
             selectionStart.x = 0;
             selectionStart.y = 0;
             selectionEnd.x = 0;
             selectionEnd.y = 0;
-            drawSelection();
+            updateSelection();
             selectionDiv.scrollIntoView({ block: "center" });
             buildMaterial();
             return;
@@ -352,7 +367,7 @@
         const selRect = selectionDiv.getBoundingClientRect();
         const container = paletteContainer.parentElement;
         const conRect = container.getBoundingClientRect();
-        drawSelection();
+        updateSelection();
         buildMaterial();
 
         if (
@@ -374,7 +389,7 @@
 
     onMount(() => {
         drawPalette();
-        drawSelection();
+        updateSelection();
     });
 </script>
 
