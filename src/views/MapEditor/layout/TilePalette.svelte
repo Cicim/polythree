@@ -252,7 +252,9 @@
     }
     function onMouseLeave() {
         hoveringTile = null;
-        onMouseUp();
+        if (rightClicking) {
+            onMouseUp();
+        }
     }
 
     /** Recalculates the tileSize every time the sidebar's size changes */
