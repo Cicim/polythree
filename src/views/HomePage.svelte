@@ -6,7 +6,7 @@
     import { MapListContext } from "./MapList";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
     import type { HomePageContext } from "./HomePage";
-    
+
     export let context: HomePageContext;
 </script>
 

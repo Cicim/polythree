@@ -1,5 +1,5 @@
 import { ViewContext, EditorContext } from "./contexts";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 
 /** The currently active view */
 export let activeView = writable<ViewContext | null>(null);

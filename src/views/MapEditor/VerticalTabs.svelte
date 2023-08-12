@@ -17,11 +17,16 @@
             class:active={$activeTab === id}
             class="tab"
             use:tooltip
-            tooltip={tab.title}
+            tooltip={`${tab.title} ${tab.isLocked ? "(Locked)" : ""}`}
             {id}
         >
             <span class="icon">
                 <iconify-icon icon={tab.icon} />
+                {#if tab.isLocked}
+                    <span class="locked">
+                        <iconify-icon icon="mdi:lock" />
+                    </span>
+                {/if}
             </span>
             <span class="text">{tab.title}</span>
         </div>
@@ -44,6 +49,7 @@
             var(--tab-selected-border);
 
         .tab {
+            position: relative;
             display: flex;
             writing-mode: vertical-rl;
             place-items: center;
@@ -55,17 +61,38 @@
             cursor: pointer;
 
             .icon {
+                position: relative;
                 iconify-icon {
                     font-size: 1.25em;
+                    transform: rotate(-90deg);
                 }
-                transform: rotate(-90deg);
+            }
+
+            .locked {
+                position: absolute;
+                bottom: 0px;
+                left: 8px;
+                color: var(--warn-fg);
+                transform: rotate(90deg);
+
+                iconify-icon {
+                    font-size: 0.75em;
+                    text-shadow: 1px 1px 0 red;
+                }
             }
 
             @media screen and (max-height: 880px) {
                 padding: 0.75em 0;
                 .icon {
+                    iconify-icon {
+                        transform: rotate(0deg);
+                    }
+                }
+
+                .locked {
                     transform: rotate(0deg);
                 }
+
                 .text {
                     display: none;
                 }

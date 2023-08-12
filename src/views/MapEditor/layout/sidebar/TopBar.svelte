@@ -1,9 +1,13 @@
 <script lang="ts">
     import Button from "src/components/Button.svelte";
     import { SidebarState } from "../LayoutSidebar.svelte";
+    import { getContext } from "svelte";
+    import type { MapEditorContext } from "src/views/MapEditor";
 
     export let state: SidebarState;
     export let levelMode: boolean;
+    const context: MapEditorContext = getContext("context");
+    const layoutLocked = context.layoutLocked;
 </script>
 
 <div
@@ -12,12 +16,21 @@
 >
     <Button color="secondary" on:click={() => (state = SidebarState.Borders)}>
         <iconify-icon icon="mdi:border-all" width="1.5em" />
-        Borders
+        {#if $layoutLocked}
+            View Borders
+        {:else}
+            Borders
+        {/if}
     </Button>
-    <Button color="secondary" on:click={() => (state = SidebarState.BrushList)}>
-        <iconify-icon icon="mdi:format-list-bulleted" width="1.5em" />
-        Brush List
-    </Button>
+    {#if !$layoutLocked}
+        <Button
+            color="secondary"
+            on:click={() => (state = SidebarState.BrushList)}
+        >
+            <iconify-icon icon="mdi:format-list-bulleted" width="1.5em" />
+            Brush List
+        </Button>
+    {/if}
     <Button color="secondary">
         <iconify-icon icon="mdi:puzzle" width="1.5em" />
         Edit Tilesets

@@ -94,7 +94,7 @@
             // If the attribute is a falsy value, return
             if (!tooltipAttribute) return;
             // Update the tooltip
-            tooltip.innerText = tooltipAttribute;
+            tooltip.innerHTML = tooltipAttribute;
             // Place the tooltip
             placeTooltip(target, options.placement);
         }, timeToOpen);

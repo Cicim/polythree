@@ -19,6 +19,7 @@
         reopenLastClosedView,
         openViews,
         draggingId,
+        activeView,
     } from "src/systems/views";
 
     // Redefine the default keybindings for the TabBar
@@ -35,13 +36,13 @@
                 if (!(<EditorContext>view)?.needsSaveNow) view.close();
             }),
         "tabbar/next": () => {
-            const current = $openViews.find((view) => view.selected);
+            const current = $openViews.find((view) => view === $activeView);
             const index = $openViews.indexOf(current);
             const next = $openViews[index + 1] ?? $openViews[0];
             next.select();
         },
         "tabbar/prev": () => {
-            const current = $openViews.find((view) => view.selected);
+            const current = $openViews.find((view) => view === $activeView);
             const index = $openViews.indexOf(current);
             const prev =
                 $openViews[index - 1] ?? $openViews[$openViews.length - 1];
@@ -93,7 +94,7 @@
             // Fix in case the shift key makes the deltaX property update instead of deltaY
             const delta = e.deltaY || e.deltaX;
 
-            const current = $openViews.find((view) => view.selected);
+            const current = $openViews.find((view) => view === $activeView);
             const index = $openViews.indexOf(current);
             const nextIndex = index + (delta > 0 ? 1 : -1);
             const next = $openViews[nextIndex];

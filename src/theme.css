@@ -7,11 +7,15 @@
     --weak-bg: #1f1f22;
     --weak-fg: #b2b2b0;
     --error-fg: #ff511c;
+    --warn-fg: #ffc107;
 
 
     --warn-card-bg: #ffc107;
     --warn-card-fg: #602a00;
+    --warn-card-bg-hover: #ffd216;
+    --warn-card-fg-hover: #8b4108;
     --warn-card-border: #c45500;
+    --warn-card-border-hover: #c45500;
     --warn-card-icon: var(--warn-border);
 
     --error-card-bg: #d7340b;

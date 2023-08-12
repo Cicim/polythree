@@ -7,11 +7,13 @@
     import ToolButton from "./ToolButton.svelte";
     import { EditorTool } from "./editor/tools";
     import type { MapEditorContext } from "../MapEditor";
+    import { tooltip } from "src/systems/tooltip";
 
     const context: MapEditorContext = getContext("context");
     const changes = context.changes;
     const changed = changes.updateStore;
     let selectedToolStore = context.selectedTool;
+    const layoutLocked = context.layoutLocked;
 
     // The currently open tab (layout, level or scripts)
     $: activeTab = context.selectedTab;
@@ -19,48 +21,64 @@
 
 <div class="editor">
     <div class="toolbar">
-        <ToolButton
-            bind:group={$selectedToolStore}
-            value={EditorTool.Pencil}
-            icon="mdi:pencil"
-            title="Pencil"
-            theme="secondary"
-        />
-        <ToolButton
-            bind:group={$selectedToolStore}
-            value={EditorTool.Fill}
-            icon="mdi:bucket"
-            title="Fill"
-        />
-        <ToolButton
-            bind:group={$selectedToolStore}
-            value={EditorTool.Rectangle}
-            icon="mdi:square"
-            title="Rectangle"
-        />
-        <ToolButton
-            bind:group={$selectedToolStore}
-            value={EditorTool.Replace}
-            icon="mdi:wand"
-            title="Replace"
-        />
-        |
-        {#key $changed}
+        <div class="buttons">
             <ToolButton
-                icon="mdi:undo"
-                title="Undo ({changes.top})"
-                disabled={changes.top === 0}
-                on:click={() => context.undo()}
+                bind:group={$selectedToolStore}
+                value={EditorTool.Pencil}
+                icon="mdi:pencil"
+                title="Pencil"
+                theme="secondary"
             />
-        {/key}
-        {#key $changed}
             <ToolButton
-                icon="mdi:redo"
-                title="Redo ({changes.stack.length - changes.top})"
-                disabled={changes.stack.length === changes.top}
-                on:click={() => context.redo()}
+                bind:group={$selectedToolStore}
+                value={EditorTool.Fill}
+                icon="mdi:bucket"
+                title="Fill"
             />
-        {/key}
+            <ToolButton
+                bind:group={$selectedToolStore}
+                value={EditorTool.Rectangle}
+                icon="mdi:square"
+                title="Rectangle"
+            />
+            <ToolButton
+                bind:group={$selectedToolStore}
+                value={EditorTool.Replace}
+                icon="mdi:wand"
+                title="Replace"
+            />
+            <span class="separator" />
+            {#key $changed}
+                <ToolButton
+                    icon="mdi:undo"
+                    title="Undo ({changes.top})"
+                    disabled={changes.top === 0}
+                    on:click={() => context.undo()}
+                />
+            {/key}
+            {#key $changed}
+                <ToolButton
+                    icon="mdi:redo"
+                    title="Redo ({changes.stack.length - changes.top})"
+                    disabled={changes.stack.length === changes.top}
+                    on:click={() => context.redo()}
+                />
+            {/key}
+        </div>
+        <div class="actions">
+            {#if $layoutLocked}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    class="action"
+                    use:tooltip
+                    tooltip="Another Editor was editing this Layout first.<br><br>Close the other Map Editors or click here<br>to see which actions can be performed."
+                    on:click={() => console.log("TODO")}
+                >
+                    <iconify-icon icon="mdi:lock" inline />
+                    Editing Locked
+                </div>
+            {/if}
+        </div>
     </div>
     <div class="area">
         <LayoutViewArea editLevels={$activeTab === "level"} />
@@ -102,21 +120,52 @@
     }
 
     .toolbar {
-        display: flex;
-        flex-flow: row nowrap;
+        display: grid;
+        grid-template-columns: 1fr max-content;
         align-items: center;
+        gap: 8px;
 
-        padding: 0 2px;
         overflow-x: auto;
         overflow-y: hidden;
-        gap: 2px;
 
         grid-area: toolbar;
         background: var(--main-bg);
         box-shadow: 0 1px 0 var(--light-shadow);
         z-index: 1;
 
-        color: transparent;
+        .buttons {
+            display: flex;
+            flex-flow: row nowrap;
+            padding: 0 2px;
+            gap: 2px;
+
+            .separator {
+                color: transparent;
+            }
+        }
+
+        .actions {
+            display: flex;
+            flex-flow: row nowrap;
+            padding: 0 2px;
+            gap: 2px;
+
+            .action {
+                padding: 4px 8px;
+                border-radius: 8px;
+                cursor: pointer;
+                background: var(--warn-card-bg);
+                color: var(--warn-card-fg);
+                border: 1px solid var(--warn-card-border);
+                justify-self: last baseline;
+
+                &:hover {
+                    background: var(--warn-card-bg-hover);
+                    color: var(--warn-card-fg-hover);
+                    border-color: var(--warn-card-border-hover);
+                }
+            }
+        }
 
         &::-webkit-scrollbar {
             -webkit-appearance: none;

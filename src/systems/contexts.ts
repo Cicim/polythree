@@ -29,8 +29,6 @@ export abstract class ViewContext {
 
     /** The HTML element that the view is rendered in */
     public container: HTMLDivElement;
-    /** Whether or not the view is currently active */
-    public selected: boolean = false;
     /** Whether or not the tab is a valid dropzone for the currently dragged tab */
     public activeDropzone: boolean = false;
 
@@ -110,7 +108,6 @@ export abstract class ViewContext {
         this.onDeselect();
         // Hide the this view
         this.container.classList.add("hidden");
-        this.selected = false;
     }
 
     /** Select this view and deselect the active one */
@@ -126,13 +123,9 @@ export abstract class ViewContext {
 
         // Show the selected view
         this.container.classList.remove("hidden");
-        this.selected = true;
 
         // Update the active view
         activeView.set(this);
-
-        // Update the tabbar
-        openViews.update(views => views);
     }
 
     /** Close this view and select a new active one if necessary */
@@ -191,6 +184,18 @@ export abstract class ViewContext {
                 position,
             });
             return views;
+        });
+    }
+
+    /** Returns whether there is another view, of the same type of this one 
+     * (excluding this one), that matches the predicate */
+    public anyOtherViewWhere(views: ViewContext[], predicate: (view: any) => boolean): boolean {
+        return views.some(view => {
+            // Skip views that are not of this type
+            if (!(view instanceof this.constructor)) return false;
+            // Skip this view
+            if (view === this) return false;
+            return predicate(view as typeof this);
         });
     }
 
@@ -328,12 +333,19 @@ export abstract class EditorContext extends ViewContext {
 }
 
 export interface EditorSubTab {
+    /** The tab's text */
     title: string;
+    /** The tab's icon */
     icon: string;
+    /** If the tab is locked */
+    isLocked?: boolean;
 }
+
+export type TabbedEditorTabs = Record<string, EditorSubTab>;
+
 /** A context that has multiple vertical tabs */
 export abstract class TabbedEditorContext extends EditorContext {
-    public tabs: Record<string, EditorSubTab>;
+    public tabs: TabbedEditorTabs;
     public selectedTab: Writable<string> = writable("");
     public _cosmeticHasSideTabs = true;
 

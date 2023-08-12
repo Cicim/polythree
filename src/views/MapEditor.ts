@@ -1,6 +1,6 @@
 import MapEditor from "./MapEditor.svelte";
-import { TabbedEditorContext } from "../systems/contexts";
-import { openViews } from "src/systems/views";
+import { TabbedEditorContext, type TabbedEditorTabs } from "../systems/contexts";
+import { activeView, openViews } from "src/systems/views";
 import { redefineBindings } from "src/systems/bindings";
 import { get, writable, type Writable } from "svelte/store";
 import { spawnDialog } from "src/systems/dialogs";
@@ -93,6 +93,9 @@ export class MapEditorContext extends TabbedEditorContext {
     public material: Writable<PaintingMaterial>;
     /** The selected tool's id */
     public selectedTool: Writable<EditorTool>;
+    /** True if the layout cannot be edited */
+    public layoutLocked: Writable<boolean> = writable(false);
+
 
     // Brushes
     /** The list of brushes loaded for these tilesets */
@@ -137,7 +140,7 @@ export class MapEditorContext extends TabbedEditorContext {
     private tileset1Length: number;
     private tileset2Length: number;
 
-    public tabs = {
+    public tabs: TabbedEditorTabs = {
         "header": {
             title: "Header",
             icon: "mdi:file-document-edit-outline",
@@ -157,10 +160,12 @@ export class MapEditorContext extends TabbedEditorContext {
         "level": {
             title: "Level",
             icon: "mdi:map",
+            isLocked: false,
         },
         "layout": {
             title: "Layout",
             icon: "mdi:grid",
+            isLocked: false,
         }
     }
 
@@ -173,17 +178,34 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     public async close(): Promise<boolean> {
+        // Try to save the map's configs before closing
         if (!get(this.isLoading)) {
-            try {
-                await this.exportTilesetsLevels();
-                await this.saveBrushesForTilesets();
+            // Save the tileset levels if edits were made
+            if (get(this.tilesetLevelChanges.unsaved)) {
+                try {
+                    await this.exportTilesetsLevels();
+                }
+                catch (err) {
+                    await spawnDialog(AlertDialog, {
+                        title: "Error while saving Tileset Levels",
+                        message: err
+                    });
+                }
             }
-            catch (err) {
-                await spawnDialog(AlertDialog, {
-                    title: "Oops! Something went wrong!",
-                    message: err
-                });
+
+            // Save the brushes if edits were made
+            if (get(this.brushesChanges.unsaved)) {
+                try {
+                    await this.saveBrushesForTilesets();
+                }
+                catch (err) {
+                    await spawnDialog(AlertDialog, {
+                        title: "Error while saving Brushes",
+                        message: err
+                    });
+                }
             }
+
         }
         return super.close();
     }
@@ -341,7 +363,7 @@ export class MapEditorContext extends TabbedEditorContext {
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
         // Trigger a re-render
-        openViews.update(views => views);
+        activeView.set(this);
         this.isLoading.set(false);
     }
 

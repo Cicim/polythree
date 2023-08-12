@@ -10,11 +10,12 @@
 
     const context: MapEditorContext = getContext("context");
     const brushes = context.brushes;
+    const layoutLocked = context.layoutLocked;
 </script>
 
 <div
     class="brushes-container"
-    class:hidden={levelMode || state !== SidebarState.Palette}
+    class:hidden={$layoutLocked || levelMode || state !== SidebarState.Palette}
     use:resizeY={{
         minHeight: () => Math.max(100, window.innerHeight * 0.1),
         maxHeight: () => Math.min(288, window.innerHeight * 0.33),

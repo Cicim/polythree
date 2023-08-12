@@ -1,7 +1,6 @@
 <script lang="ts">
-    
     import type { ViewContext, EditorContext } from "src/systems/contexts";
-    import { draggingId, openViews } from "src/systems/views";
+    import { activeView, draggingId, openViews } from "src/systems/views";
 
     import {
         IconOption,
@@ -116,7 +115,7 @@
 <div
     id="tab-{$openViews.indexOf(view)}"
     class="tab"
-    class:selected={view.selected}
+    class:selected={view === $activeView}
     class:show-anyway={!$needsSave}
     class:dropzone={view.activeDropzone}
     draggable="true"

@@ -143,6 +143,9 @@
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
 
+    /** If this var is true, switching to Painting, Selecting or Resizing mode is prohibited */
+    const editingLocked = context.layoutLocked;
+
     /** The object that will contain all the changes applied to this editor */
     export let changes: EditorChanges<any> = context.changes;
 
@@ -157,6 +160,18 @@
     // Mouse state
     /** Action the user is performing with the mouse */
     let state: State = State.Idle;
+    /** Updates the state with checks */
+    function updateState(newState: State) {
+        if (
+            $editingLocked &&
+            (newState === State.Painting ||
+                newState === State.Resizing ||
+                newState === State.Selecting)
+        )
+            return;
+        state = newState;
+    }
+
     /** Mouse position before the start of the frame */
     let mousePosition: Point = point();
 
@@ -1061,6 +1076,8 @@
         if (state !== State.Idle) return;
 
         if (event.button === 0) {
+            if ($editingLocked) return;
+
             // Resizing starts if you are hovering over a border of the map
             if (resizeDirection !== ResizeDirection.None) {
                 mouseResizeStart.y = event.offsetY;
@@ -1073,7 +1090,7 @@
                 };
 
                 changes.locked++;
-                state = State.Resizing;
+                updateState(State.Resizing);
                 return;
             }
 
@@ -1083,7 +1100,7 @@
                 const { x, y } = hoveredTile();
                 // If the tile are not in bounds, don't start anything
                 if (!canPaintOnTile(x, y)) return;
-                state = State.Painting;
+                updateState(State.Painting);
 
                 // Create the painting state
                 paintingState = new PainterState(PAINTER_METHODS);
@@ -1095,7 +1112,7 @@
 
         // Panning starts with the middle mouse button (1)
         if (event.button === 1 && allowPan) {
-            state = State.Panning;
+            updateState(State.Panning);
             // Save the mouse coordinates for computing the offset
             mousePanStart.x = event.offsetX;
             mousePanStart.y = event.offsetY;
@@ -1106,10 +1123,11 @@
 
         // Selection starts with the right mouse button (2)
         if (event.button === 2) {
+            if ($editingLocked) return;
             const { x, y } = hoveredTile();
             if (!canPaintOnTile(x, y)) return;
 
-            state = State.Selecting;
+            updateState(State.Selecting);
             // Save the tile where the selection starts
             selectionStart.x = x;
             selectionStart.y = y;
@@ -1176,16 +1194,16 @@
                 resizeDirection = ResizeDirection.None;
                 resizedMapSize = null;
             }
-            state = State.Idle;
+            updateState(State.Idle);
         } else if (event.button === 1 && state === State.Panning) {
-            state = State.Idle;
+            updateState(State.Idle);
         } else if (event.button === 2 && state === State.Selecting) {
             // Hide the selection
             selection = null;
             draw();
             changes.locked--;
 
-            state = State.Idle;
+            updateState(State.Idle);
         }
     }
     function onMouseWheel(event: WheelEvent) {

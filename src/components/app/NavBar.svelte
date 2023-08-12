@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { openViews } from "src/systems/views";
+    import { activeView, openViews } from "src/systems/views";
 </script>
 
 <div
     class="navbar"
-    class:border={!$openViews.find((view) => view.selected)
+    class:border={!$openViews.find((view) => view === $activeView)
         ?._cosmeticHasSideTabs}
 >
     <iconify-icon icon="quill:meatballs-v" />
