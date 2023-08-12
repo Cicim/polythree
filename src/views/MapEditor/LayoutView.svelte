@@ -31,15 +31,15 @@
             />
             <ToolButton
                 bind:group={$selectedToolStore}
-                value={EditorTool.Fill}
-                icon="mdi:bucket"
-                title="Fill"
-            />
-            <ToolButton
-                bind:group={$selectedToolStore}
                 value={EditorTool.Rectangle}
                 icon="mdi:square"
                 title="Rectangle"
+            />
+            <ToolButton
+                bind:group={$selectedToolStore}
+                value={EditorTool.Fill}
+                icon="mdi:bucket"
+                title="Fill"
             />
             <ToolButton
                 bind:group={$selectedToolStore}

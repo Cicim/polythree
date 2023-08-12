@@ -183,8 +183,6 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/select_connections": new KeyBinding("Select Connections", "Ctrl+4", undefined, "active.name === 'Map Editor'"),
     "map_editor/select_encounters": new KeyBinding("Select Encounters", "Ctrl+5", undefined, "active.name === 'Map Editor'"),
     "map_editor/select_header": new KeyBinding("Select Header", "Ctrl+6", undefined, "active.name === 'Map Editor'"),
-    "layout_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", () => console.log("Picked Pencil in layout"), "active.name === 'Map Editor' && active.tab === 'layout'"),
-    "permissions_editor/pick_pencil": new KeyBinding("Pick Pencil", "P", () => console.log("Picked Pencil in level"), "active.name === 'Map Editor' && active.tab === 'level'"),
     "map_editor/zoom_in": new KeyBinding("Zoom In", "Ctrl++", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
     "map_editor/zoom_out": new KeyBinding("Zoom Out", "Ctrl+-", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
     "map_editor/undo_tileset_level_changes": new KeyBinding("Undo Tileset Level Changes", "Ctrl+Shift+Z", undefined, "active.name === 'Map Editor' && active.tab === 'level'"),
@@ -197,6 +195,10 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/palette_select_left": new KeyBinding("Move left on the Palette while Selecting", "Shift+A", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_move_right": new KeyBinding("Move right on the Palette", "D", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_select_right": new KeyBinding("Move right on the Palette while Selecting", "Shift+D", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_pencil": new KeyBinding("Select Pencil Tool", "1", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_rectangle": new KeyBinding("Select Rectangle Tool", "2", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_fill": new KeyBinding("Select Bucket Tool", "3", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_replace": new KeyBinding("Select Replace Tool", "4", undefined, "active.name === 'Map Editor'"),
 };
 
 /** The object containing all the existing shortcuts */

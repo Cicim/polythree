@@ -783,4 +783,20 @@ redefineBindings({
     "map_editor/palette_select_right": (view: MapEditorContext) => {
         view.moveOnPalette(1, 0, true);
     },
+    "map_editor/select_pencil": (view: MapEditorContext) => {
+        if (view.tab === "layout" || view.tab === "level")
+            view.selectedTool.set(EditorTool.Pencil);
+    },
+    "map_editor/select_rectangle": (view: MapEditorContext) => {
+        if (view.tab === "layout" || view.tab === "level")
+            view.selectedTool.set(EditorTool.Rectangle);
+    },
+    "map_editor/select_fill": (view: MapEditorContext) => {
+        if (view.tab === "layout" || view.tab === "level")
+            view.selectedTool.set(EditorTool.Fill);
+    },
+    "map_editor/select_replace": (view: MapEditorContext) => {
+        if (view.tab === "layout" || view.tab === "level")
+            view.selectedTool.set(EditorTool.Replace);
+    },
 });
