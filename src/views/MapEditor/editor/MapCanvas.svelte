@@ -838,7 +838,7 @@
         const newBlocks = blocks.resize(width, height, nullLevels ? NULL : 0);
 
         const change = new MapResizeChange(oldBlocks, newBlocks);
-        context.changes.push(change);
+        changes.push(change);
     }
 
     // ANCHOR Selection
@@ -1111,7 +1111,11 @@
 
                 // Create the painting state
                 paintingState = new PainterState(PAINTER_METHODS);
-                tool = new context.toolClass(paintingState, $material);
+                tool = new context.toolClass(paintingState, $material, {
+                    shiftKey: event.shiftKey,
+                    ctrlKey: event.ctrlKey,
+                    editingLevels: editLevels,
+                });
                 changes.locked++;
                 tool.startStroke(x, y);
             }

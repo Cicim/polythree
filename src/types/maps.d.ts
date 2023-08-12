@@ -39,3 +39,5 @@ interface TileSelection extends Point {
 }
 
 type BlockData = [metatile: number, level: number];
+
+type CoordinatesHash = `${number},${number}`;

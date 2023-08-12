@@ -20,13 +20,11 @@ export interface PainterMethods {
     update(): void;
 }
 
-type BlockHash = `${number},${number}`;
-
 export class PainterState {
     /** Old value of the blocks from before that were modified */
-    public oldBlocks: Record<BlockHash, BlockData> = {};
+    public oldBlocks: Record<CoordinatesHash, BlockData> = {};
     /** New value of the blocks after they've been modified */
-    public newBlocks: Record<BlockHash, BlockData> = {};
+    public newBlocks: Record<CoordinatesHash, BlockData> = {};
     /** If something was drawn during a movement */
     private drawn: boolean = false;
 
@@ -57,7 +55,7 @@ export class PainterState {
         if (oldMetatile === updatedMetatile && oldLevel == updatedLevel) return;
 
         // Calculate an hash
-        const hash = `${x},${y}`;
+        const hash: CoordinatesHash = `${x},${y}`;
 
         // Never overwrite the old block if present
         if (this.oldBlocks[hash] === undefined)
