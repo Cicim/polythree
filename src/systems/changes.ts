@@ -59,6 +59,18 @@ export class EditorChanges<T> {
         this.updateChanges();
     }
 
+    /** Pushes a change without applying it */
+    public pushNoApply(change: Change) {
+        // Remove all changes after the top
+        this.stack.splice(this.top);
+        // Add the change to the stack
+        this.stack.push(change);
+        // Edit the top index
+        this.top = this.stack.length;
+
+        this.updateChanges();
+    }
+
     /** Undoes the last applied change */
     public async undo() {
         if (this.locked || this.top === 0) return;

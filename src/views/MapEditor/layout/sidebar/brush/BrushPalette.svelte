@@ -9,7 +9,8 @@
     export let levelMode: boolean;
 
     const context: MapEditorContext = getContext("context");
-    const brushes = context.brushes;
+    const primaryBrushes = context.primaryBrushes;
+    const secondaryBrushes = context.secondaryBrushes;
     const layoutLocked = context.layoutLocked;
 </script>
 
@@ -22,8 +23,12 @@
         startHeight: 100,
     }}
 >
-    <div class="brushes" class:no-brushes={$brushes.length === 0}>
-        {#each $brushes as brush (brush.uid)}
+    <div
+        class="brushes"
+        class:no-brushes={$primaryBrushes.length === 0 &&
+            $secondaryBrushes.length === 0}
+    >
+        {#each [...$primaryBrushes, ...$secondaryBrushes] as brush (brush.uid)}
             <BrushCard small={true} {brush} />
         {/each}
         <!-- svelte-ignore a11y-click-events-have-key-events -->

@@ -5,16 +5,14 @@
     import ToolButton from "../../../ToolButton.svelte";
     import BrushCard from "./BrushCard.svelte";
     import { SimpleBrush } from "src/views/MapEditor/editor/brushes";
-    import { AddBrushChange } from "src/views/MapEditor/editor/brush_changes";
     import Input from "src/components/Input.svelte";
 
     export let state: SidebarState;
     export let levelMode: boolean;
 
     const context: MapEditorContext = getContext("context");
-    const brushes = context.brushes;
-    const changes = context.brushesChanges;
-    const changed = changes.updateStore;
+    const primaryBrushes = context.primaryBrushes;
+    const secondaryBrushes = context.secondaryBrushes;
 
     let filterString: string = "";
     function clearFilter(event: KeyboardEvent) {
@@ -26,7 +24,10 @@
 
     function createBrush() {
         // Add it to the list of brushes
-        changes.push(new AddBrushChange(new SimpleBrush()));
+        primaryBrushes.update((brushes) => {
+            brushes.push(new SimpleBrush(context.tileset1Offset));
+            return brushes;
+        });
     }
 </script>
 
@@ -42,27 +43,9 @@
                 on:click={createBrush}
                 theme="transparent"
             />
-            {#key $changed}
-                <ToolButton
-                    icon="mdi:undo"
-                    title="Undo"
-                    on:click={() => changes.undo()}
-                    theme="transparent"
-                    disabled={changes.top === 0}
-                />
-            {/key}
         </div>
         <div class="center">BRUSH LIST</div>
         <div class="right">
-            {#key $changed}
-                <ToolButton
-                    icon="mdi:redo"
-                    title="Redo"
-                    on:click={() => changes.redo()}
-                    theme="transparent"
-                    disabled={changes.stack.length === changes.top}
-                />
-            {/key}
             <ToolButton
                 icon="mdi:close"
                 title="Close"
@@ -80,7 +63,7 @@
         />
     </div>
     <div class="brush-container">
-        {#each $brushes as brush (brush.uid)}
+        {#each [...$primaryBrushes, ...$secondaryBrushes] as brush (brush.uid)}
             <BrushCard
                 show={brush.name
                     .toLowerCase()
@@ -125,7 +108,7 @@
             padding: 8px;
             overflow-x: hidden;
 
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(266px, 1fr));
         }
     }
 </style>

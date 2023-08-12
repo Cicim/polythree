@@ -7,28 +7,31 @@
     } from "src/systems/context_menu";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
     import type { BrushMaterial } from "../../../editor/brushes";
-    import { DeleteBrushChange } from "../../../editor/brush_changes";
     import { getContext, onMount, tick } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import { spawnDialog } from "src/systems/dialogs";
     import BrushSettings from "./BrushSettings.svelte";
     import { tooltip } from "src/systems/tooltip";
+    import type { Writable } from "svelte/store";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
-    const data = context.data;
     const editingBrush = context.editingBrush;
-    const changes = context.brushesChanges;
+    const primaryBrushes = context.primaryBrushes;
+    const secondaryBrushes = context.secondaryBrushes;
 
-    export let small: boolean = false;
+    /** This brush */
     export let brush: BrushMaterial;
+    /** If the card should be renders as a small card */
+    export let small: boolean = false;
+    /** Whether or not to show the card (for filtering) */
     export let show: boolean = true;
 
     let name = brush.name;
     let pinned = brush.pinned;
-    $: selected = $material === brush;
     let icon = brush.icon;
     let brushName = brush.brushName;
+    $: selected = $material === brush;
 
     function setPinned() {
         $pinned = true;
@@ -54,8 +57,21 @@
         });
     }
 
+    let deletedList: Writable<BrushMaterial[]>;
+    let deletedIndex: number;
+    let deletedBrush: BrushMaterial;
+
     function deleteBrush() {
-        changes.push(new DeleteBrushChange(brush));
+        deletedList = brush.onlyUsesPrimaryTiles(context.tileset1Length)
+            ? primaryBrushes
+            : secondaryBrushes;
+
+        deletedIndex = $deletedList.indexOf(brush);
+        deletedBrush =
+            $deletedList.splice(deletedIndex, 1)?.[0] ??
+            (console.error("How come there isn't a brush?!"), null);
+
+        $deletedList = $deletedList;
     }
 
     let previewContainer: HTMLDivElement;
@@ -120,14 +136,32 @@
     >
         <div class="preview" bind:this={previewContainer} />
         <div class="name">{name}</div>
-        <div class="icon" use:tooltip tooltip={brushName}>
-            <iconify-icon {icon} inline />
+        <div class="icon">
+            <iconify-icon {icon} inline use:tooltip tooltip={brushName} />
+            {#if brush.onlyUsesPrimaryTiles(context.tileset1Length)}
+                <iconify-icon
+                    icon="mdi:dice-one"
+                    inline
+                    use:tooltip
+                    tooltip={"Brush only uses <i>primary</i> tileset"}
+                />
+            {:else}
+                <iconify-icon
+                    icon="mdi:dice-two"
+                    inline
+                    use:tooltip
+                    tooltip={"Brush uses <i>primary</i> <br> and <i>secondary</i> tilesets"}
+                />
+            {/if}
         </div>
         <ClickableIcons
             vertical_alignment="bottom"
             icons={[
-                // { icon: "mdi:edit", text: "Edit", onclick: () => {} },
-                { icon: "mdi:trash", text: "Delete", onclick: deleteBrush },
+                {
+                    icon: "mdi:edit",
+                    text: "Edit",
+                    onclick: () => editBrush(),
+                },
                 $pinned
                     ? {
                           icon: "mdi:pin-off",

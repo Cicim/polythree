@@ -35,7 +35,8 @@
     const editingBrushChanges = context.editingBrushChanges;
     const editingBrushClone = context.editingBrushClone;
     const material = context.material;
-    const brushes = context.brushes;
+    const primaryBrushes = context.primaryBrushes;
+    const secondaryBrushes = context.secondaryBrushes;
 
     // Update the moveOnPalette callback
     context.moveOnPaletteCB = (dirX: number, dirY: number, select: boolean) => {
@@ -54,9 +55,14 @@
             // so create a clone of the brush
             $editingBrushClone = $editingBrush.clone();
             // Save the index of the current brush
-            context.editingBrushIndex = $brushes.findIndex(
-                (brush) => $editingBrush === brush
-            );
+            if ($editingBrush.onlyUsesPrimaryTiles(context.tileset1Length))
+                context.editingBrushIndex = $primaryBrushes.findIndex(
+                    (brush) => $editingBrush === brush
+                );
+            else
+                context.editingBrushIndex = $secondaryBrushes.findIndex(
+                    (brush) => $editingBrush === brush
+                );
             // Create a change for the brush's tiles
             $editingBrushChanges = new EditorChanges(null);
             // Save the original state

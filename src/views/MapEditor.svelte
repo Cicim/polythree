@@ -13,8 +13,8 @@
     import { get, type Writable } from "svelte/store";
 
     export let context: MapEditorContext;
-    const data = context.data;
     setContext("context", context);
+    const data = context.data;
     setContext("data", data);
 
     const isLoading = context.isLoading;

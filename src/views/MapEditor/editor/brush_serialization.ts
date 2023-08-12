@@ -15,6 +15,10 @@ export interface SerializedBrush {
     blocks: SerializedBlocksData;
     /** The current pinned state */
     pinned: boolean;
+    /** The brush's primary tileset offset */
+    primary: number;
+    /** The brush's secondary tileset offeset (or undefined) */
+    secondary?: number;
 }
 
 export interface SerializedSimpleBrush extends SerializedBrush {
@@ -57,6 +61,47 @@ function getSecondaryTilesetBrushes(tileset1: number, tileset2: number): Seriali
     return get(config).brushes[tileset1].secondary[tileset2];
 }
 
+/** Loads the brushes for the given primary tileset from the configs */
+export async function loadBrushesForPrimaryTileset(tilesetOffset: number): Promise<BrushMaterial[]> {
+    let primaryTilesetBrushes = [];
+
+    try {
+        // Get the brushes for the primary tileset
+        primaryTilesetBrushes = getPrimaryTilesetBrushes(tilesetOffset);
+    }
+    catch (err) {
+        console.error("Could not load Brushes for this Tileset", tilesetOffset);
+    }
+    finally {
+        // Deserialize the brushes
+        const deserialized = primaryTilesetBrushes.map(serializedBrush => BrushMaterial.deserialize(serializedBrush))
+            .filter(brush => brush !== null);
+
+        return deserialized;
+    }
+}
+
+/** Loads the brushes for the given [primary, secondary] tileset pair from the configs */
+export async function loadBrushesForSecondaryTileset(primaryOffset: number, tilesetOffset: number): Promise<BrushMaterial[]> {
+    let secondaryTilesetBrushes = [];
+
+    try {
+        // Get the brushes for the secondary tileset
+        secondaryTilesetBrushes = getSecondaryTilesetBrushes(primaryOffset, tilesetOffset);
+    }
+    catch (err) {
+        console.error("Could not load Brushes for this Tileset", tilesetOffset);
+    }
+    finally {
+        // Deserialize the brushes
+        const deserialized = secondaryTilesetBrushes.map(serializedBrush => BrushMaterial.deserialize(serializedBrush))
+            .filter(brush => brush !== null);
+
+        return deserialized;
+    }
+}
+
+/** @deprecated */
 export async function loadBrushesForTilesets(tileset1: number, tileset2: number): Promise<BrushMaterial[]> {
     let primaryTilesetBrushes = [];
     let secondaryTilesetBrushes = [];
@@ -80,18 +125,13 @@ export async function loadBrushesForTilesets(tileset1: number, tileset2: number)
         return deserialized;
     }
 }
-export async function saveBrushesForTilesets(tileset1: number, tileset2: number, brushes: BrushMaterial[], tileset1Length: number) {
-    const tileset1Brushes = [];
-    const tileset2Brushes = [];
 
-    // Sort the brushes based on their blocks
-    for (const brush of brushes) {
-        const serializedBrush = brush.serialize();
-
-        if (brush.onlyUsesPrimaryTiles(tileset1Length))
-            tileset1Brushes.push(serializedBrush);
-        else tileset2Brushes.push(serializedBrush);
-    }
+export async function saveBrushesForTilesets(
+    tileset1: number, tileset2: number,
+    primaryBrushes: BrushMaterial[], secondaryBrushes: BrushMaterial[]
+) {
+    const tileset1Brushes = primaryBrushes.map(brush => brush.serialize());
+    const tileset2Brushes = secondaryBrushes.map(brush => brush.serialize());
 
     // Update the brushes in the configs
     config.update(config => {

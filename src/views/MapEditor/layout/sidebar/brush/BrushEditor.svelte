@@ -10,7 +10,6 @@
     import MapCanvas from "../../../editor/MapCanvas.svelte";
     import BrushPreview from "./BrushPreview.svelte";
     import BrushSettings from "./BrushSettings.svelte";
-    import { EditBrushChange } from "src/views/MapEditor/editor/brush_changes";
 
     export let state: SidebarState;
     export let levelMode: boolean;
@@ -21,22 +20,57 @@
     const data = context.data;
     const tilesetData = $data.tilesets;
     const editingBrush = context.editingBrush;
-    const changes = context.brushesChanges;
     const editingBrushClone = context.editingBrushClone;
+    const primaryBrushes = context.primaryBrushes;
+    const secondaryBrushes = context.secondaryBrushes;
     const editingBrushChanges = context.editingBrushChanges;
 
-    function doneEditing() {
-        // See if you need to apply the change
-        changes.push(
-            new EditBrushChange(
-                $editingBrushClone,
-                $editingBrush,
-                context.editingBrushIndex
-            )
-        );
+    function applyChanges() {
+        // If the brush was originally primary
+        if ($editingBrushClone.onlyUsesPrimaryTiles(context.tileset1Length)) {
+            // If it is still primary, update the brush
+            if ($editingBrush.onlyUsesPrimaryTiles(context.tileset1Length)) {
+                primaryBrushes.update((brushes) => {
+                    brushes[context.editingBrushIndex] = $editingBrush.clone();
+                    return brushes;
+                });
+            } else {
+                // Remove the brush from the primary brushes
+                primaryBrushes.update((brushes) => {
+                    brushes.splice(context.editingBrushIndex, 1);
+                    return brushes;
+                });
+                // Add to the secondary brushes
+                secondaryBrushes.update((brushes) => {
+                    brushes.push($editingBrush.clone());
+                    return brushes;
+                });
+            }
+        }
+        // Otherwise if the brush was secondary
+        else {
+            // If the new brush is still secondary
+            if (!$editingBrush.onlyUsesPrimaryTiles(context.tileset1Length)) {
+                secondaryBrushes.update((brushes) => {
+                    brushes[context.editingBrushIndex] = $editingBrush.clone();
+                    return brushes;
+                });
+            } else {
+                // Remove the brush from the secondary brushes
+                secondaryBrushes.update((brushes) => {
+                    brushes.splice(context.editingBrushIndex, 1);
+                    return brushes;
+                });
+                // Add to the primary brushes
+                primaryBrushes.update((brushes) => {
+                    brushes.push($editingBrush.clone());
+                    return brushes;
+                });
+            }
+        }
 
-        $editingBrush = null;
         $editingBrushChanges = null;
+        $editingBrush = null;
         context.editingBrushIndex = null;
         state = context.editingBrushEnteredFromState;
     }
@@ -111,7 +145,7 @@
                         icon="mdi:tick"
                         theme="transparent"
                         title="Done Editing"
-                        on:click={doneEditing}
+                        on:click={applyChanges}
                     />
                 </div>
             </div>
@@ -120,8 +154,8 @@
                     <MapCanvas
                         blocks={$editingBrush.blocks}
                         centerOnResize={true}
-                        changes={$editingBrushChanges}
                         editLevels={state === SidebarState.BrushLevel}
+                        changes={$editingBrushChanges}
                         nullLevels={true}
                     />
                 {/key}

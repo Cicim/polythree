@@ -1,4 +1,3 @@
-import type { MapEditorContext, TilesetsData } from "src/views/MapEditor";
 import { get, writable } from "svelte/store";
 import { BlocksData } from "./blocks_data";
 import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
@@ -23,6 +22,10 @@ export abstract class BrushMaterial extends PaintingMaterial {
     public blocks: BlocksData;
     /** Unique identifier for svelte each */
     public uid: number = BrushMaterial.LAST_UID++;
+
+    constructor(public primary: number, public secondary?: number) {
+        super();
+    }
 
     /** This brush type's icon */
     static icon: string = "";
@@ -121,13 +124,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
 
     /** Returns if this brush's blocks are all inside of the primary tileset given */
     public onlyUsesPrimaryTiles(tileset1Length: number): boolean {
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                if (this.blocks[y]?.[x]?.[0] >= tileset1Length)
-                    return false;
-            }
-        }
-        return true;
+        return !this.blocks.metatiles.some(mtid => mtid >= tileset1Length);
     }
     /** Serializes a brush into a storable object */
     public serialize(): SerializedBrush {
@@ -136,6 +133,8 @@ export abstract class BrushMaterial extends PaintingMaterial {
             type: this.type,
             name: this.name,
             pinned: get(this.pinned),
+            primary: this.primary,
+            secondary: this.secondary
         };
     }
 
@@ -170,7 +169,7 @@ export class SimpleBrush extends BrushMaterial {
     }
 
     public clone(): SimpleBrush {
-        const brush = new SimpleBrush();
+        const brush = new SimpleBrush(this.primary, this.secondary);
         brush.blocks = this.blocks.clone();
         brush.name = this.name;
         brush.pinned = this.pinned;
@@ -189,7 +188,7 @@ export class SimpleBrush extends BrushMaterial {
     }
 
     public static deserialize(serialized: SerializedSimpleBrush) {
-        const brush = new SimpleBrush();
+        const brush = new SimpleBrush(serialized.primary, serialized.secondary);
         brush.blocks = BlocksData.fromSerialized(serialized.blocks);
         if (brush.width > SimpleBrush.MAX_WIDTH || brush.height > SimpleBrush.MAX_HEIGHT)
             return null;
@@ -217,7 +216,7 @@ export class NinePatchBrush extends BrushMaterial {
     }
 
     public clone(): NinePatchBrush {
-        const brush = new NinePatchBrush();
+        const brush = new NinePatchBrush(this.primary, this.secondary);
         brush.blocks = this.blocks.clone();
         brush.name = this.name;
         brush.hasCorners = this.hasCorners;
@@ -236,7 +235,7 @@ export class NinePatchBrush extends BrushMaterial {
     }
 
     public static deserialize(serialized: SerializedNinePatchBrush) {
-        const brush = new NinePatchBrush();
+        const brush = new NinePatchBrush(serialized.primary, serialized.secondary);
         brush.blocks = BlocksData.fromSerialized(serialized.blocks);
         brush.name = serialized.name;
         brush.hasCorners = serialized.hasCorners;
