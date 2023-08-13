@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { BlocksData } from "./blocks_data";
+import { BlocksData, NULL } from "./blocks_data";
 import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
 import { PaintingMaterial } from "./materials";
 import type { PainterState } from "./painter_state";
@@ -198,28 +198,152 @@ export class SimpleBrush extends BrushMaterial {
     }
 }
 
+
+// ANCHOR Nine patch brush
+const BORDER_VISIT_ORDER: [dx: number, dy: number][] = [
+    [-1, -1], [0, -1], [1, -1], [1, 0],
+    [1, 1], [0, 1], [-1, 1], [-1, 0]
+]
+/** 
+ * Returns a vector of true and false representing whether the blocks surrounding
+ * the given coordinates match a given condition.
+ * 
+ * Blocks out of bounds return false by default, but it can be changed with the
+ * `outOfBoundsBehavior` parameter.
+ */
+function getBorderMask(state: PainterState, x: number, y: number,
+    predicate: (metatile: number, level: number) => boolean,
+    fallback: boolean = false
+): number {
+    const mask = [fallback, fallback, fallback, fallback, fallback, fallback, fallback, fallback];
+
+    let index = 0;
+    for (const [i, j] of BORDER_VISIT_ORDER) {
+        const metatile = state.getMetatile(x + i, y + j);
+        if (metatile === NULL) { index++; continue; }
+        const level = state.getLevel(x + i, y + j);
+        mask[index++] = predicate(metatile, level);
+    }
+
+    // Transform it into an 8-bit mask
+    let result = 0;
+    for (let i = 0; i < 8; i++)
+        result |= (mask[7 - i] ? 1 : 0) << i;
+    return result;
+}
+
 export class NinePatchBrush extends BrushMaterial {
     static typeName = "Nine Patch Brush";
     static icon = "icon-park-outline:nine-key";
     public blocks: BlocksData = new BlocksData(3, 3, 0, null);
     public readonly type = BrushType.NinePatch;
-    public hasCorners = false;
+    private _hasCorners = false;
+
+    public set hasCorners(hasCorners) {
+        if (this._hasCorners === hasCorners) return;
+
+        this._hasCorners = hasCorners;
+        // Resize the blocks
+        this.blocks = this.blocks.resize(hasCorners ? 6 : 3, this.blocks.height);
+
+        if (!hasCorners) return;
+
+        // Fill all the new blocks
+        // O O O X N N
+        // O O O X N N
+        // O O O X X X
+        this.blocks.setMetatile(3, 0, NULL);
+        this.blocks.setMetatile(3, 1, NULL);
+        this.blocks.setMetatile(3, 2, NULL);
+        this.blocks.setMetatile(4, 2, NULL);
+        this.blocks.setMetatile(5, 2, NULL);
+
+        const [metatile, level] = this.getBlock(1, 1);
+        this.blocks.set(4, 0, metatile, level);
+        this.blocks.set(5, 0, metatile, level);
+        this.blocks.set(4, 1, metatile, level);
+        this.blocks.set(5, 1, metatile, level);
+    }
+    public get hasCorners() {
+        return this._hasCorners;
+    }
 
     public apply(state: PainterState, x: number, y: number): void {
-        const blocks = this.blocks;
-        const width = blocks.width;
-        const height = blocks.height;
-
-        for (let dy = 0; dy < height; dy++)
-            for (let dx = 0; dx < width; dx++)
-                state.set(x + dx, y + dy, blocks.getMetatile(dx, dy), blocks.getLevel(dx, dy));
+        this.applyPatch(state, x, y, false);
+        this.applyPatch(state, x - 1, y - 1);
+        this.applyPatch(state, x, y - 1);
+        this.applyPatch(state, x + 1, y - 1);
+        this.applyPatch(state, x + 1, y);
+        this.applyPatch(state, x + 1, y + 1);
+        this.applyPatch(state, x, y + 1);
+        this.applyPatch(state, x - 1, y + 1);
+        this.applyPatch(state, x - 1, y);
     }
+
+    private applyPatch(state: PainterState, x: number, y: number, side: boolean = true) {
+        if (!this.blocks.metatiles.includes(state.getMetatile(x, y)) && side) return;
+
+        // Get the border masks
+        const mask = getBorderMask(state, x, y, (metatile, _) => {
+            return this.blocks.metatiles.includes(metatile);
+        });
+
+        // Get the block to put here based on the mask
+        const [metatile, level] = this.getReplacement(mask);
+        state.set(x, y, metatile, level);
+    }
+
+
+    private getReplacement(mask: number): [number, number] {
+        if (mask === 0) return this.getBlock(1, 1);
+
+        if (this.hasCorners) {
+            // North-west corner
+            if (mask === 0b01111111) return this.getCorner(0, 0);
+            // North-east corner
+            if (mask === 0b11011111) return this.getCorner(1, 0);
+            // South-east corner
+            if (mask === 0b11110111) return this.getCorner(1, 1);
+            // South-west corner
+            if (mask === 0b11111101) return this.getCorner(0, 1);
+        }
+
+        // North-west side
+        if ((mask & 0b11000001) === 0) return this.getBlock(0, 0);
+        // Sout-west side
+        if ((mask & 0b00000111) === 0) return this.getBlock(0, 2);
+        // North-east side
+        if ((mask & 0b01110000) === 0) return this.getBlock(2, 0);
+        // South-east side
+        if ((mask & 0b00011100) === 0) return this.getBlock(2, 2);
+
+        // North side
+        if ((mask & 0b01000000) === 0) return this.getBlock(1, 0);
+        // West side
+        if ((mask & 0b00000001) === 0) return this.getBlock(0, 1);
+        // South side
+        if ((mask & 0b00000100) === 0) return this.getBlock(1, 2);
+        // East side
+        if ((mask & 0b00010000) === 0) return this.getBlock(2, 1);
+
+        return this.getBlock(1, 1);
+    }
+
+
+    private getBlock(x: number, y: number): [number, number] {
+        return [this.blocks.getMetatile(x, y), this.blocks.getLevel(x, y)];
+    }
+    private getCorner(x: number, y: number) {
+        if (!this.hasCorners) return this.getBlock(1, 1);
+        return this.getBlock(4 + x, y);
+    }
+
 
     public clone(): NinePatchBrush {
         const brush = new NinePatchBrush(this.primary, this.secondary);
         brush.blocks = this.blocks.clone();
         brush.name = this.name;
-        brush.hasCorners = this.hasCorners;
+        brush._hasCorners = this._hasCorners;
         brush.pinned = this.pinned;
         return brush;
     }
@@ -238,7 +362,7 @@ export class NinePatchBrush extends BrushMaterial {
         const brush = new NinePatchBrush(serialized.primary, serialized.secondary);
         brush.blocks = BlocksData.fromSerialized(serialized.blocks);
         brush.name = serialized.name;
-        brush.hasCorners = serialized.hasCorners;
+        brush._hasCorners = serialized.hasCorners;
         brush.pinned = writable(serialized.pinned);
         return brush;
     }
