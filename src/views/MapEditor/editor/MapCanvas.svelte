@@ -1,6 +1,12 @@
 <script lang="ts">
     import { watchResize } from "svelte-watch-resize";
-    import { getContext, onDestroy, onMount, tick } from "svelte";
+    import {
+        createEventDispatcher,
+        getContext,
+        onDestroy,
+        onMount,
+        tick,
+    } from "svelte";
     import type { Writable } from "svelte/store";
     import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
     import { SelectionMaterial, type PaintingMaterial } from "./materials";
@@ -142,6 +148,7 @@
 
     let context: MapEditorContext = getContext("context");
     let data: Writable<MapEditorData> = getContext("data");
+    let dispatch = createEventDispatcher();
 
     /** If this var is true, switching to Painting, Selecting or Resizing mode is prohibited */
     const editingLocked = context.layoutLocked;
@@ -517,6 +524,18 @@
                 drawMetatileChunk(cx, cy, botData, topData);
                 redrawLevelChunk(cx, cy);
             }
+    }
+
+    /** Rebuilds and draws the levels when the blocks are updated */
+    export function rebuildLevels() {
+        const chunksWidth = Math.ceil(blocks.width / chunkSize);
+        const chunksHeight = Math.ceil(blocks.height / chunkSize);
+
+        for (let cy = 0; cy < chunksHeight; cy++)
+            for (let cx = 0; cx < chunksWidth; cx++) redrawLevelChunk(cx, cy);
+
+        buildLevelMinimap();
+        draw();
     }
 
     /** Returns a new context for a metatile chunk */
@@ -1194,8 +1213,18 @@
                 changes.locked--;
                 tool.endStroke(x, y);
 
+                const change = new PaintChange(paintingState);
                 // Create a brush edit
-                changes.push(new PaintChange(paintingState));
+                changes.push(change);
+                // Create a new change event
+                dispatch("blockschanged", {
+                    blocks,
+                    newBlocks: paintingState.newBlocks,
+                    oldBlocks: paintingState.oldBlocks,
+                    anyChanges:
+                        Object.values(paintingState.newBlocks).length > 0,
+                    timestamp: +Date.now(),
+                });
             } else if (state === State.Resizing) {
                 const { width, height } = resizedMapSize;
                 // Resize the map

@@ -101,31 +101,6 @@ export async function loadBrushesForSecondaryTileset(primaryOffset: number, tile
     }
 }
 
-/** @deprecated */
-export async function loadBrushesForTilesets(tileset1: number, tileset2: number): Promise<BrushMaterial[]> {
-    let primaryTilesetBrushes = [];
-    let secondaryTilesetBrushes = [];
-
-    try {
-        // Get the brushes for the primary tileset
-        primaryTilesetBrushes = getPrimaryTilesetBrushes(tileset1);
-        // Get the brushes for the secondary tileset
-        secondaryTilesetBrushes = getSecondaryTilesetBrushes(tileset1, tileset2);
-    }
-    catch (err) {
-        console.error("Could not load Brushes for these Tilesets", tileset1, tileset2);
-    }
-    finally {
-        // Mix the two together
-        const brushes = [...primaryTilesetBrushes, ...secondaryTilesetBrushes];
-        // Deserialize the brushes
-        const deserialized = brushes.map(serializedBrush => BrushMaterial.deserialize(serializedBrush))
-            .filter(brush => brush !== null);
-
-        return deserialized;
-    }
-}
-
 export async function saveBrushesForTilesets(
     tileset1: number, tileset2: number,
     primaryBrushes: BrushMaterial[], secondaryBrushes: BrushMaterial[]

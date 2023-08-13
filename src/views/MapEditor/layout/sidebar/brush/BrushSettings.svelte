@@ -98,11 +98,14 @@
             $editingBrush = $editingBrush;
         } else {
             // Create a new brush
-            const newBrush = new brushToTypeClass[brushType]();
+            const newBrush = new brushToTypeClass[brushType](
+                context.tileset1Offset
+            );
             // Copy the name
             newBrush.name = brush.name;
             // Apply all the properties
             for (const [key, value] of Object.entries(brushSettings)) {
+                if (key === "width" || key === "height") continue;
                 newBrush[key] = value;
             }
             // Update the current brush

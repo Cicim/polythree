@@ -1,10 +1,71 @@
 <script lang="ts">
-    import type { MapEditorContext } from "src/views/MapEditor";
-    import { getContext } from "svelte";
+    import { MapEditorContext } from "src/views/MapEditor";
+    import { getContext, onMount } from "svelte";
     import MapCanvas from "../editor/MapCanvas.svelte";
+    import type { BlocksChangedEvent, BlocksData } from "../editor/blocks_data";
+    import { openViews } from "src/systems/views";
+    import { get } from "svelte/store";
+
+    let component: MapCanvas;
 
     const context: MapEditorContext = getContext("context");
     const blocksStore = context.tilesetBlocks;
+
+    function synchronizeChanges({
+        detail: { blocks, anyChanges, timestamp },
+    }: BlocksChangedEvent) {
+        if (!anyChanges) return;
+
+        let viewsSharingBothTilesets: MapEditorContext[] = [];
+        let viewsSharingPrimaryTileset: MapEditorContext[] = [];
+        let viewsSharingSecondaryTileset: MapEditorContext[] = [];
+
+        // Loop through each MapEditor layout that shares the same tileset
+        for (const view of $openViews) {
+            if (
+                !(view instanceof MapEditorContext) ||
+                view === context ||
+                get(view.isLoading)
+            )
+                continue;
+
+            if (view.tileset1Offset === context.tileset1Offset) {
+                if (view.tileset2Offset === context.tileset2Offset)
+                    viewsSharingBothTilesets.push(view);
+                else viewsSharingPrimaryTileset.push(view);
+            } else if (view.tileset2Offset === context.tileset2Offset)
+                viewsSharingSecondaryTileset.push(view);
+        }
+
+        // Update each mapEditor with the correct portion of the levels
+        for (const view of viewsSharingBothTilesets) {
+            view.tilesetBlocks.update((blocksData: BlocksData) => {
+                blocksData.updateLevels(blocks.levels);
+                return blocksData;
+            });
+        }
+        for (const view of viewsSharingPrimaryTileset) {
+            view.tilesetBlocks.update((blocksData: BlocksData) => {
+                blocksData.updateLevels(blocks.levels, 0, view.tileset1Length);
+                return blocksData;
+            });
+        }
+        for (const view of viewsSharingSecondaryTileset) {
+            view.tilesetBlocks.update((blocksData: BlocksData) => {
+                blocksData.updateLevels(
+                    blocks.levels,
+                    view.tileset1Length,
+                    view.tileset2Length
+                );
+                return blocksData;
+            });
+        }
+    }
+
+    onMount(() => {
+        // Update the mapCanvas for the tilesetLevels
+        context.tilesetMapCanvas.set(component);
+    });
 </script>
 
 <div class="palette">
@@ -19,6 +80,8 @@
             allowZoom={false}
             constantWidth={512}
             nullBlocks={true}
+            on:blockschanged={synchronizeChanges}
+            bind:this={component}
         />
     </div>
 </div>

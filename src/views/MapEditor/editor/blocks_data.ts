@@ -1,5 +1,15 @@
 export const NULL = 0xFFFF;
 
+export interface BlocksChangedEvent {
+    detail: {
+        blocks: BlocksData;
+        anyChanges: boolean;
+        timestamp: number;
+        oldBlocks: Record<CoordinatesHash, BlockData>;
+        newBlocks: Record<CoordinatesHash, BlockData>;
+    };
+}
+
 export interface ImportedBlocksData {
     width: number;
     height: number;
@@ -109,6 +119,13 @@ export class BlocksData {
     /** Returns the BlockData (aka [metatile, level]) at (x, y) */
     public get(x: number, y: number): BlockData {
         return [this.getMetatile(x, y), this.getLevel(x, y)];
+    }
+
+    // ANCHOR Large Updates
+    public updateLevels(levels: Uint16Array, start: number = 0, length: number = levels.length) {
+        for (let i = 0; i < length; i++) {
+            this.levels[start + i] = levels[i];
+        }
     }
 
     // ANCHOR Manipulation

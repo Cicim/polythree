@@ -15,9 +15,10 @@ import type { BrushMaterial } from "./MapEditor/editor/brushes";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { EditorChanges } from "src/systems/changes";
 import type { SidebarState } from "./MapEditor/layout/LayoutSidebar.svelte";
-import { loadBrushesForPrimaryTileset, loadBrushesForSecondaryTileset, loadBrushesForTilesets, saveBrushesForTilesets } from "./MapEditor/editor/brush_serialization";
+import { loadBrushesForPrimaryTileset, loadBrushesForSecondaryTileset, saveBrushesForTilesets } from "./MapEditor/editor/brush_serialization";
 import { BlocksData, NULL, type ImportedBlocksData } from "./MapEditor/editor/blocks_data";
 import initWasmFunctions, { load_tileset, render_blocks_data } from "src/wasm/map-canvas/pkg";
+import type MapCanvas from "./MapEditor/editor/MapCanvas.svelte";
 
 export interface MapEditorProperties {
     group: number;
@@ -128,6 +129,8 @@ export class MapEditorContext extends TabbedEditorContext {
     public tilesetsLength: number;
     /** The block data for the tilset level editor */
     public tilesetBlocks: Writable<BlocksData>;
+    /** The reference to the MapCanvas for the tilesetBlocks */
+    public tilesetMapCanvas: Writable<MapCanvas>;
     /** The changes that are applied to the tileset level editor */
     public tilesetLevelChanges: EditorChanges<null>;
 
@@ -176,6 +179,10 @@ export class MapEditorContext extends TabbedEditorContext {
 
         return this.doneSaving();
     }
+
+    public onSelect = () => {
+        get(this.tilesetMapCanvas)?.rebuildLevels();
+    };
 
     public async close(): Promise<boolean> {
         // Try to save the map's configs before closing
@@ -339,6 +346,7 @@ export class MapEditorContext extends TabbedEditorContext {
                 tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL, NULL);
 
         this.tilesetBlocks = writable(tilesetBlocks);
+        this.tilesetMapCanvas = writable(null);
         this.tilesetLevelChanges = new EditorChanges(null);
 
         this.material = writable(new PaletteMaterial(
