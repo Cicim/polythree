@@ -132,7 +132,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
 
     /** Returns if this brush's blocks are all inside of the primary tileset given */
     public onlyUsesPrimaryTiles(tileset1Length: number): boolean {
-        return !this.blocks.metatiles.some(mtid => mtid >= tileset1Length);
+        return !this.blocks.metatiles.some(mtid => mtid !== NULL && mtid >= tileset1Length);
     }
     /** Serializes a brush into a storable object */
     public serialize(serializeBlocks: boolean = true): SerializedBrush {
