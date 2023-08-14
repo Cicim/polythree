@@ -13,29 +13,6 @@ static mut LOADED_TILESETS: OnceCell<HashMap<(u32, u32), TilesetData>> = OnceCel
 
 #[wasm_bindgen]
 /// Renders the blocks data to two image datas obtained by a canvas.
-///
-/// Takes as input:
-/// + `bottom_layer_image_data`: the image data of the bottom layer
-///   (the one the player is in front of).
-/// + `top_layer_image_data`: the image data of the top layer
-///   (the one the player is covered by).
-/// + `blocks_data`: the blocks data to render. Its length must be
-///   equal to `blocks_width * blocks_height`. Each element represents
-///   the metatile id to write in that position. If the value is `0xFFFF`
-///   nothing is drawn in that position.
-/// + `blocks_width`: the width of the blocks data.
-/// + `blocks_height`: the height of the blocks data.
-///
-/// + `metatiles`: the metatiles palette composed for both tilesets.
-/// + `metatiles_layer_type`: the layer type of each metatile in the palette.
-/// + `tiles`: the tiles palette composed for both tilesets.
-/// + `palette`: the color palette composed for both tilesets in RGB form.
-///
-///
-/// Every slice that represents a 2d array is expected to be in row-major order
-///  (i.e. the first `blocks_width` elements are the first row, the
-///  next `blocks_width` elements are the second row, etc.).
-///
 pub unsafe fn render_blocks_data(
     bottom_layer_image_data: &mut [u8],
     top_layer_image_data: &mut [u8],
