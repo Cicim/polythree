@@ -8,6 +8,7 @@
     export let hoveringTile: number = null;
     export let selectedTile: number | [number, number, number] = null;
     export let fitToContainer: boolean = true;
+    export let showEraserOverlay: boolean = false;
 
     const context: MapEditorContext = getContext("context");
     // Get the data
@@ -138,7 +139,7 @@
         const containerWidth = canvas.parentElement.clientWidth;
         // Get the left offset
         const left = (containerWidth - rect.width) / 2;
-        selectionDiv.style.setProperty("--left", `${left}px`);
+        paletteContainer.style.setProperty("--left", `${left}px`);
     }
 
     /** Updates the selection start and end so that it
@@ -266,7 +267,7 @@
         // Calculate the new tile size
         lastTileSize = width / 8;
         // Update the selection's position and size
-        selectionDiv.style.setProperty("--size", `${lastTileSize}px`);
+        paletteContainer.style.setProperty("--size", `${lastTileSize}px`);
 
         updateSelection();
     }
@@ -407,6 +408,9 @@
             bind:this={selectionDiv}
             class:stretch={fitToContainer}
         />
+        <div class="eraser-overlay" class:hidden={!showEraserOverlay}>
+            <iconify-icon icon="mdi:eraser" />
+        </div>
         <canvas
             class:stretch={fitToContainer}
             class="palette-canvas"
@@ -420,6 +424,8 @@
 
 <style lang="scss">
     .palette {
+        --size: 32px;
+        --left: 182px;
         padding: 18px;
 
         &:not(:hover) {
@@ -458,12 +464,10 @@
     }
 
     .selection {
-        --size: 32px;
         --x: 0;
         --y: 0;
         --width: 1;
         --height: 1;
-        --left: 182px;
         &.stretch {
             --left: 0px;
         }
@@ -477,5 +481,21 @@
         outline: 2px solid red;
         box-shadow: 0 0 4px 4px black;
         pointer-events: none;
+    }
+
+    .eraser-overlay {
+        position: absolute;
+        left: var(--left);
+        top: 0;
+        width: var(--size);
+        height: var(--size);
+        pointer-events: none;
+        display: grid;
+        place-content: center;
+
+        iconify-icon {
+            font-size: calc(var(--size) * 0.75);
+            color: var(--weak-fg);
+        }
     }
 </style>

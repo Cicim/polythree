@@ -29,6 +29,7 @@
             bind:fitToContainer
             bind:hoveringTile
             bind:selectedTile
+            showEraserOverlay={state === SidebarState.Brush}
         />
     </div>
 </div>
