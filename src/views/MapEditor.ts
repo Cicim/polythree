@@ -17,7 +17,7 @@ import { EditorChanges } from "src/systems/changes";
 import type { SidebarState } from "./MapEditor/layout/LayoutSidebar.svelte";
 import { loadBrushesForPrimaryTileset, loadBrushesForSecondaryTileset, saveBrushesForTilesets } from "./MapEditor/editor/brush_serialization";
 import { BlocksData, NULL, type ImportedBlocksData } from "./MapEditor/editor/blocks_data";
-import initWasmFunctions, { load_tileset, render_blocks_data } from "src/wasm/map-canvas/pkg";
+import initWasmFunctions, { load_tileset, render_blocks_data, replace_tiles } from "src/wasm/map-canvas/pkg";
 import type MapCanvas from "./MapEditor/editor/MapCanvas.svelte";
 
 export interface MapEditorProperties {
@@ -53,10 +53,25 @@ interface ImportedTilesetsData {
     metatiles: number[][];
     metatile_layers: number[];
     palettes: number[][];
-
     tile_limit: number;
     metatile_limit: number;
 }
+
+
+export interface TilesetsAnimations {
+    primary: Animation[];
+    primary_max_frames: number;
+    secondary: Animation[];
+    secondary_max_frames: number;
+}
+
+export interface Animation {
+    start_tile: number;
+    graphics: Uint8Array[];
+    start_time: number;
+    interval: number;
+}
+
 
 export interface TilesetsData {
     tiles: Uint8Array;
@@ -124,6 +139,14 @@ export class MapEditorContext extends TabbedEditorContext {
     private botTilesData: ImageData;
     /** The image data of the top tiles */
     private topTilesData: ImageData;
+    /** Tileset animations */
+    private animations: TilesetsAnimations;
+    /** Primary animation counter */
+    private primaryAnimationCounter: number;
+    /** Secondary animation counter */
+    private secondaryAnimationCounter: number;
+    /** Listener for the tileset animations. Updates when animations need to be updated */
+    public animationsChange: Writable<boolean> = writable(false);
 
     /** Length of the two tilesets (might not be a multiple of 8) */
     public tilesetsLength: number;
@@ -367,6 +390,9 @@ export class MapEditorContext extends TabbedEditorContext {
         // Trigger a re-render
         activeView.set(this as ViewContext);
         this.isLoading.set(false);
+
+        // Load the animations without waiting
+        this.loadAnimations().then(() => this.animationTick());
     }
 
     /** Constructs the tileset data used by the renderers from the `ImportedTilesetsData` */
@@ -478,6 +504,73 @@ export class MapEditorContext extends TabbedEditorContext {
         // Put the image data
         this.topTiles.putImageData(this.topTilesData, 0, 0);
         this.botTiles.putImageData(this.botTilesData, 0, 0);
+    }
+
+    private async loadAnimations() {
+        // Load the animations
+        const animations: TilesetsAnimations = await invoke('get_tilesets_animations', {
+            tileset1: this.tileset1Offset,
+            tileset2: this.tileset2Offset,
+        });
+
+        // Convert the animations graphics into Uint8Arrays
+        for (const anim of animations.primary) {
+            for (let i = 0; i < anim.graphics.length; i++) {
+                const frame = Uint8Array.from(anim.graphics[i]);
+                anim.graphics[i] = frame;
+            }
+        }
+        for (const anim of animations.secondary) {
+            for (let i = 0; i < anim.graphics.length; i++) {
+                const frame = Uint8Array.from(anim.graphics[i]);
+                anim.graphics[i] = frame;
+            }
+        }
+
+        this.animations = animations;
+        this.primaryAnimationCounter = 0;
+        this.secondaryAnimationCounter = 0;
+    }
+
+    private async animationTick() {
+        let somethingChanged = false;
+
+        // Perform the animation
+        for (const anim of this.animations.primary) {
+            if (this.primaryAnimationCounter % anim.interval === anim.start_time) {
+                somethingChanged = true;
+                let frame = (this.primaryAnimationCounter - anim.start_time) / anim.interval;
+                let bytes = anim.graphics[frame % anim.graphics.length];
+                replace_tiles(this.tileset1Offset, this.tileset2Offset, anim.start_tile, bytes);
+            }
+        }
+        for (const anim of this.animations.secondary) {
+            if (this.secondaryAnimationCounter % anim.interval === anim.start_time) {
+                somethingChanged = true;
+                let frame = (this.primaryAnimationCounter - anim.start_time) / anim.interval;
+                let bytes = anim.graphics[frame % anim.graphics.length];
+                replace_tiles(this.tileset1Offset, this.tileset2Offset, anim.start_tile, bytes);
+            }
+        }
+
+        // If something changed, update the cache
+        if (somethingChanged) {
+            this.updateTilesetCache();
+            // Force an update on the canvas
+            this.animationsChange.update(val => !val);
+        }
+
+        // Increment the counters
+        this.primaryAnimationCounter++;
+        this.secondaryAnimationCounter++;
+        if (this.primaryAnimationCounter >= this.animations.primary_max_frames)
+            this.primaryAnimationCounter = 0;
+        if (this.secondaryAnimationCounter >= this.animations.secondary_max_frames)
+            this.secondaryAnimationCounter = 0;
+
+
+        // Schedule the next tick
+        setTimeout(() => this.animationTick(), 16);
     }
 
     // ANCHOR Error Handling

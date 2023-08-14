@@ -3,9 +3,10 @@ use poly3lib::maps::{
     layout::{MapLayout, MapLayoutData},
     render::TilesetsPair,
     tileset::TilesetsRenderData,
+    tileset_anims::TilesetAnimationList,
 };
 
-use crate::state::{AppResult, AppState, AppStateFunctions};
+use crate::state::{AppResult, AppState, AppStateFunctions, PolythreeState};
 
 #[tauri::command]
 pub fn get_map_header_data(state: AppState, group: u8, index: u8) -> AppResult<MapHeaderData> {
@@ -91,4 +92,87 @@ pub fn update_layout_header(state: AppState, id: u16, header: MapLayout) -> AppR
             .write_header(id, header)
             .map_err(|e| format!("Error while updating map layout header: {}", e))
     })
+}
+
+// ANCHOR Loading animations
+#[derive(serde::Serialize)]
+pub struct ExportedTilesetsAnimations {
+    primary: Vec<ExportedAnimation>,
+    primary_max_frames: u16,
+
+    secondary: Vec<ExportedAnimation>,
+    secondary_max_frames: u16,
+}
+
+#[derive(serde::Serialize)]
+pub struct ExportedAnimation {
+    start_tile: u16,
+    graphics: Vec<Vec<u8>>,
+
+    start_time: u16,
+    interval: u16,
+}
+
+#[tauri::command]
+pub async fn get_tilesets_animations<'r>(
+    state: tauri::State<'r, PolythreeState>,
+    tileset1: usize,
+    tileset2: usize,
+) -> AppResult<ExportedTilesetsAnimations> {
+    state.with_rom(|rom| {
+        let mut tilesets = TilesetsPair::new(&rom, tileset1, tileset2)
+            .map_err(|e| format!("Error while loading tilesets: {}", e))?;
+
+        if let Err(anim) = tilesets.load_animations(rom) {
+            println!("Error while loading animations: {}", anim);
+        }
+
+        let mut exported = ExportedTilesetsAnimations {
+            primary: vec![],
+            primary_max_frames: 0,
+            secondary: vec![],
+            secondary_max_frames: 0,
+        };
+
+        if let Some(primary) = tilesets.primary.animations {
+            exported.primary = prepare_anims(&primary);
+            exported.primary_max_frames = primary.max_frames;
+        }
+
+        if let Some(secondary) = tilesets.secondary.animations {
+            exported.secondary = prepare_anims(&secondary);
+            exported.secondary_max_frames = secondary.max_frames;
+        }
+
+        Ok(exported)
+    })
+}
+
+fn prepare_anims(anims: &TilesetAnimationList) -> Vec<ExportedAnimation> {
+    let mut res = vec![];
+
+    for anim in anims.animations.iter() {
+        let mut exported = ExportedAnimation {
+            start_tile: anim.start_tile,
+            graphics: Vec::new(),
+            start_time: anim.start_time,
+            interval: anim.interval,
+        };
+
+        for frame in anim.frame_graphics.iter() {
+            let mut flattened = vec![];
+
+            for tile in frame.tiles.iter() {
+                for row in tile.iter() {
+                    flattened.extend_from_slice(row);
+                }
+            }
+
+            exported.graphics.push(flattened);
+        }
+
+        res.push(exported);
+    }
+
+    res
 }

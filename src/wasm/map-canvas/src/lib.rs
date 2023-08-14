@@ -117,3 +117,27 @@ pub unsafe fn load_tileset(
         .unwrap()
         .insert((primary_offset, secondary_offset), tileset_data);
 }
+
+#[wasm_bindgen]
+pub unsafe fn replace_tiles(
+    primary_offset: u32,
+    secondary_offset: u32,
+    tiles_start: u32,
+    tiles: &[u8],
+) {
+    // Get the data for this context
+    let context = LOADED_TILESETS
+        .get_mut()
+        .unwrap()
+        .get_mut(&(primary_offset, secondary_offset))
+        .unwrap();
+
+    // Transmute the tiles into an slice of Tiles
+    let tiles: &[Tile] = transmute(tiles);
+
+    let tiles_start = tiles_start as usize;
+    // For some reason the lenght does not update, so we have to recompute it
+    let tiles_length = tiles.len() as usize / 64;
+    // Replace the tiles
+    context.tiles[tiles_start..tiles_start + tiles_length].copy_from_slice(&tiles[0..tiles_length]);
+}

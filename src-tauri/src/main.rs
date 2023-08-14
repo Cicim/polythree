@@ -59,6 +59,7 @@ fn main() {
             get_map_header_data,
             get_map_layout_data,
             get_tilesets_rendering_data,
+            get_tilesets_animations,
             get_layout_offset,
             get_tilesets_lengths,
             update_map_header,

@@ -248,6 +248,14 @@
         draw();
     });
 
+    const unsubscribeFromAnimations = context.animationsChange.subscribe(() => {
+        if (!mainCanvas) return;
+        initialized = false;
+        redrawAllMetatileChunks();
+        initialized = true;
+        draw();
+    });
+
     // ANCHOR Draw
     /** Draw a full frame of the canvas from scratch. */
     function draw() {
@@ -604,6 +612,17 @@
                 top.drawImage(topData, metatile * 16, 0, 16, 16, x, y, 16, 16);
             }
         }
+    }
+
+    function redrawAllMetatileChunks() {
+        const botData = context.botTiles.canvas;
+        const topData = context.topTiles.canvas;
+        const chunksWidth = Math.ceil(blocks.width / chunkSize);
+        const chunksHeight = Math.ceil(blocks.height / chunkSize);
+
+        for (let cy = 0; cy < chunksHeight; cy++)
+            for (let cx = 0; cx < chunksWidth; cx++)
+                drawMetatileChunk(cx, cy, botData, topData);
     }
 
     /** Returns a new context for a level chunk*/
@@ -1386,6 +1405,7 @@
         }
     });
     onDestroy(() => {
+        unsubscribeFromAnimations();
         unsubscribeFromData();
         initialized = false;
 
