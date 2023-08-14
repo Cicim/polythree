@@ -27,7 +27,6 @@ export interface SerializedSimpleBrush extends SerializedBrush {
 
 export interface SerializedNinePatchBrush extends SerializedBrush {
     type: BrushType.NinePatch;
-    hasCorners: boolean;
 }
 
 function getPrimaryTilesetBrushes(tileset1: number): SerializedBrush[] {

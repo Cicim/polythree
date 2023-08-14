@@ -201,75 +201,66 @@ export class SimpleBrush extends BrushMaterial {
 
 // ANCHOR Nine patch brush
 const BORDER_VISIT_ORDER: [dx: number, dy: number][] = [
-    [-1, -1], [0, -1], [1, -1], [1, 0],
-    [1, 1], [0, 1], [-1, 1], [-1, 0]
+    // North
+    [0, -1],
+    // North-East
+    [1, -1],
+    // East
+    [1, 0],
+    // South-East
+    [1, 1],
+    // South
+    [0, 1],
+    // South-West
+    [-1, 1],
+    // West
+    [-1, 0],
+    // North-West
+    [-1, -1]
 ]
-/** 
- * Returns a vector of true and false representing whether the blocks surrounding
- * the given coordinates match a given condition.
- * 
- * Blocks out of bounds return false by default, but it can be changed with the
- * `outOfBoundsBehavior` parameter.
- */
+/**  Returns an 8-bit mask of the bordering metatiles */
 function getBorderMask(state: PainterState, x: number, y: number,
-    predicate: (metatile: number, level: number) => boolean,
+    predicate: (metatile: number) => boolean,
     fallback: boolean = false
 ): number {
-    const mask = [fallback, fallback, fallback, fallback, fallback, fallback, fallback, fallback];
+    let mask = 0;
 
-    let index = 0;
+    let index = 8;
     for (const [i, j] of BORDER_VISIT_ORDER) {
+        // The first bit you write is bit 7
+        index--;
+
         const metatile = state.getMetatile(x + i, y + j);
-        if (metatile === NULL) { index++; continue; }
-        const level = state.getLevel(x + i, y + j);
-        mask[index++] = predicate(metatile, level);
+        // Compute the predicate only if the metatile is not null
+        const bit = (metatile !== NULL) ? predicate(metatile) : fallback;
+
+        // Set the bit and proceed
+        mask |= (bit ? 1 : 0) << index;
     }
 
-    // Transform it into an 8-bit mask
-    let result = 0;
-    for (let i = 0; i < 8; i++)
-        result |= (mask[7 - i] ? 1 : 0) << i;
-    return result;
+    return mask;
+}
+
+/** 
+ * Returns true if the bits set in `ones` are all ones in `mask` and the
+ * bits set in `zero` are all zeros in `mask`.
+ */
+function maskMatches(mask: number, ones: number, zeros: number): boolean {
+    // Basically, we need that (mask & ones) == ones and (mask & zeros) == 0
+    return (mask & ones) === ones && (mask & zeros) === 0;
 }
 
 export class NinePatchBrush extends BrushMaterial {
     static typeName = "Nine Patch Brush";
     static icon = "icon-park-outline:nine-key";
-    public blocks: BlocksData = new BlocksData(3, 3, 0, null);
+    public blocks: BlocksData = new BlocksData(5, 3, 0, null);
     public readonly type = BrushType.NinePatch;
-    private _hasCorners = false;
-
-    public set hasCorners(hasCorners) {
-        if (this._hasCorners === hasCorners) return;
-
-        this._hasCorners = hasCorners;
-        // Resize the blocks
-        this.blocks = this.blocks.resize(hasCorners ? 6 : 3, this.blocks.height);
-
-        if (!hasCorners) return;
-
-        // Fill all the new blocks
-        // O O O X N N
-        // O O O X N N
-        // O O O X X X
-        this.blocks.setMetatile(3, 0, NULL);
-        this.blocks.setMetatile(3, 1, NULL);
-        this.blocks.setMetatile(3, 2, NULL);
-        this.blocks.setMetatile(4, 2, NULL);
-        this.blocks.setMetatile(5, 2, NULL);
-
-        const [metatile, level] = this.getBlock(1, 1);
-        this.blocks.set(4, 0, metatile, level);
-        this.blocks.set(5, 0, metatile, level);
-        this.blocks.set(4, 1, metatile, level);
-        this.blocks.set(5, 1, metatile, level);
-    }
-    public get hasCorners() {
-        return this._hasCorners;
-    }
 
     public apply(state: PainterState, x: number, y: number): void {
+        // Apply the rules to the first tile
         this.applyPatch(state, x, y, false);
+
+        // Apply the rules to the surrounding tiles
         this.applyPatch(state, x - 1, y - 1);
         this.applyPatch(state, x, y - 1);
         this.applyPatch(state, x + 1, y - 1);
@@ -280,89 +271,141 @@ export class NinePatchBrush extends BrushMaterial {
         this.applyPatch(state, x - 1, y);
     }
 
+    private canReplace(metatile: number): boolean {
+        return this.blocks.metatiles.includes(metatile) || metatile === 0;
+    }
+
+    /** 
+     * Obtains the mask of blocks surrounding the given one and 
+     * uses it to compute a block to put in its place. */
     private applyPatch(state: PainterState, x: number, y: number, side: boolean = true) {
-        if (!this.blocks.metatiles.includes(state.getMetatile(x, y)) && side) return;
+        if (!this.canReplace(state.getMetatile(x, y)) && side) return;
 
         // Get the border masks
-        const mask = getBorderMask(state, x, y, (metatile, _) => {
-            return this.blocks.metatiles.includes(metatile);
-        });
+        const mask = getBorderMask(state, x, y, (metatile) => this.canReplace(metatile));
 
         // Get the block to put here based on the mask
         const [metatile, level] = this.getReplacement(mask);
-        state.set(x, y, metatile, level);
+        if (metatile === 0)
+            state.set(x, y, ...this.CENTER());
+        else
+            state.set(x, y, metatile, level);
     }
 
+    /** Applies the rules (heavily documented inside) to produce a new block based on the mask */
+    private getReplacement(mask: number): BlockData {
+        // 1. All bordering tiles are part of the path
+        if (mask === 0b11111111) return this.CENTER();
+        // 2. All non-diagonally bordering tiles are part of the path
+        if (mask === 0b10101010) return this.FOUR_CORNERS();
+        // 3. Only the tile itself is part of the path
+        if (maskMatches(mask, 0, 0b10101010)) return this.FOUR_SIDES();
 
-    private getReplacement(mask: number): [number, number] {
-        if (mask === 0) return this.getBlock(1, 1);
+        // Compute four masks by rotating the original one by 90 degrees
+        const maskNorth = mask;
+        const maskEast = (mask >> 6) | ((mask & 0b111111) << 2);
+        const maskSouth = (mask >> 4) | ((mask & 0b1111) << 4);
+        const maskWest = (mask >> 2) | ((mask & 0b11) << 6);
+        const masks = [[0, maskNorth], [1, maskEast], [2, maskSouth], [3, maskWest]];
 
-        if (this.hasCorners) {
-            // North-west corner
-            if (mask === 0b01111111) return this.getCorner(0, 0);
-            // North-east corner
-            if (mask === 0b11011111) return this.getCorner(1, 0);
-            // South-east corner
-            if (mask === 0b11110111) return this.getCorner(1, 1);
-            // South-west corner
-            if (mask === 0b11111101) return this.getCorner(0, 1);
-        }
+        // 4. Side (without corners)
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b00111110, 0b10000000))
+                return this.SIDE(index);
+        // 5. Two perpendicular sides (without corners)
+        //    These are the blocks at the edges of a 3x3 square
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b00111000, 0b10000010))
+                return this.SIDES_PERPENDICULAR(index);
+        // 6. Two opposite sides (without corners)
+        //    These are the blocks at the sides of a 3x3 square
+        if (maskMatches(maskNorth, 0b10001000, 0b00100010)) return this.SIDES_OPPOSITE(0);
+        if (maskMatches(maskEast, 0b10001000, 0b00100010)) return this.SIDES_OPPOSITE(1);
+        // 7. Three sides (without corners)
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b00001000, 0b10100010))
+                return this.THREE_SIDES(index);
 
-        // North-west side
-        if ((mask & 0b11000001) === 0) return this.getBlock(0, 0);
-        // Sout-west side
-        if ((mask & 0b00000111) === 0) return this.getBlock(0, 2);
-        // North-east side
-        if ((mask & 0b01110000) === 0) return this.getBlock(2, 0);
-        // South-east side
-        if ((mask & 0b00011100) === 0) return this.getBlock(2, 2);
+        // 8. Corner (without sides)
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b11111110, 0b0000001)) return this.CORNER(index);
+        // 9. Two adjacent corners (without sides)
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b10111110, 0b01000001))
+                return this.CORNERS_ADJACENT(index);
+        // 10. Two opposite corners (without sides)
+        if (maskMatches(maskNorth, 0b11101110, 0b00010001)) return this.CORNERS_OPPOSITE(0);
+        if (maskMatches(maskEast, 0b11101110, 0b00010001)) return this.CORNERS_OPPOSITE(1);
+        // 11. Three corners (without sides)
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b10111010, 0b01000101))
+                return this.CORNERS_THREE(index);
 
-        // North side
-        if ((mask & 0b01000000) === 0) return this.getBlock(1, 0);
-        // West side
-        if ((mask & 0b00000001) === 0) return this.getBlock(0, 1);
-        // South side
-        if ((mask & 0b00000100) === 0) return this.getBlock(1, 2);
-        // East side
-        if ((mask & 0b00010000) === 0) return this.getBlock(2, 1);
-
-        return this.getBlock(1, 1);
+        // 12. Adjacent sides with corners
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b00101000, 0b10010010))
+                return this.TWO_SIDES_WITH_CORNERS(index);
+        // 13. Side with two corners
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b00101010, 0b10010100))
+                return this.SIDE_WITH_TWO_CORNERS(index);
+        // 14. Side with one corner (clockwise)
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b00101110, 0b10010000))
+                return this.SIDE_WITH_CLOCKWISE_CORNER(index);
+        // 15. Side with one corner (counterclockwise)
+        for (const [index, mask] of masks)
+            if (maskMatches(mask, 0b00111010, 0b10000100))
+                return this.SIDE_WITH_COUNTERCLOCKWISE_CORNER(index);
     }
-
-
-    private getBlock(x: number, y: number): [number, number] {
-        return [this.blocks.getMetatile(x, y), this.blocks.getLevel(x, y)];
+    private CENTER() { return this.blocks.get(1, 1); }
+    private FOUR_CORNERS() { return [0, NULL] as BlockData; }
+    private FOUR_SIDES() { return [0, NULL] as BlockData; }
+    private SIDE(index: number) {
+        if (index === 0) return this.blocks.get(1, 0);
+        if (index === 1) return this.blocks.get(2, 1);
+        if (index === 2) return this.blocks.get(1, 2);
+        if (index === 3) return this.blocks.get(0, 1);
     }
-    private getCorner(x: number, y: number) {
-        if (!this.hasCorners) return this.getBlock(1, 1);
-        return this.getBlock(4 + x, y);
+    private SIDES_PERPENDICULAR(index: number) {
+        if (index === 0) return this.blocks.get(0, 0);
+        if (index === 1) return this.blocks.get(2, 0);
+        if (index === 2) return this.blocks.get(2, 2);
+        if (index === 3) return this.blocks.get(0, 2);
     }
+    private SIDES_OPPOSITE(arg0: number) { return [0, NULL] as BlockData; }
+    private THREE_SIDES(index: number) { return [0, NULL] as BlockData; }
+    private CORNER(index: number) {
+        if (index === 0) return this.blocks.get(4, 0);
+        if (index === 1) return this.blocks.get(5, 0);
+        if (index === 2) return this.blocks.get(5, 1);
+        if (index === 3) return this.blocks.get(4, 1);
+    }
+    private CORNERS_ADJACENT(index: number) { return [0, NULL] as BlockData; }
+    private CORNERS_OPPOSITE(arg0: number) { return [0, NULL] as BlockData; }
+    private CORNERS_THREE(index: number) { return [0, NULL] as BlockData; }
+    private TWO_SIDES_WITH_CORNERS(index: number) { return [0, NULL] as BlockData; }
+    private SIDE_WITH_TWO_CORNERS(index: number) { return [0, NULL] as BlockData; }
+    private SIDE_WITH_CLOCKWISE_CORNER(index: number) { return [0, NULL] as BlockData; }
+    private SIDE_WITH_COUNTERCLOCKWISE_CORNER(index: number) { return [0, NULL] as BlockData; }
 
 
     public clone(): NinePatchBrush {
         const brush = new NinePatchBrush(this.primary, this.secondary);
         brush.blocks = this.blocks.clone();
         brush.name = this.name;
-        brush._hasCorners = this._hasCorners;
         brush.pinned = this.pinned;
         return brush;
     }
 
-    public equals(other: NinePatchBrush): boolean {
-        if (!super.equals(other)) return false;
-
-        return this.hasCorners === other.hasCorners;
-    }
-
     public serialize(): SerializedNinePatchBrush {
-        return { ...super.serialize(), hasCorners: this.hasCorners } as SerializedNinePatchBrush;
+        return super.serialize() as SerializedNinePatchBrush;
     }
 
     public static deserialize(serialized: SerializedNinePatchBrush) {
         const brush = new NinePatchBrush(serialized.primary, serialized.secondary);
         brush.blocks = BlocksData.fromSerialized(serialized.blocks);
         brush.name = serialized.name;
-        brush._hasCorners = serialized.hasCorners;
         brush.pinned = writable(serialized.pinned);
         return brush;
     }
