@@ -46,6 +46,10 @@ export class PencilTool extends Tool {
         const dy = y - this.lastY;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const steps = Math.ceil(dist);
+
+        // This avoids calling the apply function with NaNs.
+        if (steps === 0) return;
+
         for (let i = 0; i <= steps; i++) {
             const stepX = this.lastX + dx * (i / steps);
             const stepY = this.lastY + dy * (i / steps);
