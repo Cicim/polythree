@@ -189,14 +189,27 @@ export abstract class ViewContext {
 
     /** Returns whether there is another view, of the same type of this one 
      * (excluding this one), that matches the predicate */
-    public anyOtherViewWhere(views: ViewContext[], predicate: (view: any) => boolean): boolean {
-        return views.some(view => {
+    public anyOtherViewWhere<T extends this>(predicate: (view: T) => boolean): boolean {
+        return get(openViews).some(view => {
             // Skip views that are not of this type
             if (!(view instanceof this.constructor)) return false;
             // Skip this view
             if (view === this) return false;
-            return predicate(view as typeof this);
+            return predicate(view as T);
         });
+    }
+
+    /** Returns a list of the other views of the same type that match the predicate */
+    public *getOtherViews<T extends this>(predicate: (view: T) => boolean = () => true): Generator<T> {
+        for (let view of get(openViews)) {
+            // Skip views that are not of this type
+            if (!(view instanceof this.constructor)) continue;
+            // Skip this view
+            if (view === this) continue;
+            // Skip views that do not match the predicate
+            if (!predicate(view as T)) continue;
+            yield view as T;
+        }
     }
 
     /** Returns the list of actions that are specific to the tab */
@@ -300,7 +313,7 @@ export abstract class EditorContext extends ViewContext {
         }
 
         // If it's already closed, just return
-        if (get(openViews).indexOf(this) === -1) return true;
+        if (get(openViews).indexOf(this as ViewContext) === -1) return true;
         // If the save was successful, close it
         await super.close();
         return true;
@@ -320,6 +333,14 @@ export abstract class EditorContext extends ViewContext {
         }
         else super.close();
         return true;
+    }
+
+    /** Returns a list of the other views of the same type that match the predicate */
+    public *getOtherViews<T extends this>(predicate: (view: T) => boolean = () => true): Generator<T> {
+        for (const view of get(openViews)) {
+            if (!(view instanceof this.constructor) || view === this || get((<T>view).isLoading)) continue;
+            if (predicate(view as T)) yield view as T;
+        }
     }
 
     /** Undoes this editor's last applied change */

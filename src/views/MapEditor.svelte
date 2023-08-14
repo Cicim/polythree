@@ -23,7 +23,7 @@
     function updateLayoutLock() {
         if ($isLoading) return;
 
-        $layoutLocked = context.anyOtherViewWhere($openViews, (view) => {
+        $layoutLocked = context.anyOtherViewWhere((view) => {
             const thisLayoutIndex = $data.layout.index;
 
             if (get(view.isLoading)) return false;

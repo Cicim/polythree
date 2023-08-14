@@ -1,10 +1,8 @@
 <script lang="ts">
-    import { MapEditorContext } from "src/views/MapEditor";
     import { getContext, onMount } from "svelte";
-    import MapCanvas from "../editor/MapCanvas.svelte";
     import type { BlocksChangedEvent, BlocksData } from "../editor/blocks_data";
-    import { openViews } from "src/systems/views";
-    import { get } from "svelte/store";
+    import type { MapEditorContext } from "src/views/MapEditor";
+    import MapCanvas from "../editor/MapCanvas.svelte";
 
     let component: MapCanvas;
 
@@ -21,14 +19,7 @@
         let viewsSharingSecondaryTileset: MapEditorContext[] = [];
 
         // Loop through each MapEditor layout that shares the same tileset
-        for (const view of $openViews) {
-            if (
-                !(view instanceof MapEditorContext) ||
-                view === context ||
-                get(view.isLoading)
-            )
-                continue;
-
+        for (const view of context.getOtherViews()) {
             if (view.tileset1Offset === context.tileset1Offset) {
                 if (view.tileset2Offset === context.tileset2Offset)
                     viewsSharingBothTilesets.push(view);

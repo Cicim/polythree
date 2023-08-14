@@ -1,10 +1,10 @@
 import { ViewContext, EditorContext } from "./contexts";
-import { get, writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 
 /** The currently active view */
 export let activeView = writable<ViewContext | null>(null);
 /** All of the currently open views */
-export let openViews = writable<ViewContext[]>([]);
+export let openViews: Writable<ViewContext[]> = writable<ViewContext[]>([]);
 /** All of the views that have been closed */
 export let lastClosedViews = writable<LastClosedContext[]>([]);
 
