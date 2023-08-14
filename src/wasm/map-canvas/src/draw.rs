@@ -5,19 +5,6 @@ const COVERED: u8 = 1;
 const SPLIT: u8 = 2;
 const THREELAYERS: u8 = 3;
 
-#[repr(u8)]
-#[derive(PartialEq, Eq)]
-enum TransparencyType {
-    /// Pixel is drawn even if color 0
-    Opaque,
-    /// If color is 0, pixel is set to #0000
-    /// This is useful for the top layer.
-    Transparent,
-    /// If color is 0, pixel is not drawn
-    /// so any previously left one will remain.
-    FallThrough,
-}
-
 pub(crate) fn render(
     context: &TilesetData,
 
@@ -62,7 +49,7 @@ pub(crate) fn render(
                         offset_y,
                         &[0; 4],
                         pixels_width,
-                        TransparencyType::Transparent,
+                        false,
                     );
                 };
             }
@@ -79,7 +66,7 @@ pub(crate) fn render(
                         offset_y,
                         bot,
                         pixels_width,
-                        TransparencyType::Opaque,
+                        false,
                     );
                     draw_metatile_layer(
                         context,
@@ -88,7 +75,7 @@ pub(crate) fn render(
                         offset_y,
                         top,
                         pixels_width,
-                        TransparencyType::Transparent,
+                        false,
                     );
                 }
                 COVERED | SPLIT => {
@@ -100,7 +87,7 @@ pub(crate) fn render(
                         offset_y,
                         bot,
                         pixels_width,
-                        TransparencyType::Opaque,
+                        false,
                     );
                     draw_metatile_layer(
                         context,
@@ -109,7 +96,7 @@ pub(crate) fn render(
                         offset_y,
                         top,
                         pixels_width,
-                        TransparencyType::FallThrough,
+                        true,
                     );
                     clear_top_layer!();
                 }
@@ -121,7 +108,7 @@ pub(crate) fn render(
                         offset_y,
                         bot,
                         pixels_width,
-                        TransparencyType::Opaque,
+                        false,
                     );
                     draw_metatile_layer(
                         context,
@@ -130,7 +117,7 @@ pub(crate) fn render(
                         offset_y,
                         top,
                         pixels_width,
-                        TransparencyType::FallThrough,
+                        true,
                     );
 
                     // Get the next metatile
@@ -150,7 +137,7 @@ pub(crate) fn render(
                         offset_y,
                         top,
                         pixels_width,
-                        TransparencyType::Transparent,
+                        false,
                     );
                 }
 
@@ -170,7 +157,7 @@ fn draw_metatile_layer(
     offset_y: usize,
     metatile_layer: &[u16; 4],
     pixels_width: usize,
-    transparency: TransparencyType,
+    fall_through: bool,
 ) {
     // For each tile on this layer
     for (index, inner_x, inner_y) in [(0, 0, 0), (1, 8, 0), (2, 0, 8), (3, 8, 8)] {
@@ -189,22 +176,9 @@ fn draw_metatile_layer(
         for (y, row) in tile.iter().enumerate() {
             for (x, color_id) in row.iter().enumerate() {
                 let color_id = *color_id as usize;
-                if color_id == 0 && transparency == TransparencyType::Transparent {
-                    // Get the actual x and y based on the flip
-                    let x = if hflip { 7 - x } else { x };
-                    let y = if vflip { 7 - y } else { y };
-                    let buffer_index =
-                        (offset_y + y + inner_y) * pixels_width + offset_x + x + inner_x;
 
-                    // Set the buffer to transparent
-                    buffer[buffer_index] = Color {
-                        r: 0,
-                        g: 0,
-                        b: 0,
-                        a: 0,
-                    };
-                    continue;
-                } else if color_id == 0 && transparency == TransparencyType::FallThrough {
+                // If you wanna use the fall-through, don't even compute the indices
+                if color_id == 0 && fall_through {
                     continue;
                 }
 
@@ -214,7 +188,11 @@ fn draw_metatile_layer(
                 let buffer_index = (offset_y + y + inner_y) * pixels_width + offset_x + x + inner_x;
 
                 // Get the color
-                let color = context.palettes[palette][color_id & 0xF];
+                let color = if color_id == 0 {
+                    Color::default()
+                } else {
+                    context.palettes[palette][color_id & 0xF]
+                };
                 // Paste the color in the buffer
                 buffer[buffer_index] = color;
             }

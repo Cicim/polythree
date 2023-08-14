@@ -1096,6 +1096,7 @@
         const topChunk = topMetatileChunks[cy][cx];
 
         // Clear the top chunk
+        botChunk.clearRect(ox * 16, oy * 16, 16, 16);
         topChunk.clearRect(ox * 16, oy * 16, 16, 16);
 
         // Draw the top and bot metatiles from the palette
