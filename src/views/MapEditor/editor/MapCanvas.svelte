@@ -1290,6 +1290,9 @@
         // Stop updating if the containerEl was destroyed
         if (!containerEl) return;
 
+        if (containerEl.clientWidth === 0 || containerEl.clientHeight === 0)
+            return;
+
         // Set it to the container size
         canvasWidth = containerEl.clientWidth;
         canvasHeight = containerEl.clientHeight;
