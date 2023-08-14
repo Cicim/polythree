@@ -147,6 +147,8 @@ export class MapEditorContext extends TabbedEditorContext {
     private secondaryAnimationCounter: number;
     /** Listener for the tileset animations. Updates when animations need to be updated */
     public animationsChange: Writable<boolean> = writable(false);
+    /** The animation timeout */
+    private animationTimeout: NodeJS.Timeout;
 
     /** Length of the two tilesets (might not be a multiple of 8) */
     public tilesetsLength: number;
@@ -234,6 +236,8 @@ export class MapEditorContext extends TabbedEditorContext {
                 });
             }
         }
+        // Clear the animation timeout to prevent memory leaks
+        clearTimeout(this.animationTimeout);
         return super.close();
     }
 
@@ -570,7 +574,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
 
         // Schedule the next tick
-        setTimeout(() => this.animationTick(), 16);
+        this.animationTimeout = setTimeout(() => this.animationTick(), 16);
     }
 
     // ANCHOR Error Handling

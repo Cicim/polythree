@@ -359,8 +359,8 @@ export class NinePatchBrush extends BrushMaterial {
                 return this.SIDES_PERPENDICULAR(index);
         // 6. Two opposite sides (without corners)
         //    These are the blocks at the sides of a 3x3 square
-        if (maskMatches(maskNorth, 0b10001000, 0b00100010)) return this.SIDES_OPPOSITE(0);
-        if (maskMatches(maskEast, 0b10001000, 0b00100010)) return this.SIDES_OPPOSITE(1);
+        if (maskMatches(maskEast, 0b10001000, 0b00100010)) return this.SIDES_OPPOSITE(0);
+        if (maskMatches(maskNorth, 0b10001000, 0b00100010)) return this.SIDES_OPPOSITE(1);
         // 7. Three sides (without corners)
         for (const [index, mask] of masks)
             if (maskMatches(mask, 0b00001000, 0b10100010))
