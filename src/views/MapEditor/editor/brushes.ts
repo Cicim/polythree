@@ -1,8 +1,10 @@
 import { get, writable } from "svelte/store";
 import { BlocksData, NULL } from "./blocks_data";
 import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
+import type { MapCanvasImage } from "./MapCanvas.svelte";
 import { PaintingMaterial } from "./materials";
 import type { PainterState } from "./painter_state";
+import ninePatchBackgroundImageURL from "/src/images/ninepatch-bg.png";
 
 export enum BrushType {
     Simple,
@@ -22,6 +24,8 @@ export abstract class BrushMaterial extends PaintingMaterial {
     public blocks: BlocksData;
     /** Unique identifier for svelte each */
     public uid: number = BrushMaterial.LAST_UID++;
+    /** Canvas images for this brush type */
+    public static canvasImages: MapCanvasImage[] = [];
 
     constructor(public primary: number, public secondary?: number) {
         super();
@@ -120,6 +124,10 @@ export abstract class BrushMaterial extends PaintingMaterial {
     public get icon(): string {
         // @ts-ignore
         return this.constructor.icon;
+    }
+    public get canvasImages(): MapCanvasImage[] {
+        // @ts-ignore
+        return this.constructor?.canvasImages ?? BrushMaterial.canvasImages;
     }
 
     /** Returns if this brush's blocks are all inside of the primary tileset given */
@@ -272,11 +280,21 @@ NINEPATCH_DEFAULT_BLOCKS.updateMetatiles([
     NULL, NULL, NULL, NULL, NULL, ____, ____, NULL, ____, ____, NULL, NULL
 ]);
 
+const ninePatchBackgroundImage = new Image();
+ninePatchBackgroundImage.onload = () => {
+    NinePatchBrush.canvasImages = [{
+        image: ninePatchBackgroundImage,
+        x: 0, y: 0, scale: 4
+    }]
+};
+ninePatchBackgroundImage.src = ninePatchBackgroundImageURL;
+
 export class NinePatchBrush extends BrushMaterial {
     static typeName = "Nine Patch Brush";
     static icon = "icon-park-outline:nine-key";
     public blocks: BlocksData = NINEPATCH_DEFAULT_BLOCKS.clone();
     public readonly type = BrushType.NinePatch;
+    public static canvasImages: MapCanvasImage[] = [];
 
     public apply(state: PainterState, x: number, y: number): void {
         // Apply the rules to the first tile

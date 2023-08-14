@@ -152,6 +152,7 @@
             <div class="editor" bind:this={bodyEl}>
                 {#key $editingBrush}
                     <MapCanvas
+                        images={$editingBrush.canvasImages}
                         blocks={$editingBrush.blocks}
                         centerOnResize={true}
                         editLevels={state === SidebarState.BrushLevel}

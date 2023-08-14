@@ -1,3 +1,26 @@
+<script lang="ts" context="module">
+    interface MapCanvasText {
+        text: string;
+        x: number;
+        y: number;
+        maxWidth?: number;
+    }
+
+    export interface MapCanvasImage {
+        image: HTMLImageElement;
+        x: number;
+        y: number;
+        scale?: number;
+    }
+
+    interface MapResizingOptions {
+        border: number;
+        maxWidth: number;
+        maxHeight: number;
+        maxArea: number;
+    }
+</script>
+
 <script lang="ts">
     import { watchResize } from "svelte-watch-resize";
     import {
@@ -20,20 +43,6 @@
     import { Change, type EditorChanges } from "src/systems/changes";
     import { BlocksData, NULL } from "./blocks_data";
 
-    interface MapCanvasText {
-        text: string;
-        x: number;
-        y: number;
-        maxWidth?: number;
-    }
-
-    interface MapResizingOptions {
-        border: number;
-        maxWidth: number;
-        maxHeight: number;
-        maxArea: number;
-    }
-
     /** Blocks to edit */
     export let blocks: BlocksData;
     /** The size of the chunks in which to divide the map for caching */
@@ -52,6 +61,8 @@
 
     /** Texts to print on top of the map */
     export let texts: MapCanvasText[] = [];
+    /** Images to print behind the map */
+    export let images: MapCanvasImage[] = [];
 
     /** Whether zooming is allowed */
     export let allowZoom: boolean = true;
@@ -248,6 +259,9 @@
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
+        // Draw the background images
+        for (const image of images) drawImage(image);
+
         const [startBlock, endBlock] = getVisibleBlocks();
         const [startChunk, endChunk] = getVisibleChunks(startBlock, endBlock);
 
@@ -407,6 +421,19 @@
             pos.x,
             pos.y,
             maxWidth === undefined ? undefined : maxWidth * 16 * zoom
+        );
+    }
+
+    function drawImage({ image, scale = 1, x, y }: MapCanvasImage) {
+        const pos = mapToCanvas({ x: x * 16, y: y * 16 });
+
+        // Draw the image scaled
+        ctx.drawImage(
+            image,
+            pos.x,
+            pos.y,
+            image.width * scale * zoom,
+            image.height * scale * zoom
         );
     }
 
