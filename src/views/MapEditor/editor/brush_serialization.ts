@@ -12,7 +12,7 @@ export interface SerializedBrush {
     /** The brush name */
     name: string;
     /** The serialized blocks */
-    blocks: SerializedBlocksData;
+    blocks?: SerializedBlocksData;
     /** The current pinned state */
     pinned: boolean;
     /** The brush's primary tileset offset */
@@ -23,10 +23,16 @@ export interface SerializedBrush {
 
 export interface SerializedSimpleBrush extends SerializedBrush {
     type: BrushType.Simple;
+    /** The serialized blocks */
+    blocks?: SerializedBlocksData;
 }
 
 export interface SerializedNinePatchBrush extends SerializedBrush {
     type: BrushType.NinePatch;
+    /** The serialized metatiles */
+    metatiles: number[];
+    /** The serialized levels */
+    levels: number[];
 }
 
 function getPrimaryTilesetBrushes(tileset1: number): SerializedBrush[] {

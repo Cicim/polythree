@@ -127,9 +127,9 @@ export abstract class BrushMaterial extends PaintingMaterial {
         return !this.blocks.metatiles.some(mtid => mtid >= tileset1Length);
     }
     /** Serializes a brush into a storable object */
-    public serialize(): SerializedBrush {
+    public serialize(serializeBlocks: boolean = true): SerializedBrush {
         return {
-            blocks: this.blocks.toSerialized(),
+            blocks: serializeBlocks ? this.blocks.toSerialized() : null,
             type: this.type,
             name: this.name,
             pinned: get(this.pinned),
@@ -139,13 +139,21 @@ export abstract class BrushMaterial extends PaintingMaterial {
     }
 
     public static deserialize(serialized: SerializedBrush): BrushMaterial {
-        switch (serialized.type) {
-            case BrushType.Simple:
-                return SimpleBrush.deserialize(serialized as SerializedSimpleBrush);
-            case BrushType.NinePatch:
-                return NinePatchBrush.deserialize(serialized as SerializedNinePatchBrush);
+        try {
+            switch (serialized.type) {
+
+                case BrushType.Simple:
+                    return SimpleBrush.deserialize(serialized as SerializedSimpleBrush);
+                case BrushType.NinePatch:
+                    return NinePatchBrush.deserialize(serialized as SerializedNinePatchBrush);
+                default:
+                    console.error("Invalid Brush type for serialized object");
+            }
+        } catch (e) {
+            console.error("An error occurred while deserializing brush. Brush data is lost");
+            return null;
         }
-        throw new Error("Invalid Brush type for serialized object");
+        return null;
     }
 }
 
@@ -250,10 +258,24 @@ function maskMatches(mask: number, ones: number, zeros: number): boolean {
     return (mask & ones) === ones && (mask & zeros) === 0;
 }
 
+const NINEPATCH_DEFAULT_BLOCKS = new BlocksData(12, 9, 0, null);
+const ____ = 0;
+NINEPATCH_DEFAULT_BLOCKS.updateMetatiles([
+    ____, ____, ____, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    ____, ____, ____, NULL, ____, ____, NULL, ____, ____, NULL, NULL, ____,
+    ____, ____, ____, NULL, ____, ____, NULL, ____, ____, NULL, ____, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, ____, NULL, NULL, NULL, ____, ____, NULL, ____, ____, NULL, ____,
+    ____, ____, ____, ____, NULL, ____, ____, NULL, ____, ____, NULL, ____,
+    NULL, ____, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ____,
+    NULL, ____, NULL, ____, NULL, ____, ____, NULL, ____, ____, NULL, ____,
+    NULL, NULL, NULL, NULL, NULL, ____, ____, NULL, ____, ____, NULL, NULL
+]);
+
 export class NinePatchBrush extends BrushMaterial {
     static typeName = "Nine Patch Brush";
     static icon = "icon-park-outline:nine-key";
-    public blocks: BlocksData = new BlocksData(5, 3, 0, null);
+    public blocks: BlocksData = NINEPATCH_DEFAULT_BLOCKS.clone();
     public readonly type = BrushType.NinePatch;
 
     public apply(state: PainterState, x: number, y: number): void {
@@ -344,7 +366,7 @@ export class NinePatchBrush extends BrushMaterial {
         // 12. Adjacent sides with corners
         for (const [index, mask] of masks)
             if (maskMatches(mask, 0b00101000, 0b10010010))
-                return this.TWO_SIDES_WITH_CORNERS(index);
+                return this.TWO_SIDES_WITH_CORNER(index);
         // 13. Side with two corners
         for (const [index, mask] of masks)
             if (maskMatches(mask, 0b00101010, 0b10010100))
@@ -358,37 +380,6 @@ export class NinePatchBrush extends BrushMaterial {
             if (maskMatches(mask, 0b00111010, 0b10000100))
                 return this.SIDE_WITH_COUNTERCLOCKWISE_CORNER(index);
     }
-    private CENTER() { return this.blocks.get(1, 1); }
-    private FOUR_CORNERS() { return [0, NULL] as BlockData; }
-    private FOUR_SIDES() { return [0, NULL] as BlockData; }
-    private SIDE(index: number) {
-        if (index === 0) return this.blocks.get(1, 0);
-        if (index === 1) return this.blocks.get(2, 1);
-        if (index === 2) return this.blocks.get(1, 2);
-        if (index === 3) return this.blocks.get(0, 1);
-    }
-    private SIDES_PERPENDICULAR(index: number) {
-        if (index === 0) return this.blocks.get(0, 0);
-        if (index === 1) return this.blocks.get(2, 0);
-        if (index === 2) return this.blocks.get(2, 2);
-        if (index === 3) return this.blocks.get(0, 2);
-    }
-    private SIDES_OPPOSITE(arg0: number) { return [0, NULL] as BlockData; }
-    private THREE_SIDES(index: number) { return [0, NULL] as BlockData; }
-    private CORNER(index: number) {
-        if (index === 0) return this.blocks.get(4, 0);
-        if (index === 1) return this.blocks.get(5, 0);
-        if (index === 2) return this.blocks.get(5, 1);
-        if (index === 3) return this.blocks.get(4, 1);
-    }
-    private CORNERS_ADJACENT(index: number) { return [0, NULL] as BlockData; }
-    private CORNERS_OPPOSITE(arg0: number) { return [0, NULL] as BlockData; }
-    private CORNERS_THREE(index: number) { return [0, NULL] as BlockData; }
-    private TWO_SIDES_WITH_CORNERS(index: number) { return [0, NULL] as BlockData; }
-    private SIDE_WITH_TWO_CORNERS(index: number) { return [0, NULL] as BlockData; }
-    private SIDE_WITH_CLOCKWISE_CORNER(index: number) { return [0, NULL] as BlockData; }
-    private SIDE_WITH_COUNTERCLOCKWISE_CORNER(index: number) { return [0, NULL] as BlockData; }
-
 
     public clone(): NinePatchBrush {
         const brush = new NinePatchBrush(this.primary, this.secondary);
@@ -399,14 +390,149 @@ export class NinePatchBrush extends BrushMaterial {
     }
 
     public serialize(): SerializedNinePatchBrush {
-        return super.serialize() as SerializedNinePatchBrush;
+        const serialized = super.serialize(false) as SerializedNinePatchBrush;
+        serialized.metatiles = [];
+        serialized.levels = [];
+
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 11; x++) {
+                if (this.blocks.getMetatile(x, y) === NULL) continue;
+                serialized.metatiles.push(this.blocks.getMetatile(x, y));
+                serialized.levels.push(this.blocks.getLevel(x, y));
+            }
+        }
+        return serialized;
     }
 
     public static deserialize(serialized: SerializedNinePatchBrush) {
         const brush = new NinePatchBrush(serialized.primary, serialized.secondary);
-        brush.blocks = BlocksData.fromSerialized(serialized.blocks);
+
+        const metatiles = serialized.metatiles.reverse();
+        const levels = serialized.levels.reverse();
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 11; x++) {
+                if (brush.blocks.getMetatile(x, y) === NULL) continue;
+                brush.blocks.setMetatile(x, y, metatiles.pop())
+                brush.blocks.setLevel(x, y, levels.pop())
+            }
+        }
+
         brush.name = serialized.name;
         brush.pinned = writable(serialized.pinned);
         return brush;
+    }
+
+    //    [0]
+    // [3]   [1]
+    //    [2]  
+    private _crossX(rot: number) { return rot ? 3 - rot : 1 }
+    private _crossY(rot: number) { return !(rot % 2) ? rot : 1 }
+    // [0]   [1]
+    // 
+    // [3]   [2]
+    private _splitCornersX(rot: number) { return (rot & 1 ^ rot >> 1 & 1) << 1 }
+    private _splitCornersY(rot: number) { return rot & 2 }
+    // [0][1]
+    // [3][2]
+    private _cornersX(rot: number) { return rot & 1 ^ rot >> 1 & 1 }
+    private _cornersY(rot: number) { return (rot & 2) >> 1 }
+
+    private CENTER() { return this.blocks.get(1, 1) }
+    private FOUR_SIDES() { return this.blocks.get(3, 7) }
+    private FOUR_CORNERS() { return this.blocks.get(1, 5) }
+    private SIDE(rot: number) { return this.blocks.get(this._crossX(rot), this._crossY(rot)) }
+    private SIDES_PERPENDICULAR(rot: number) { return this.blocks.get(this._splitCornersX(rot), this._splitCornersY(rot)) }
+    private SIDES_OPPOSITE(flip: number) { return this.blocks.get(1 + this._cornersX(1 + flip * 2), 5 + this._cornersY(1 + flip * 2)) }
+    private CORNER(rot: number) { return this.blocks.get(4 + this._cornersX(rot), 1 + this._cornersY(rot)) }
+    private CORNERS_THREE(rot: number) { return this.blocks.get(7 + this._cornersX(rot), 1 + this._cornersY(rot)) }
+    private CORNERS_ADJACENT(rot: number) { return this.blocks.get(11, 4 + rot) }
+    private CORNERS_OPPOSITE(flip: number) { return this.blocks.get(10 + this._cornersX(1 + flip * 2), 1 + this._cornersY(1 + flip * 2)) }
+    private TWO_SIDES_WITH_CORNER(rot: number) { return this.blocks.get(5 + this._cornersX(rot), 4 + this._cornersY(rot)) }
+    private __VERTICAL_CORNER(rot: number) { return this.blocks.get(5 + this._cornersX(rot), 7 + this._cornersY(rot)) }
+    private __HORIZONTAL_CORNER(rot: number) { return this.blocks.get(8 + this._cornersX(rot), 7 + this._cornersY(rot)) }
+    private SIDE_WITH_CLOCKWISE_CORNER(rot: number) { return rot % 2 ? this.__HORIZONTAL_CORNER(rot) : this.__VERTICAL_CORNER(rot) }
+    private SIDE_WITH_COUNTERCLOCKWISE_CORNER(rot: number) { return ((rot + 3) % 4) % 2 ? this.__VERTICAL_CORNER((rot + 3) % 4) : this.__HORIZONTAL_CORNER((rot + 3) % 4) }
+    private SIDE_WITH_TWO_CORNERS(rot: number) { return this.blocks.get(8 + this._cornersX(rot), 4 + this._cornersY(rot)) }
+    private THREE_SIDES(rot: number) { return this.blocks.get((rot === 1 ? 1 : 0) + this._crossX(rot), (rot === 2 ? 5 : 4) + this._crossY(rot)) }
+
+    /** Prints all possible the combinations' coordinates and values in the blocks */
+    static testTileGetters() {
+        const brush = new NinePatchBrush(0);
+
+        // Test values
+        console.log("Center");
+        console.log(brush.CENTER());
+        console.log("Four Sides");
+        console.log(brush.FOUR_SIDES());
+        console.log("Four Corners");
+        console.log(brush.FOUR_CORNERS());
+        console.log("Side");
+        for (let i = 0; i < 4; i++) console.log(brush.SIDE(i));
+        console.log("Vertical corner");
+        for (let i = 0; i < 4; i++) console.log(brush.__VERTICAL_CORNER(i));
+        console.log("Horizontal corner");
+        for (let i = 0; i < 4; i++) console.log(brush.__HORIZONTAL_CORNER(i));
+        console.log("Side perpendicular");
+        for (let i = 0; i < 4; i++) console.log(brush.SIDES_PERPENDICULAR(i));
+        console.log("Side parallel");
+        for (let i = 0; i < 2; i++) console.log(brush.SIDES_OPPOSITE(i));
+        console.log("Corner");
+        for (let i = 0; i < 4; i++) console.log(brush.CORNER(i));
+        console.log("Three corners");
+        for (let i = 0; i < 4; i++) console.log(brush.CORNERS_THREE(i));
+        console.log("Two sides with corner");
+        for (let i = 0; i < 4; i++) console.log(brush.TWO_SIDES_WITH_CORNER(i));
+        console.log("Side with CW corner");
+        for (let i = 0; i < 4; i++) console.log(brush.SIDE_WITH_CLOCKWISE_CORNER(i));
+        console.log("Side with CCW corner");
+        for (let i = 0; i < 4; i++) console.log(brush.SIDE_WITH_COUNTERCLOCKWISE_CORNER(i));
+        console.log("Side with two corners");
+        for (let i = 0; i < 4; i++) console.log(brush.SIDE_WITH_TWO_CORNERS(i));
+        console.log("Corners opposite");
+        for (let i = 0; i < 2; i++) console.log(brush.CORNERS_OPPOSITE(i));
+        console.log("Corners adjacent");
+        for (let i = 0; i < 4; i++) console.log(brush.CORNERS_ADJACENT(i));
+        console.log("Three sides");
+        for (let i = 0; i < 4; i++) console.log(brush.THREE_SIDES(i));
+
+        // @ts-ignore
+        brush.blocks = {
+            // @ts-ignore
+            get: (x, y) => {
+                console.log(x, y);
+            }
+        }
+
+        // Test positions
+        console.log("Center");
+        brush.CENTER();
+        console.log("Four Sides");
+        brush.FOUR_SIDES();
+        console.log("Four Corners");
+        brush.FOUR_CORNERS();
+        console.log("Side");
+        for (let i = 0; i < 4; i++) brush.SIDE(i);
+        console.log("Side perpendicular");
+        for (let i = 0; i < 4; i++) brush.SIDES_PERPENDICULAR(i);
+        console.log("Side parallel");
+        for (let i = 0; i < 2; i++) brush.SIDES_OPPOSITE(i);
+        console.log("Corner");
+        for (let i = 0; i < 4; i++) brush.CORNER(i);
+        console.log("Three corners");
+        for (let i = 0; i < 4; i++) brush.CORNERS_THREE(i);
+        console.log("Two sides with corner");
+        for (let i = 0; i < 4; i++) brush.TWO_SIDES_WITH_CORNER(i);
+        console.log("Side with CW corner");
+        for (let i = 0; i < 4; i++) brush.SIDE_WITH_CLOCKWISE_CORNER(i);
+        console.log("Side with CCW corner");
+        for (let i = 0; i < 4; i++) brush.SIDE_WITH_COUNTERCLOCKWISE_CORNER(i);
+        console.log("Side with two corners");
+        for (let i = 0; i < 4; i++) brush.SIDE_WITH_TWO_CORNERS(i);
+        console.log("Corners opposite");
+        for (let i = 0; i < 2; i++) brush.CORNERS_OPPOSITE(i);
+        console.log("Corners adjacent");
+        for (let i = 0; i < 4; i++) brush.CORNERS_ADJACENT(i);
+        console.log("Three sides");
+        for (let i = 0; i < 4; i++) brush.THREE_SIDES(i);
     }
 }

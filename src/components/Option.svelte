@@ -19,7 +19,6 @@
     }
 
     function onMouseMove() {
-        console.log("Moving mouse");
         scrollingMode.set(ScrollingMode.Mouse);
     }
 

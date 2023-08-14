@@ -122,7 +122,13 @@ export class BlocksData {
     }
 
     // ANCHOR Large Updates
-    public updateLevels(levels: Uint16Array, start: number = 0, length: number = levels.length) {
+    public updateMetatiles(metatiles: ArrayLike<number>, start: number = 0, length: number = metatiles.length) {
+        for (let i = 0; i < length; i++) {
+            this.metatiles[start + i] = metatiles[i];
+        }
+    }
+
+    public updateLevels(levels: ArrayLike<number>, start: number = 0, length: number = levels.length) {
         for (let i = 0; i < length; i++) {
             this.levels[start + i] = levels[i];
         }

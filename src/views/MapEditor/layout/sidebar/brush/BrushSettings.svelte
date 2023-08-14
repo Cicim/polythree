@@ -49,14 +49,7 @@
                       height: ($editingBrush as SimpleBrush).height,
                   }
                 : { width: 1, height: 1 },
-        [BrushType.NinePatch]:
-            brushType === BrushType.NinePatch
-                ? {
-                      hasCorners: ($editingBrush as NinePatchBrush).hasCorners,
-                  }
-                : {
-                      hasCorners: true,
-                  },
+        [BrushType.NinePatch]: {},
     };
 
     let brushSettings: any;
@@ -185,11 +178,7 @@
                     >
                 {/if}
             {:else if brushType === BrushType.NinePatch}
-                <div class="row">
-                    <CheckBox bind:checked={brushSettings.hasCorners}
-                        >Has corners</CheckBox
-                    >
-                </div>
+                <div class="row" />
             {/if}
         </div>
     </div>

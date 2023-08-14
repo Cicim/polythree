@@ -1,6 +1,6 @@
 import MapEditor from "./MapEditor.svelte";
 import { TabbedEditorContext, type TabbedEditorTabs } from "../systems/contexts";
-import { activeView, openViews } from "src/systems/views";
+import { activeView, openViews, ViewContext } from "src/systems/views";
 import { redefineBindings } from "src/systems/bindings";
 import { get, writable, type Writable } from "svelte/store";
 import { spawnDialog } from "src/systems/dialogs";
@@ -365,7 +365,7 @@ export class MapEditorContext extends TabbedEditorContext {
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
         // Trigger a re-render
-        activeView.set(this);
+        activeView.set(this as ViewContext);
         this.isLoading.set(false);
     }
 
