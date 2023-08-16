@@ -201,6 +201,7 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/select_replace": new KeyBinding("Select Replace Tool", "4", undefined, "active.name === 'Map Editor'"),
     "map_editor/import_map": new KeyBinding("Import the Map from File", "Ctrl+I", undefined, "active.name === 'Map Editor'"),
     "map_editor/export_map": new KeyBinding("Export the Map to File", "Ctrl+E", undefined, "active.name === 'Map Editor'"),
+    "map_editor/toggle_animations": new KeyBinding("Play/Stop the Animations", "F7", undefined, "active.name === 'Map Editor'"),
 };
 
 /** The object containing all the existing shortcuts */

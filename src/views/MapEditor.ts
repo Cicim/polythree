@@ -182,6 +182,9 @@ export class MapEditorContext extends TabbedEditorContext {
         else
             super.redo();
     }
+    public toggleAnimations() {
+        this.animations.playing.update(v => !v);
+    }
 }
 
 redefineBindings({
@@ -261,4 +264,8 @@ redefineBindings({
     "map_editor/import_map": (view: MapEditorContext) => {
         console.log("Import Map");
     },
+    "map_editor/toggle_animations": (view: MapEditorContext) => {
+        if (view.tab === "layout" || view.tab === "level")
+            view.toggleAnimations();
+    }
 });

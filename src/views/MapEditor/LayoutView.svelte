@@ -87,6 +87,7 @@
                 <ToolButton
                     icon="mdi:pinwheel"
                     title="Start/Stop Animations"
+                    action="map_editor/toggle_animations"
                     active={$playingAnimations}
                     rotateOnActive={true}
                     on:click={() => ($playingAnimations = !$playingAnimations)}
