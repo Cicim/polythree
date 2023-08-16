@@ -20,6 +20,7 @@ import { BlocksData, NULL, type ImportedBlocksData } from "./MapEditor/editor/bl
 import initWasmFunctions, { load_tileset, render_blocks_data, replace_tiles } from "src/wasm/map-canvas/pkg";
 import type MapCanvas from "./MapEditor/editor/MapCanvas.svelte";
 import { BrushesModule } from "./MapEditor/context/brushes_module";
+import { PaletteModule } from "./MapEditor/context/palette_module";
 
 export interface MapEditorProperties {
     group: number;
@@ -113,7 +114,8 @@ export class MapEditorContext extends TabbedEditorContext {
     public layoutLocked: Writable<boolean> = writable(false);
 
     // Modules
-    public brushes: BrushesModule = new BrushesModule();
+    public brushes: BrushesModule = new BrushesModule(this);
+    public palette: PaletteModule = new PaletteModule(this);
 
     // Tileset Palette
     /** Tileset bottom tiles for quick drawing */
@@ -139,18 +141,6 @@ export class MapEditorContext extends TabbedEditorContext {
     private animationTimeout: NodeJS.Timeout;
     /** Function to unsubscribe from activeView */
     private activeViewUnsubscriber: Unsubscriber = () => { };
-
-    /** Length of the two tilesets (might not be a multiple of 8) */
-    public tilesetsLength: number;
-    /** The block data for the tilset level editor */
-    public tilesetBlocks: Writable<BlocksData>;
-    /** The reference to the MapCanvas for the tilesetBlocks */
-    public tilesetMapCanvas: Writable<MapCanvas>;
-    /** The changes that are applied to the tileset level editor */
-    public tilesetLevelChanges: EditorChanges<null>;
-
-    // Keybindings callbacks
-    public moveOnPaletteCB: (dirX: number, dirY: number, select: boolean) => void = () => { };
 
     // Tileset
     public tileset1Offset: number;
@@ -196,35 +186,16 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     public onSelect = () => {
-        get(this.tilesetMapCanvas)?.rebuildLevels();
+        this.palette.tryToRebuildLevels();
     };
 
     public async close(): Promise<boolean> {
         // Try to save the map's configs before closing
-        if (!get(this.isLoading)) {
-            // Save the tileset levels if edits were made
-            if (get(this.tilesetLevelChanges.unsaved)) {
-                try {
-                    await this.exportTilesetsLevels();
-                }
-                catch (err) {
-                    await spawnDialog(AlertDialog, {
-                        title: "Error while saving Tileset Levels",
-                        message: err
-                    });
-                }
-            }
-
-            // Save the brushes if edits were made
-            try {
-                await this.brushes.save();
-            }
-            catch (err) {
-                await spawnDialog(AlertDialog, {
-                    title: "Error while saving Brushes",
-                    message: err
-                });
-            }
+        if (!this.isLoading) {
+            // Save the tileset levels
+            await this.palette.save();
+            // Save the brushes
+            await this.brushes.save();
         }
         // Unsubscribe from activeView
         this.activeViewUnsubscriber();
@@ -234,7 +205,7 @@ export class MapEditorContext extends TabbedEditorContext {
     }
 
     public async load() {
-        this.isLoading.set(true);
+        this.loading.set(true);
         this._cosmeticHasSideTabs = false;
 
         // Load the map header data
@@ -341,48 +312,27 @@ export class MapEditorContext extends TabbedEditorContext {
                 title: "Could not load tilesets lengths",
                 message,
             });
-            this.isLoading.set(false);
+            this.loading.set(false);
             this.close();
             return;
         }
 
-        // Get the levels for these tilesets from config
-        const importedTilesetLevels = await this.importTilesetsLevels();
-        // Compose the block data for the tileset level editor
-        const tilesetsLength = tilesetsData.metatiles.length;
-        this.tilesetsLength = tilesetsLength;
-        const tilesetBlocks = new BlocksData(8, Math.ceil(tilesetsLength / 8))
-        // Set the blockData for the tilesets to be the ascending number of tiles 
-        // with the permissions you've read from the configs
-        for (let y = 0; y < tilesetBlocks.height; y++) {
-            for (let x = 0; x < 8; x++)
-                tilesetBlocks.set(x, y, y * 8 + x, importedTilesetLevels[y * 8 + x]);
-        }
-
-        // Set the tiles after the last block in the last row to null
-        if (tilesetsLength % 8 !== 0)
-            for (let x = tilesetsLength % 8; x < 8; x++)
-                tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL, NULL);
-
-        this.tilesetBlocks = writable(tilesetBlocks);
-        this.tilesetMapCanvas = writable(null);
-        this.tilesetLevelChanges = new EditorChanges(null);
+        // Load the tileset
+        await this.palette.load(tilesetsData.metatiles.length);
+        // Load brushes
+        await this.brushes.load();
 
         this.material = writable(new PaletteMaterial(
-            BlocksData.fromBlockData(get(this.tilesetBlocks).get(0, 0))
+            BlocksData.fromBlockData(this.palette.$blocks.get(0, 0))
         ));
         this.selectedTool = writable(EditorTool.Pencil);
-
-        // Load brushes
-        await this.brushes.load(this);
-
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
 
         // Trigger a re-render (to update the side tabs)
         activeView.set(this as ViewContext);
         // Start rendering the editor
-        this.isLoading.set(false);
+        this.loading.set(false);
 
         // Unsubscribe from previous subscriptions to activeView
         this.activeViewUnsubscriber();
@@ -639,97 +589,6 @@ export class MapEditorContext extends TabbedEditorContext {
         }
     }
 
-    // ANCHOR Tileset Levels
-    private async importTilesetsLevels(): Promise<number[]> {
-        // Get the tileset levels
-        const t1Levels = await this._parseTilesetLevels(this.tileset1Offset, this.tileset1Length);
-        const t2Levels = await this._parseTilesetLevels(this.tileset2Offset, this.tileset2Length);
-
-        return [...t1Levels, ...t2Levels];
-    }
-
-    public async exportTilesetsLevels(): Promise<void> {
-        // Get the tileset levels from the editor
-        const tilesetLevels = get(this.tilesetBlocks).levels;
-        // Divide the two tilsets based on the lengths
-        const t1Levels = tilesetLevels.slice(0, this.tileset1Length);
-        const t2Levels = tilesetLevels.slice(this.tileset1Length, this.tileset1Length + this.tileset2Length);
-        // Convert the levels to a string
-        const t1LevelChars = this._encodeTilesetLevels(t1Levels);
-        const t2LevelChars = this._encodeTilesetLevels(t2Levels);
-        // Update the configs with the new tileset levels
-        config.update(config => {
-            config.tileset_levels[this.tileset1Offset] = t1LevelChars;
-            config.tileset_levels[this.tileset2Offset] = t2LevelChars;
-            return config;
-        });
-        // Update the tileset the configs jsons too
-        await invoke("update_tileset_level", { tileset: this.tileset1Offset, levels: t1LevelChars });
-        await invoke("update_tileset_level", { tileset: this.tileset2Offset, levels: t2LevelChars });
-    }
-
-    private async _parseTilesetLevels(tilesetOffset: number, tilesetLength: number): Promise<Uint16Array> {
-        const levelChars = get(config).tileset_levels[tilesetOffset];
-
-        // If you can't find the levelChars, return a list of null as long as the tileset
-        if (levelChars === undefined) {
-            // Update the configs with the new tileset levels
-            config.update(config => {
-                config.tileset_levels[tilesetOffset] = "";
-                return config;
-            });
-            await invoke("update_tileset_level", { tileset: tilesetOffset, levels: "" })
-            return new Uint16Array(tilesetLength).fill(NULL);
-        }
-        // Otherwise, read the data from the levelChars
-        else {
-            const data = new Uint16Array(tilesetLength).fill(NULL);
-
-            for (let i = 0; i < levelChars.length; i++) {
-                const char = levelChars[i];
-                if (char === "=") data[i] = NULL;
-                else {
-                    if (char === "/") data[i] = 29;
-                    else data[i] = levelChars.charCodeAt(i) - 63;
-
-                    // Convert it back to the original format
-                    if (data[i] % 2 === 0)
-                        data[i] = Math.floor(data[i] / 2);
-                    else
-                        data[i] = Math.floor(data[i] / 2) + 0x100;
-                }
-            }
-
-            return data;
-        }
-    }
-
-    private _encodeTilesetLevels(levels: Uint16Array) {
-        let levelChars = "";
-        let nullsEncountered = 0;
-
-        for (const level of levels) {
-            if (level === NULL) {
-                nullsEncountered++;
-                continue;
-            }
-            else {
-                // Add the nulls   
-                levelChars += "=".repeat(nullsEncountered);
-                nullsEncountered = 0;
-
-                let compressedLevel = (level & 0xFF) * 2;
-                if (level & 0x100)
-                    compressedLevel++;
-
-                if (compressedLevel === 29) levelChars += "/";
-                else levelChars += String.fromCharCode(compressedLevel + 63);
-            }
-        }
-
-        return levelChars;
-    }
-
     // ANCHOR Editor Methods
     public renderMetatiles(bottomImageData: ImageData, topImageData: ImageData, blocksData: {
         metatiles: Uint16Array,
@@ -781,10 +640,10 @@ export class MapEditorContext extends TabbedEditorContext {
     public zoomOut: () => void = () => { };
 
     public undoTilesetChanges() {
-        this.tilesetLevelChanges.undo();
+        this.palette.undoChanges();
     }
     public redoTilesetChanges() {
-        this.tilesetLevelChanges.redo();
+        this.palette.redoChanges();
     }
     public async undo() {
         if (this.brushes.isEditing)
@@ -797,12 +656,6 @@ export class MapEditorContext extends TabbedEditorContext {
             this.brushes.redoBrushChanges();
         else
             super.redo();
-    }
-    public moveOnPalette(dirX: number, dirY: number, select: boolean) {
-        const tab = get(this.selectedTab);
-        if (tab !== "layout" && tab !== "level") return;
-
-        this.moveOnPaletteCB(dirX, dirY, select);
     }
 }
 
@@ -838,28 +691,28 @@ redefineBindings({
         view.redoTilesetChanges();
     },
     "map_editor/palette_move_up": (view: MapEditorContext) => {
-        view.moveOnPalette(0, -1, false);
+        view.palette.move(0, -1, false);
     },
     "map_editor/palette_select_up": (view: MapEditorContext) => {
-        view.moveOnPalette(0, -1, true);
+        view.palette.move(0, -1, true);
     },
     "map_editor/palette_move_down": (view: MapEditorContext) => {
-        view.moveOnPalette(0, 1, false);
+        view.palette.move(0, 1, false);
     },
     "map_editor/palette_select_down": (view: MapEditorContext) => {
-        view.moveOnPalette(0, 1, true);
+        view.palette.move(0, 1, true);
     },
     "map_editor/palette_move_left": (view: MapEditorContext) => {
-        view.moveOnPalette(-1, 0, false);
+        view.palette.move(-1, 0, false);
     },
     "map_editor/palette_select_left": (view: MapEditorContext) => {
-        view.moveOnPalette(-1, 0, true);
+        view.palette.move(-1, 0, true);
     },
     "map_editor/palette_move_right": (view: MapEditorContext) => {
-        view.moveOnPalette(1, 0, false);
+        view.palette.move(1, 0, false);
     },
     "map_editor/palette_select_right": (view: MapEditorContext) => {
-        view.moveOnPalette(1, 0, true);
+        view.palette.move(1, 0, true);
     },
     "map_editor/select_pencil": (view: MapEditorContext) => {
         if (view.tab === "layout" || view.tab === "level")

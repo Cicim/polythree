@@ -245,7 +245,7 @@ export abstract class EditorContext extends ViewContext {
     /** This editor's data, used for displaying information */
     public data: Writable<Record<string, any>>;
     /** Whether or not the editor is currently loading */
-    public isLoading: Writable<boolean>;
+    public loading: Writable<boolean>;
     /** A promise that resolves once the editor is done saving */
     public savePromise: Promise<boolean>;
 
@@ -261,7 +261,7 @@ export abstract class EditorContext extends ViewContext {
         this.changes = (this instanceof TabbedEditorContext) ? null :
             new EditorChanges(this.data);
 
-        this.isLoading = writable(true);
+        this.loading = writable(true);
     }
 
     /** Function to run when the editor needs saving */
@@ -297,6 +297,9 @@ export abstract class EditorContext extends ViewContext {
     }
     public get isSavingNow() {
         return get(this.changes.saving);
+    }
+    public get isLoading() {
+        return get(this.loading);
     }
 
     /** Asks the user for the needs save prompt and awaits for them to answer */
@@ -352,7 +355,7 @@ export abstract class EditorContext extends ViewContext {
     /** Returns a list of the other views of the same type that match the predicate */
     public *getOtherViews<T extends this>(predicate: (view: T) => boolean = () => true): Generator<T> {
         for (const view of get(openViews)) {
-            if (!(view instanceof this.constructor) || view === this || get((<T>view).isLoading)) continue;
+            if (!(view instanceof this.constructor) || view === this || get((<T>view).loading)) continue;
             if (predicate(view as T)) yield view as T;
         }
     }
@@ -362,8 +365,8 @@ export abstract class EditorContext extends ViewContext {
     public subscribeToSelection(onSelect: () => void, onDeselect: () => void): Unsubscriber {
         return activeView.subscribe((view) => {
             if (view === this) {
-                if (get(this.isLoading)) {
-                    const unsubscribe = this.isLoading.subscribe((isLoading) => {
+                if (get(this.loading)) {
+                    const unsubscribe = this.loading.subscribe((isLoading) => {
                         if (!isLoading) {
                             unsubscribe();
                             onSelect();
@@ -373,8 +376,8 @@ export abstract class EditorContext extends ViewContext {
                 else onSelect();
             }
             else {
-                if (get(this.isLoading)) {
-                    const unsubscribe = this.isLoading.subscribe((isLoading) => {
+                if (get(this.loading)) {
+                    const unsubscribe = this.loading.subscribe((isLoading) => {
                         if (!isLoading) {
                             unsubscribe();
                             onDeselect();

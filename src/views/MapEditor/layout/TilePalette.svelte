@@ -14,7 +14,7 @@
     // Get the data
     const material = context.material;
     // Get the block data for this map
-    const tilesetBlocksStore = context.tilesetBlocks;
+    const tilesetBlocksStore = context.palette.blocks;
     /** Height of the tileset in blocks */
     let tilesetHeight: number = 0;
 
@@ -178,7 +178,7 @@
             for (let i = 0; i < width; i++) {
                 const tileIndex = blocks.index(x + i, y + j);
 
-                if (tileIndex >= context.tilesetsLength) {
+                if (tileIndex >= context.palette.fullLength) {
                     blocks.set(i, j, NULL, NULL);
                 } else {
                     blocks.set(

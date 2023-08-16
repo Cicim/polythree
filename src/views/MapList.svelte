@@ -37,7 +37,7 @@
     setContext("data", context.data);
     setContext("context", context);
 
-    $: isLoading = context.isLoading;
+    $: isLoading = context.loading;
     $: mapInfoOpen = true;
 
     /** The content of the searchbar */

@@ -39,11 +39,13 @@
     const secondaryBrushes = context.brushes.secondary;
 
     // Update the moveOnPalette callback
-    context.moveOnPaletteCB = (dirX: number, dirY: number, select: boolean) => {
-        if (levelMode || state === SidebarState.BrushLevel)
-            levelPalette.moveOnPalette(dirX, dirY, select);
-        else tilePalette.moveOnPalette(dirX, dirY, select);
-    };
+    context.palette.setMoveCallback(
+        (dirX: number, dirY: number, select: boolean) => {
+            if (levelMode || state === SidebarState.BrushLevel)
+                levelPalette.moveOnPalette(dirX, dirY, select);
+            else tilePalette.moveOnPalette(dirX, dirY, select);
+        }
+    );
 
     let state: SidebarState = SidebarState.Palette;
 

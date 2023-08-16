@@ -8,56 +8,64 @@ import {
     loadBrushesForSecondaryTileset,
     saveBrushesForTilesets
 } from "../editor/brush_serialization";
+import { spawnDialog } from "src/systems/dialogs";
+import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 
 export class BrushesModule {
     private context: MapEditorContext;
 
     /** The list of brushes for the primary tileset */
-    public primary: Writable<BrushMaterial[]> = writable([]);
+    public primary: Writable<BrushMaterial[]>;
     /** The list of brushes for the secondary tileset */
-    public secondary: Writable<BrushMaterial[]> = writable([]);
+    public secondary: Writable<BrushMaterial[]>;
 
     /** The brush that's being currently edited */
-    public editing: Writable<BrushMaterial> = writable(null);
+    public editing: Writable<BrushMaterial>;
     /** The changes that are applied to the editing brush */
-    public editingChanges: Writable<EditorChanges<null>> = writable(null);
+    public editingChanges: Writable<EditorChanges<null>>;
     /** A clone of the brush you've just started editing right
      * before you made any edits to it */
-    public editingClone: Writable<BrushMaterial> = writable(null);
+    public editingClone: Writable<BrushMaterial>;
     /** The state from which you entered brush editing */
     public editingEnteredFromState: SidebarState;
     /** The index of the editing brush within the brushes */
     public editingIndex: number;
 
     // ANCHOR Main Methods
+    constructor(context: MapEditorContext) {
+        this.context = context;
+    }
     /**
      * 
      *  Function to load/reload the brushes
      * 
      */
-    public async load(context: MapEditorContext = undefined) {
-        // Set the context if there is one, otherwise use the old one
-        if (context) this.context = context;
-
-        if (!context) throw new Error("No context provided for loading brushes");
+    public async load() {
+        // Reset everything before loading
+        this.primary = writable([]);
+        this.secondary = writable([]);
+        this.editing = writable(null);
+        this.editingClone = writable(null);
+        this.editingChanges = writable(null);
+        this.editingEnteredFromState = null;
+        this.editingIndex = null;
 
         // Sets the primary and secondary stores
         await this.loadBrushesForTilesets();
 
-        // Set the currently editing brush
-        this.editing.set(null);
-        this.editingClone.set(null);
-        this.editingChanges.set(null);
-        this.editingEnteredFromState = null;
-        this.editingIndex = null;
     }
 
     /** Function to save data for the brushes */
     public async save() {
-        // No context was provided yet
-        if (!this.context) return;
-
-        this.saveBrushesForTilesets();
+        try {
+            await this.saveBrushesForTilesets();
+        }
+        catch (err) {
+            await spawnDialog(AlertDialog, {
+                title: "Error while saving Brushes",
+                message: err
+            });
+        }
     }
 
     // ANCHOR Secondary Methods

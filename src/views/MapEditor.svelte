@@ -17,7 +17,7 @@
     const data = context.data;
     setContext("data", data);
 
-    const isLoading = context.isLoading;
+    const isLoading = context.loading;
     const layoutLocked = context.layoutLocked;
 
     function updateLayoutLock() {
@@ -26,7 +26,7 @@
         $layoutLocked = context.anyOtherViewWhere((view) => {
             const thisLayoutIndex = $data.layout.index;
 
-            if (get(view.isLoading)) return false;
+            if (get(view.loading)) return false;
 
             const viewLayoutIndex = get(view.data as Writable<any>).layout
                 .index;

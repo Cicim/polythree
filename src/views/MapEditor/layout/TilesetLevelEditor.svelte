@@ -7,55 +7,18 @@
     let component: MapCanvas;
 
     const context: MapEditorContext = getContext("context");
-    const blocksStore = context.tilesetBlocks;
+    const blocksStore = context.palette.blocks;
 
-    function synchronizeChanges({
-        detail: { blocks, anyChanges, timestamp },
+    function onBlocksChanged({
+        detail: { blocks, anyChanges },
     }: BlocksChangedEvent) {
-        if (!anyChanges) return;
-
-        let viewsSharingBothTilesets: MapEditorContext[] = [];
-        let viewsSharingPrimaryTileset: MapEditorContext[] = [];
-        let viewsSharingSecondaryTileset: MapEditorContext[] = [];
-
-        // Loop through each MapEditor layout that shares the same tileset
-        for (const view of context.getOtherViews()) {
-            if (view.tileset1Offset === context.tileset1Offset) {
-                if (view.tileset2Offset === context.tileset2Offset)
-                    viewsSharingBothTilesets.push(view);
-                else viewsSharingPrimaryTileset.push(view);
-            } else if (view.tileset2Offset === context.tileset2Offset)
-                viewsSharingSecondaryTileset.push(view);
-        }
-
-        // Update each mapEditor with the correct portion of the levels
-        for (const view of viewsSharingBothTilesets) {
-            view.tilesetBlocks.update((blocksData: BlocksData) => {
-                blocksData.updateLevels(blocks.levels);
-                return blocksData;
-            });
-        }
-        for (const view of viewsSharingPrimaryTileset) {
-            view.tilesetBlocks.update((blocksData: BlocksData) => {
-                blocksData.updateLevels(blocks.levels, 0, view.tileset1Length);
-                return blocksData;
-            });
-        }
-        for (const view of viewsSharingSecondaryTileset) {
-            view.tilesetBlocks.update((blocksData: BlocksData) => {
-                blocksData.updateLevels(
-                    blocks.levels,
-                    view.tileset1Length,
-                    view.tileset2Length
-                );
-                return blocksData;
-            });
-        }
+        // Synchronize the changes with the other editors
+        if (anyChanges) context.palette.synchronizeChanges(blocks);
     }
 
     onMount(() => {
         // Update the mapCanvas for the tilesetLevels
-        context.tilesetMapCanvas.set(component);
+        context.palette.mapCanvas.set(component);
     });
 </script>
 
@@ -63,7 +26,7 @@
     <div class="canvas-container">
         <MapCanvas
             blocks={$blocksStore}
-            changes={context.tilesetLevelChanges}
+            changes={context.palette.changes}
             editLevels={true}
             nullLevels={true}
             chunkSize={8}
@@ -71,7 +34,7 @@
             allowZoom={false}
             constantWidth={512}
             nullBlocks={true}
-            on:blockschanged={synchronizeChanges}
+            on:blockschanged={onBlocksChanged}
             bind:this={component}
         />
     </div>

@@ -142,7 +142,7 @@ export class MapListContext extends EditorContext {
     }
 
     public async load(): Promise<void> {
-        this.isLoading.set(true);
+        this.loading.set(true);
 
         // Fill the names array with 256 nulls
         let names: string[] = Array(256).fill(null);
@@ -182,7 +182,7 @@ export class MapListContext extends EditorContext {
             this.close();
         }
         finally {
-            this.isLoading.set(false);
+            this.loading.set(false);
         }
     }
 
