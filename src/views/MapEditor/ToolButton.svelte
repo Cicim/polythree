@@ -12,6 +12,9 @@
 
     export let value: string = null;
     export let group: string = null;
+    /** Whether the toolbutton is active or not */
+    export let active: boolean = false;
+    export let rotateOnActive: boolean = false;
 
     function onClick(event: MouseEvent) {
         if (group !== null) group = value;
@@ -24,10 +27,12 @@
     use:tooltip
     tooltip={title}
     class="toolbar-button"
-    class:selected={group !== null && group === value}
+    class:selected={(group !== null && group === value) || active === true}
+    class:active
     class:primary={theme === "primary"}
     class:secondary={theme === "secondary"}
     class:transparent={theme === "transparent"}
+    class:rotating={active && rotateOnActive}
     {disabled}
 >
     <iconify-icon inline {icon} />
@@ -93,17 +98,36 @@
         }
 
         &.selected {
-            cursor: default;
+            &:not(.active) {
+                cursor: default;
+            }
             background: var(--bg-hover);
             border: 1px solid var(--border-hover);
             iconify-icon {
                 color: var(--fg-selected);
             }
+
+            @keyframes rotate {
+                from {
+                    transform: rotate(360deg) scale(1.5);
+                }
+                to {
+                    transform: rotate(0deg) scale(1.5);
+                }
+            }
+
+            &.rotating {
+                transition: rotate 2s;
+                iconify-icon {
+                    animation: rotate 2s linear infinite;
+                }
+            }
         }
 
         &:focus {
-            outline: 1px solid var(--accent-fg);
-            outline-offset: -1px;
+            outline: none;
+            // outline: 1px solid var(--accent-fg);
+            // outline-offset: -1px;
         }
         &:not(.selected) {
             &:hover {

@@ -14,6 +14,16 @@
     const changed = changes.updateStore;
     let selectedToolStore = context.selectedTool;
     const layoutLocked = context.layoutLocked;
+    const playingAnimations = context.playingAnimations;
+
+    $: $playingAnimations,
+        (() => {
+            if ($playingAnimations) {
+                context.startAnimations();
+            } else {
+                context.stopAnimations();
+            }
+        })();
 
     // The currently open tab (layout, level or scripts)
     $: activeTab = context.selectedTab;
@@ -64,6 +74,14 @@
                     on:click={() => context.redo()}
                 />
             {/key}
+            <span class="separator" />
+            <ToolButton
+                icon="mdi:pinwheel"
+                title="Start/Stop Animations"
+                active={$playingAnimations}
+                rotateOnActive={true}
+                on:click={() => ($playingAnimations = !$playingAnimations)}
+            />
         </div>
         <div class="actions">
             {#if $layoutLocked}

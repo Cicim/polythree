@@ -1,5 +1,5 @@
 import type { SvelteComponent } from "svelte";
-import { get, writable, type Writable } from "svelte/store";
+import { get, writable, type Unsubscriber, type Writable } from "svelte/store";
 import { rom } from "./global";
 import { spawnDialog } from "./dialogs";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
@@ -21,6 +21,8 @@ export abstract class ViewContext {
     public identifier: Record<string, any>;
     /** The Svelte component for the view's view */
     protected component: SvelteComponent;
+    /** A quick getter if this view is the activeView */
+    protected selected: boolean;
 
     /** Whether or not the view has side tabs
      * just a cosmetic flag for the Navbar
@@ -108,6 +110,7 @@ export abstract class ViewContext {
         this.onDeselect();
         // Hide the this view
         this.container.classList.add("hidden");
+        this.selected = false;
     }
 
     /** Select this view and deselect the active one */
@@ -126,6 +129,7 @@ export abstract class ViewContext {
 
         // Update the active view
         activeView.set(this);
+        this.selected = true;
     }
 
     /** Close this view and select a new active one if necessary */
@@ -210,6 +214,16 @@ export abstract class ViewContext {
             if (!predicate(view as T)) continue;
             yield view as T;
         }
+    }
+
+    /** Subscribes to the activeView and runs the callback once the view is selected */
+    public subscribeToSelection(onSelect: () => void, onDeselect: () => void): Unsubscriber {
+        return activeView.subscribe((view) => {
+            if (view === this)
+                onSelect();
+            else
+                onDeselect();
+        });
     }
 
     /** Returns the list of actions that are specific to the tab */
@@ -341,6 +355,35 @@ export abstract class EditorContext extends ViewContext {
             if (!(view instanceof this.constructor) || view === this || get((<T>view).isLoading)) continue;
             if (predicate(view as T)) yield view as T;
         }
+    }
+
+    /** Subscribes to the activeView and runs the appropriate callback once the view is selected or deselected.
+     * If the editor is not loaded, waits for the editor to load before it runs either callback. */
+    public subscribeToSelection(onSelect: () => void, onDeselect: () => void): Unsubscriber {
+        return activeView.subscribe((view) => {
+            if (view === this) {
+                if (get(this.isLoading)) {
+                    const unsubscribe = this.isLoading.subscribe((isLoading) => {
+                        if (!isLoading) {
+                            unsubscribe();
+                            onSelect();
+                        }
+                    });
+                }
+                else onSelect();
+            }
+            else {
+                if (get(this.isLoading)) {
+                    const unsubscribe = this.isLoading.subscribe((isLoading) => {
+                        if (!isLoading) {
+                            unsubscribe();
+                            onDeselect();
+                        }
+                    });
+                }
+                else onDeselect();
+            }
+        });
     }
 
     /** Undoes this editor's last applied change */
