@@ -16,9 +16,9 @@
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
-    const editingBrush = context.editingBrush;
-    const primaryBrushes = context.primaryBrushes;
-    const secondaryBrushes = context.secondaryBrushes;
+    const editingBrush = context.brushes.editing;
+    const primaryBrushes = context.brushes.primary;
+    const secondaryBrushes = context.brushes.secondary;
 
     /** This brush */
     export let brush: BrushMaterial;

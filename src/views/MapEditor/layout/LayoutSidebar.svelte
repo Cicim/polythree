@@ -31,12 +31,12 @@
     let tilePalette: TilePaletteContainer;
 
     const context: MapEditorContext = getContext("context");
-    const editingBrush = context.editingBrush;
-    const editingBrushChanges = context.editingBrushChanges;
-    const editingBrushClone = context.editingBrushClone;
+    const editingBrush = context.brushes.editing;
+    const editingBrushChanges = context.brushes.editingChanges;
+    const editingBrushClone = context.brushes.editingClone;
     const material = context.material;
-    const primaryBrushes = context.primaryBrushes;
-    const secondaryBrushes = context.secondaryBrushes;
+    const primaryBrushes = context.brushes.primary;
+    const secondaryBrushes = context.brushes.secondary;
 
     // Update the moveOnPalette callback
     context.moveOnPaletteCB = (dirX: number, dirY: number, select: boolean) => {
@@ -56,17 +56,17 @@
             $editingBrushClone = $editingBrush.clone();
             // Save the index of the current brush
             if ($editingBrush.onlyUsesPrimaryTiles(context.tileset1Length))
-                context.editingBrushIndex = $primaryBrushes.findIndex(
+                context.brushes.editingIndex = $primaryBrushes.findIndex(
                     (brush) => $editingBrush === brush
                 );
             else
-                context.editingBrushIndex = $secondaryBrushes.findIndex(
+                context.brushes.editingIndex = $secondaryBrushes.findIndex(
                     (brush) => $editingBrush === brush
                 );
             // Create a change for the brush's tiles
             $editingBrushChanges = new EditorChanges(null);
             // Save the original state
-            context.editingBrushEnteredFromState = state;
+            context.brushes.editingEnteredFromState = state;
             // Update the state
             state = SidebarState.Brush;
         }

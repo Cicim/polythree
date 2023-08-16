@@ -11,8 +11,8 @@
     export let levelMode: boolean;
 
     const context: MapEditorContext = getContext("context");
-    const primaryBrushes = context.primaryBrushes;
-    const secondaryBrushes = context.secondaryBrushes;
+    const primaryBrushes = context.brushes.primary;
+    const secondaryBrushes = context.brushes.secondary;
 
     let filterString: string = "";
     function clearFilter(event: KeyboardEvent) {

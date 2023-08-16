@@ -19,11 +19,11 @@
     const context: MapEditorContext = getContext("context");
     const data = context.data;
     const tilesetData = $data.tilesets;
-    const editingBrush = context.editingBrush;
-    const editingBrushClone = context.editingBrushClone;
-    const primaryBrushes = context.primaryBrushes;
-    const secondaryBrushes = context.secondaryBrushes;
-    const editingBrushChanges = context.editingBrushChanges;
+    const editingBrush = context.brushes.editing;
+    const editingBrushClone = context.brushes.editingClone;
+    const editingBrushChanges = context.brushes.editingChanges;
+    const primaryBrushes = context.brushes.primary;
+    const secondaryBrushes = context.brushes.secondary;
 
     function applyChanges() {
         // If the brush was originally primary
@@ -31,13 +31,14 @@
             // If it is still primary, update the brush
             if ($editingBrush.onlyUsesPrimaryTiles(context.tileset1Length)) {
                 primaryBrushes.update((brushes) => {
-                    brushes[context.editingBrushIndex] = $editingBrush.clone();
+                    brushes[context.brushes.editingIndex] =
+                        $editingBrush.clone();
                     return brushes;
                 });
             } else {
                 // Remove the brush from the primary brushes
                 primaryBrushes.update((brushes) => {
-                    brushes.splice(context.editingBrushIndex, 1);
+                    brushes.splice(context.brushes.editingIndex, 1);
                     return brushes;
                 });
                 // Add to the secondary brushes
@@ -52,13 +53,14 @@
             // If the new brush is still secondary
             if (!$editingBrush.onlyUsesPrimaryTiles(context.tileset1Length)) {
                 secondaryBrushes.update((brushes) => {
-                    brushes[context.editingBrushIndex] = $editingBrush.clone();
+                    brushes[context.brushes.editingIndex] =
+                        $editingBrush.clone();
                     return brushes;
                 });
             } else {
                 // Remove the brush from the secondary brushes
                 secondaryBrushes.update((brushes) => {
-                    brushes.splice(context.editingBrushIndex, 1);
+                    brushes.splice(context.brushes.editingIndex, 1);
                     return brushes;
                 });
                 // Add to the primary brushes
@@ -71,8 +73,8 @@
 
         $editingBrushChanges = null;
         $editingBrush = null;
-        context.editingBrushIndex = null;
-        state = context.editingBrushEnteredFromState;
+        context.brushes.editingIndex = null;
+        state = context.brushes.editingEnteredFromState;
     }
 </script>
 

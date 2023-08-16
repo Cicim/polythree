@@ -7,7 +7,6 @@
     import Button from "src/components/Button.svelte";
     import Select from "src/components/Select.svelte";
     import Input from "src/components/Input.svelte";
-    import CheckBox from "src/components/CheckBox.svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import { PaletteMaterial } from "src/views/MapEditor/editor/materials";
 
@@ -15,7 +14,7 @@
     const MAX_HEIGHT = SimpleBrush.MAX_HEIGHT;
 
     export let context: MapEditorContext;
-    const editingBrush = context.editingBrush;
+    const editingBrush = context.brushes.editing;
     const material = context.material;
 
     export let close: (value: any) => void;

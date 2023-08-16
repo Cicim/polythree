@@ -19,6 +19,7 @@ import { loadBrushesForPrimaryTileset, loadBrushesForSecondaryTileset, saveBrush
 import { BlocksData, NULL, type ImportedBlocksData } from "./MapEditor/editor/blocks_data";
 import initWasmFunctions, { load_tileset, render_blocks_data, replace_tiles } from "src/wasm/map-canvas/pkg";
 import type MapCanvas from "./MapEditor/editor/MapCanvas.svelte";
+import { BrushesModule } from "./MapEditor/context/brushes_module";
 
 export interface MapEditorProperties {
     group: number;
@@ -111,24 +112,8 @@ export class MapEditorContext extends TabbedEditorContext {
     /** True if the layout cannot be edited */
     public layoutLocked: Writable<boolean> = writable(false);
 
-
-    // Brushes
-    /** The list of brushes for the primary tileset */
-    public primaryBrushes: Writable<BrushMaterial[]>;
-    /** The list of brushes for the secondary tileset */
-    public secondaryBrushes: Writable<BrushMaterial[]>;
-
-    /** The brush that's being currently edited */
-    public editingBrush: Writable<BrushMaterial>;
-    /** The state from which you entered brush editing */
-    public editingBrushEnteredFromState: SidebarState;
-    /** The index of the editing brush within the brushes */
-    public editingBrushIndex: number;
-    /** The changes that are applied to the editing brush */
-    public editingBrushChanges: Writable<EditorChanges<null>>;
-    /** A clone of the brush you've just started editing right
-     * before you made any edits to it */
-    public editingBrushClone: Writable<BrushMaterial>;
+    // Modules
+    public brushes: BrushesModule = new BrushesModule();
 
     // Tileset Palette
     /** Tileset bottom tiles for quick drawing */
@@ -232,7 +217,7 @@ export class MapEditorContext extends TabbedEditorContext {
 
             // Save the brushes if edits were made
             try {
-                await this.saveBrushesForTilesets();
+                await this.brushes.save();
             }
             catch (err) {
                 await spawnDialog(AlertDialog, {
@@ -389,12 +374,7 @@ export class MapEditorContext extends TabbedEditorContext {
         this.selectedTool = writable(EditorTool.Pencil);
 
         // Load brushes
-        await this.loadBrushesForTilesets();
-
-        // Set the currently editing brush
-        this.editingBrush = writable(null);
-        this.editingBrushClone = writable(null);
-        this.editingBrushChanges = writable(null);
+        await this.brushes.load(this);
 
         // Update the cosmetics
         this._cosmeticHasSideTabs = true;
@@ -750,46 +730,6 @@ export class MapEditorContext extends TabbedEditorContext {
         return levelChars;
     }
 
-    // ANCHOR Custom Brushes
-    private async loadBrushesForTilesets() {
-        let sameT1 = false;
-        let sameT1AndT2 = false;
-
-        // Look for another MapEditor with either of these tilesets
-        for (const view of get(openViews)) {
-            // Skip if the view is not a MapEditor, or is this view or is loading
-            if (!(view instanceof MapEditorContext) || view === this || get(view.isLoading)) continue;
-
-            // Check if the tilesets are the same
-            if (view.tileset1Offset === this.tileset1Offset) {
-                sameT1 = true;
-                this.primaryBrushes = view.primaryBrushes;
-
-                if (view.tileset2Offset === this.tileset2Offset) {
-                    sameT1AndT2 = true;
-                    this.secondaryBrushes = view.secondaryBrushes;
-                }
-            }
-        }
-
-        // If you didn't find a MapEditor with this tileset open, load the configs yourself
-        if (!sameT1)
-            this.primaryBrushes = writable(await loadBrushesForPrimaryTileset(this.tileset1Offset));
-        if (!sameT1AndT2)
-            this.secondaryBrushes = writable(
-                await loadBrushesForSecondaryTileset(this.tileset1Offset, this.tileset2Offset)
-            );
-    }
-
-    private async saveBrushesForTilesets() {
-        await saveBrushesForTilesets(
-            this.tileset1Offset,
-            this.tileset2Offset,
-            get(this.primaryBrushes),
-            get(this.secondaryBrushes)
-        );
-    }
-
     // ANCHOR Editor Methods
     public renderMetatiles(bottomImageData: ImageData, topImageData: ImageData, blocksData: {
         metatiles: Uint16Array,
@@ -847,14 +787,14 @@ export class MapEditorContext extends TabbedEditorContext {
         this.tilesetLevelChanges.redo();
     }
     public async undo() {
-        if (get(this.editingBrushChanges) !== null)
-            get(this.editingBrushChanges).undo();
+        if (this.brushes.isEditing)
+            this.brushes.undoBrushChanges();
         else
             super.undo();
     }
     public async redo() {
-        if (get(this.editingBrushChanges) !== null)
-            get(this.editingBrushChanges).redo();
+        if (this.brushes.isEditing)
+            this.brushes.redoBrushChanges();
         else
             super.redo();
     }
