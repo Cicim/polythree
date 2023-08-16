@@ -9,13 +9,31 @@
 </script>
 
 <div class="editor">
-    <Input readonly value={$data.layout.map_data.width} />
-    <Input readonly value={$data.layout.map_data.height} />
+    <div class="toolbar">
+        <div class="buttons" />
+    </div>
+    <div class="area">
+        View
+        <Input readonly value={$data.layout.map_data.width} />
+        <Input readonly value={$data.layout.map_data.height} />
+    </div>
 </div>
 
 <style lang="scss">
     .editor {
         height: 100%;
+
+        display: grid;
+        grid-template-rows: 36px minmax(0, 1fr);
+        grid-template-areas: "toolbar" "area";
+
         overflow: hidden;
+
+        .toolbar {
+        }
+
+        .area {
+            grid-area: area;
+        }
     }
 </style>

@@ -1,8 +1,12 @@
 <script lang="ts">
+    import { getActionsShortcut } from "src/systems/bindings";
     import { tooltip } from "src/systems/tooltip";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+    import type { EditorContext } from "src/systems/views";
 
     const dispatch = createEventDispatcher();
+
+    const context: EditorContext = getContext("context");
 
     export let icon: string;
     export let title: string = "";
@@ -16,6 +20,19 @@
     export let active: boolean = false;
     export let rotateOnActive: boolean = false;
 
+    export let action: string = null;
+    export let shortcut: string = null;
+
+    let actionCB: (context: EditorContext) => void = null;
+
+    if (action) {
+        const actionData = getActionsShortcut(action);
+        if (!actionData) console.error(`Action ${action} not found`);
+        else {
+            [actionCB, shortcut] = actionData;
+        }
+    }
+
     function onClick(event: MouseEvent) {
         if (group !== null) group = value;
         dispatch("click", event);
@@ -23,9 +40,11 @@
 </script>
 
 <button
-    on:click={onClick}
+    on:click={(e) => (actionCB ? actionCB(context) : onClick(e))}
     use:tooltip
-    tooltip={title}
+    tooltip="{title}{shortcut
+        ? `<span class=binding> (${shortcut})</span>`
+        : ''}"
     class="toolbar-button"
     class:selected={(group !== null && group === value) || active === true}
     class:active

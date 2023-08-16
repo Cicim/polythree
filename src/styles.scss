@@ -339,7 +339,7 @@ body {
   overflow-y: hidden;
 
   grid-area: toolbar;
-  background: var(--main-bg);
+  background: var(--strong-bg);
   box-shadow: 0 1px 0 var(--light-shadow);
   z-index: 1;
 
@@ -359,6 +359,7 @@ body {
     flex-flow: row nowrap;
     padding: 0 2px;
     gap: 2px;
+    align-items: center;
 
     .action {
       padding: 4px 8px;

@@ -8,9 +8,12 @@
     import { EditorTool } from "./editor/tools";
     import type { MapEditorContext } from "../MapEditor";
     import { tooltip } from "src/systems/tooltip";
+    import TextToolButton from "./TextToolButton.svelte";
+    import { IconOption, Menu, Separator } from "src/systems/context_menu";
 
     const context: MapEditorContext = getContext("context");
     const changes = context.changes;
+    const tab = context.selectedTab;
     const changed = changes.updateStore;
     let selectedToolStore = context.selectedTool;
     const layoutLocked = context.layoutLocked;
@@ -32,32 +35,37 @@
 <div class="editor">
     <div class="toolbar">
         <div class="buttons">
-            <ToolButton
-                bind:group={$selectedToolStore}
-                value={EditorTool.Pencil}
-                icon="mdi:pencil"
-                title="Pencil"
-                theme="secondary"
-            />
-            <ToolButton
-                bind:group={$selectedToolStore}
-                value={EditorTool.Rectangle}
-                icon="mdi:square"
-                title="Rectangle"
-            />
-            <ToolButton
-                bind:group={$selectedToolStore}
-                value={EditorTool.Fill}
-                icon="mdi:bucket"
-                title="Fill"
-            />
-            <ToolButton
-                bind:group={$selectedToolStore}
-                value={EditorTool.Replace}
-                icon="mdi:wand"
-                title="Replace"
-            />
-            <span class="separator" />
+            {#if $tab !== "scripts"}
+                <ToolButton
+                    bind:group={$selectedToolStore}
+                    value={EditorTool.Pencil}
+                    action="map_editor/select_pencil"
+                    icon="mdi:pencil"
+                    title="Pencil"
+                />
+                <ToolButton
+                    bind:group={$selectedToolStore}
+                    value={EditorTool.Rectangle}
+                    action="map_editor/select_rectangle"
+                    icon="mdi:square"
+                    title="Rectangle"
+                />
+                <ToolButton
+                    bind:group={$selectedToolStore}
+                    value={EditorTool.Fill}
+                    action="map_editor/select_fill"
+                    icon="mdi:bucket"
+                    title="Fill"
+                />
+                <ToolButton
+                    bind:group={$selectedToolStore}
+                    value={EditorTool.Replace}
+                    action="map_editor/select_replace"
+                    icon="mdi:wand"
+                    title="Replace"
+                />
+                <span class="separator" />
+            {/if}
             {#key $changed}
                 <ToolButton
                     icon="mdi:undo"
@@ -74,17 +82,54 @@
                     on:click={() => context.redo()}
                 />
             {/key}
-            <span class="separator" />
-            <ToolButton
-                icon="mdi:pinwheel"
-                title="Start/Stop Animations"
-                active={$playingAnimations}
-                rotateOnActive={true}
-                on:click={() => ($playingAnimations = !$playingAnimations)}
-            />
+            {#if $tab !== "scripts"}
+                <span class="separator" />
+                <ToolButton
+                    icon="mdi:pinwheel"
+                    title="Start/Stop Animations"
+                    active={$playingAnimations}
+                    rotateOnActive={true}
+                    on:click={() => ($playingAnimations = !$playingAnimations)}
+                />
+            {/if}
         </div>
         <div class="actions">
-            {#if $layoutLocked}
+            {#if $tab !== "scripts"}
+                <TextToolButton
+                    title="Change Layout"
+                    icon="mdi:grid"
+                    menu={new Menu([
+                        new Separator("This Map"),
+                        new IconOption("Change Layout", "mdi:grid", () => {}),
+                        new Separator("This Layout"),
+                        new IconOption("Resize Layout", "mdi:resize", () => {}),
+                        new IconOption(
+                            "Resize Borders Layout",
+                            "mdi:resize",
+                            () => {}
+                        ),
+                    ])}
+                />
+                <TextToolButton
+                    title="Change Tilesets"
+                    icon="material-symbols:palette"
+                    menu={new Menu([
+                        new IconOption(
+                            "Change Tilesets",
+                            "material-symbols:palette",
+                            () => {}
+                        ),
+                        new Separator(),
+                        new IconOption(
+                            "Open Tilesets Editor",
+                            "typcn:export",
+                            () => {}
+                        ),
+                    ])}
+                />
+            {/if}
+            {#if $layoutLocked && ($tab === "layout" || $tab === "level")}
+                <span class="separator" />
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
                     class="action"

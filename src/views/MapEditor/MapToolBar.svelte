@@ -9,16 +9,14 @@
         <TextToolButton
             icon="carbon:save"
             text="Save"
-            title="Save Changes <span class=binding>({getActionsShortcut(
-                'editor/save'
-            )[1]})</span>"
+            action="editor/save"
+            title="Save Changes"
         />
         <TextToolButton
             text="Import"
             icon="bx:import"
-            title="Import Map  <span class=binding>({getActionsShortcut(
-                'map_editor/import_map'
-            )[1]})</span>"
+            action="map_editor/import_map"
+            title="Import Map"
             menu={new Menu([
                 new IconOption(
                     "Import All Map Data",
@@ -51,9 +49,8 @@
         <TextToolButton
             text="Export"
             icon="bx:export"
-            title="Export Map <span class=binding>({getActionsShortcut(
-                'map_editor/export_map'
-            )[1]})</span>"
+            action="map_editor/export_map"
+            title="Export Map"
             menu={new Menu([
                 new IconOption(
                     "Export All Map Data",
@@ -90,5 +87,6 @@
     .toolbar {
         grid-area: toolbar;
         z-index: 10;
+        background: inherit;
     }
 </style>

@@ -1,13 +1,29 @@
 <script lang="ts">
-    import { showContextMenu, Menu, ctxMenu } from "src/systems/context_menu";
+    import { getActionsShortcut } from "src/systems/bindings";
+    import { showContextMenu, Menu } from "src/systems/context_menu";
     import { tooltip } from "src/systems/tooltip";
+    import type { EditorContext } from "src/systems/views";
+    import { getContext } from "svelte";
 
-    export let text: string = "Text";
+    const context: EditorContext = getContext("context");
+
+    export let text: string = "";
     export let title: string = "";
     export let moreActionString: string = "More actions...";
     export let theme: "primary" | "secondary" | "transparent" = "primary";
     export let icon: string = null;
     export let menu: Menu = null;
+    export let action: string = null;
+    export let shortcut: string = null;
+    let actionCallback: (context: EditorContext) => void = null;
+
+    if (action) {
+        const actionData = getActionsShortcut(action);
+        if (!action) console.error(`No action found for shortcut ${action}`);
+        else {
+            [actionCallback, shortcut] = actionData;
+        }
+    }
 
     let chevronButton: HTMLButtonElement;
 
@@ -22,7 +38,15 @@
     class:secondary={theme === "secondary"}
     class:transparent={theme === "transparent"}
 >
-    <button class="text" use:tooltip tooltip={title}>
+    <button
+        class="text"
+        use:tooltip
+        tooltip={`${title} ${
+            shortcut ? `<span class=binding>(${shortcut})</span>` : ""
+        }`}
+        on:click
+        on:click={() => (actionCallback ? actionCallback(context) : null)}
+    >
         {#if icon}
             <iconify-icon {icon} class="icon" inline />
         {/if}
@@ -83,6 +107,7 @@
             --fg-disabled: var(--light-shadow);
         }
 
+        min-width: max-content;
         height: 32px;
         background: var(--bg);
 
@@ -132,8 +157,15 @@
             padding: 0 10px;
         }
 
+        .more {
+            padding: 0 2px;
+        }
+
         .separator {
-            border-right: 1px solid var(--light-shadow);
+            background: var(--light-shadow);
+            width: 1px;
+            height: 75%;
+            align-self: center;
         }
     }
 </style>
