@@ -68,7 +68,7 @@ export class MapModule {
     public get identifier() { return this.context.identifier }
     public get data() { return this.context.data }
     public get loading() { return this.context.loading }
-    public get tilesetLenghts() { return this.tileset1Length + this.tileset2Length }
+    private get $data() { return get(this.data) }
 
     public get tileset1Offset() { return this.context.tileset1Offset }
     public set tileset1Offset(value: number) { this.context.tileset1Offset = value }
@@ -78,6 +78,7 @@ export class MapModule {
     public set tileset1Length(value: number) { this.context.tileset1Length = value }
     public get tileset2Length() { return this.context.tileset2Length }
     public set tileset2Length(value: number) { this.context.tileset2Length = value }
+    public get tilesetLengths() { return this.$data.tilesets.metatiles.length / 8 }
 
     // ANCHOR Main Methods
     constructor(context: MapEditorContext) {

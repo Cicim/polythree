@@ -21,6 +21,8 @@ export class PaletteModule {
     public changes: EditorChanges<null>;
     // Keybindings callbacks
     public moveCB: (dirX: number, dirY: number, select: boolean) => void = () => { };
+    /** The number of blocks at the end that are not in the tileset */
+    public lastRowLength: number;
 
     // ANCHOR Main Methods
     constructor(context: MapEditorContext) {
@@ -40,9 +42,11 @@ export class PaletteModule {
                 tilesetBlocks.set(x, y, y * 8 + x, importedTilesetLevels[y * 8 + x]);
         }
 
+        // Set the removed tiles number
+        this.lastRowLength = this.fullLength % 8;
         // Set the tiles after the last block in the last row to null
-        if (this.fullLength % 8 !== 0)
-            for (let x = this.fullLength % 8; x < 8; x++)
+        if (this.lastRowLength !== 0)
+            for (let x = this.lastRowLength; x < 8; x++)
                 tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL, NULL);
 
         // Update the blocks

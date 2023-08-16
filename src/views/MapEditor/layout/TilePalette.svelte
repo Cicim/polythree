@@ -15,6 +15,8 @@
     const material = context.material;
     // Get the block data for this map
     const tilesetBlocksStore = context.palette.blocks;
+    // Get the number of tiles that are valid from the end of the tileset
+    const lastRowLength = context.palette.lastRowLength;
     /** Height of the tileset in blocks */
     let tilesetHeight: number = 0;
 
@@ -22,6 +24,7 @@
     let canvas: HTMLCanvasElement;
     let selectionDiv: HTMLDivElement;
     let paletteContainer: HTMLDivElement;
+    let hiderElement: HTMLDivElement;
 
     // Currently selected tile
     let selectionStart: Point = { x: 0, y: 0 },
@@ -393,6 +396,16 @@
     onMount(() => {
         drawPalette();
         updateSelection();
+
+        // Update the hider's data
+        hiderElement.style.setProperty(
+            "--hider-width",
+            (8 - lastRowLength).toString()
+        );
+        hiderElement.style.setProperty(
+            "--hider-left",
+            lastRowLength.toString()
+        );
     });
 </script>
 
@@ -403,6 +416,11 @@
     bind:this={paletteContainer}
 >
     <div class="canvas-container">
+        <div
+            class="null-hider"
+            class:hidden={lastRowLength === 0}
+            bind:this={hiderElement}
+        />
         <div
             class="selection"
             bind:this={selectionDiv}
@@ -456,6 +474,7 @@
     }
 
     .palette-canvas {
+        box-shadow: 0 0 1px 1px var(--medium-shadow);
         width: 256px;
         &.stretch {
             width: 100%;
@@ -497,5 +516,19 @@
             font-size: calc(var(--size) * 0.75);
             color: var(--weak-fg);
         }
+    }
+
+    .null-hider {
+        position: absolute;
+        background: var(--medium-bg);
+
+        left: calc(var(--left) + (var(--size) * var(--hider-left)));
+        bottom: -1px;
+
+        width: calc(var(--size) * var(--hider-width) + 1px);
+        height: calc(var(--size) + 2px);
+        box-shadow: inset 1px 1px 1px 0 var(--medium-shadow);
+
+        pointer-events: none;
     }
 </style>

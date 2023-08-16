@@ -116,7 +116,7 @@ export class MapEditorContext extends TabbedEditorContext {
         // Load the header data
         if (!await this.map.load()) return;
         // Load the tileset
-        await this.palette.load(this.map.tilesetLenghts);
+        await this.palette.load(this.map.tilesetLengths);
         // Load brushes
         await this.brushes.load();
 
