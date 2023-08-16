@@ -87,6 +87,18 @@ export class PainterState {
         if (this.drawn)
             this.methods.update();
     }
+
+    /** Restores the old blocks */
+    public restore() {
+        for (const [hash, data] of Object.entries(this.oldBlocks)) {
+            const [x, y] = hash.split(",").map(Number);
+            this.methods.set(x, y, data[0], data[1]);
+        }
+
+        // Clear the new blocks
+        this.newBlocks = {};
+        this.oldBlocks = {};
+    }
 }
 
 export class PaintChange extends Change {

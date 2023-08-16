@@ -59,12 +59,46 @@ export class PencilTool extends Tool {
         this.lastX = x;
         this.lastY = y;
     }
+}
+
+export class SquareTool extends Tool {
+    private startX: number = null;
+    private startY: number = null;
+
+    public startStroke(x: number, y: number) {
+        this.startX = x;
+        this.startY = y;
+        this.material.apply(this.state, x, y);
+        this.state.update();
+    }
+
+    public moveStroke(x: number, y: number) {
+        if (this.startX === null || this.startY === null) return;
+
+        // Revert the old blocks
+        this.state.restore();
+
+        // Draw the new blocks
+        const minX = Math.min(this.startX, x);
+        const maxX = Math.max(this.startX, x);
+        const minY = Math.min(this.startY, y);
+        const maxY = Math.max(this.startY, y);
+
+        for (let cx = minX; cx <= maxX; cx++) {
+            for (let cy = minY; cy <= maxY; cy++) {
+                this.material.apply(this.state, cx, cy);
+            }
+        }
+        this.state.update();
+    }
 
     public endStroke(x: number, y: number) {
-        this.lastX = null;
-        this.lastY = null;
+        this.startX = null;
+        this.startY = null;
     }
 }
+
+
 
 enum FillPredicate {
     SameMetatile = 1,
@@ -190,6 +224,6 @@ export class ReplaceTool extends Tool {
 export const toolFunctions: Record<EditorTool, typeof Tool> = {
     [EditorTool.Pencil]: PencilTool,
     [EditorTool.Fill]: FillTool,
-    [EditorTool.Rectangle]: undefined,
+    [EditorTool.Rectangle]: SquareTool,
     [EditorTool.Replace]: ReplaceTool,
 }
