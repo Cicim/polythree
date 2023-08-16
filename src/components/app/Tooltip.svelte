@@ -55,7 +55,7 @@
 
         // If the target is <= 40px, then center the arrow
         const mouseOffset =
-            targetWidth <= 40
+            targetWidth <= 200
                 ? targetWidth / 2 + targetX
                 : Math.max(8, Math.min(mouseX, windowWidth - 11));
         const arrowOffsetX = mouseOffset - placementX - tooltipWidth / 2;

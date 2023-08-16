@@ -161,4 +161,15 @@ export class BlocksData {
             levels: Array.from(this.levels),
         };
     }
+
+    /** Updates the values of this blocks to the given blocks without updating any references */
+    public update(newData: BlocksData) {
+        this.width = newData.width;
+        this.height = newData.height;
+        this.metatiles = new Uint16Array(newData.metatiles.length);
+        this.updateMetatiles(newData.metatiles, 0, newData.metatiles.length);
+        this.levels = new Uint16Array(newData.levels.length)
+        this.updateLevels(newData.levels, 0, newData.levels.length);
+        return this;
+    }
 }

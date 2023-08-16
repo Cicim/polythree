@@ -1,5 +1,4 @@
 <script lang="ts">
-    
     import {
         type MenuItem,
         Separator,
@@ -183,6 +182,7 @@
             text-align: left;
             background: var(--ctx-bg);
             color: var(--ctx-fg);
+            cursor: pointer;
 
             &:hover {
                 background: var(--ctx-bg-hover);

@@ -255,4 +255,10 @@ redefineBindings({
         if (view.tab === "layout" || view.tab === "level")
             view.selectedTool.set(EditorTool.Replace);
     },
+    "map_editor/export_map": (view: MapEditorContext) => {
+        console.log("Export Map");
+    },
+    "map_editor/import_map": (view: MapEditorContext) => {
+        console.log("Import Map");
+    },
 });

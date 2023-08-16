@@ -323,3 +323,62 @@ body {
     left: 0;
   }
 }
+
+.binding {
+  color: var(--weak-fg);
+}
+
+// ANCHOR Toolbar
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr max-content;
+  align-items: center;
+  gap: 8px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  grid-area: toolbar;
+  background: var(--main-bg);
+  box-shadow: 0 1px 0 var(--light-shadow);
+  z-index: 1;
+
+  .buttons {
+    display: flex;
+    flex-flow: row nowrap;
+    padding: 0 2px;
+    gap: 2px;
+
+    .separator {
+      color: transparent;
+    }
+  }
+
+  .actions {
+    display: flex;
+    flex-flow: row nowrap;
+    padding: 0 2px;
+    gap: 2px;
+
+    .action {
+      padding: 4px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: var(--warn-card-bg);
+      color: var(--warn-card-fg);
+      border: 1px solid var(--warn-card-border);
+      justify-self: last baseline;
+
+      &:hover {
+        background: var(--warn-card-bg-hover);
+        color: var(--warn-card-fg-hover);
+        border-color: var(--warn-card-border-hover);
+      }
+    }
+  }
+
+  &::-webkit-scrollbar {
+    -webkit-appearance: none;
+    display: none;
+  }
+}

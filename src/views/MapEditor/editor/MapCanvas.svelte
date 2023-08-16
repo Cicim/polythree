@@ -770,9 +770,8 @@
 
         private redraw(_blocks: BlocksData) {
             initialized = false;
-            blocks = _blocks;
-            blocks.width = blocks.width;
-            blocks.height = blocks.height;
+            blocks = blocks.update(_blocks);
+            data.update((_) => _);
             // Update the chunks
             buildAllChunks();
             buildLevelMinimap();
@@ -901,7 +900,7 @@
     function resizeMap(width: number, height: number) {
         if (width === blocks.width && height === blocks.height) return;
 
-        const oldBlocks = blocks;
+        const oldBlocks = blocks.clone();
         const newBlocks = blocks.resize(width, height, nullLevels ? NULL : 0);
 
         const change = new MapResizeChange(oldBlocks, newBlocks);

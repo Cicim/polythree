@@ -67,6 +67,7 @@ export class AnimationsModule {
     // ANCHOR Secondary Methods
     /** Starts the animation loop */
     public play() {
+        this.stop();
         this.animationTick();
     }
 
@@ -142,9 +143,6 @@ export class AnimationsModule {
             if (this.secondaryCounter >= this.list.secondary_max_frames)
                 this.secondaryCounter = 0;
         }
-
-        // Check to see if the animations are still being played
-        if (!this.$playing) return;
         // Schedule the next tick
         this.timeout = setTimeout(() => this.animationTick(), 16);
     }

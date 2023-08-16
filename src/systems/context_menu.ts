@@ -165,13 +165,17 @@ async function setContextMenuPosition(target: HTMLElement, x: number, y: number)
     }
 }
 
-export function showContextMenu(e: MouseEvent, menu: Menu) {
-    e.preventDefault();
-    e.stopPropagation();
+export function showContextMenu(e: MouseEvent | HTMLElement, menu: Menu) {
+    const isEvent = e instanceof MouseEvent;
+
     // Get the menu
     const ctx: HTMLDialogElement = getMenu();
-    // If you are clicking on the body of the ctx menu, don't do anything
-    if (isBody(e)) return;
+    if (isEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        // If you are clicking on the body of the ctx menu, don't do anything
+        if (isBody(e)) return;
+    }
     // Update the menu
     ctxMenu.set(menu.shake());
     // Close the menu, in case it was already open
@@ -179,7 +183,12 @@ export function showContextMenu(e: MouseEvent, menu: Menu) {
     // Open the menu
     ctx.showModal();
     // Set the position of the menu
-    setContextMenuPosition(ctx, e.clientX, e.clientY);
+    if (isEvent) {
+        setContextMenuPosition(ctx, e.clientX, e.clientY);
+    } else {
+        const rect = e.getBoundingClientRect();
+        setContextMenuPosition(ctx, rect.left, rect.bottom);
+    }
 }
 
 export function closeContextMenu(e?: MouseEvent) {

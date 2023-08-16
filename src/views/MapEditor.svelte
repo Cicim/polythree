@@ -11,6 +11,7 @@
     import HeaderView from "./MapEditor/HeaderView.svelte";
     import { openViews } from "src/systems/views";
     import { get, type Writable } from "svelte/store";
+    import MapToolBar from "./MapEditor/MapToolBar.svelte";
 
     export let context: MapEditorContext;
     setContext("context", context);
@@ -57,6 +58,7 @@
 {:else}
     <div class="view">
         <VerticalTabs tabs={context.tabs} />
+        <MapToolBar />
         <div
             class="editor-container layout"
             class:hidden={$activeTab !== "layout" &&
@@ -94,11 +96,18 @@
         height: 100%;
 
         display: grid;
+        grid-template-rows: 36px minmax(0, 1fr);
         grid-template-columns: 36px minmax(0, 1fr);
-        grid-template-areas: "tabs editor";
-    }
-    .editor-container {
-        height: 100%;
-        overflow: hidden;
+        grid-template-areas: "tabs toolbar" "tabs editor";
+
+        :global(.tabs) {
+            grid-area: tabs;
+        }
+
+        .editor-container {
+            grid-area: editor;
+            height: 100%;
+            overflow: hidden;
+        }
     }
 </style>
