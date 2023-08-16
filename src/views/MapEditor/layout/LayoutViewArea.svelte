@@ -8,12 +8,6 @@
 
     let data: Writable<MapEditorData> = getContext("data");
     let blocks = $data.layout.map_data;
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Delete") {
-            console.log($data.layout.map_data.width);
-        }
-    });
 </script>
 
 <div class="container">

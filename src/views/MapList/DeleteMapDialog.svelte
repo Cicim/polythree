@@ -11,6 +11,10 @@
   import { invoke } from "@tauri-apps/api";
   import { config } from "src/systems/global";
   import { tooltip } from "src/systems/tooltip";
+  import { getAllViews } from "src/systems/views";
+  import { MapEditorContext } from "../MapEditor";
+  import CloseViewsDialog from "src/components/dialog/CloseViewsDialog.svelte";
+  import { spawnDialog } from "src/systems/dialogs";
 
   // Dialog options
   export let noOutsideClose = false;
@@ -63,6 +67,41 @@
   async function deleteMaps() {
     deleting = true;
     noEscapeClose = noOutsideClose = true;
+
+    // Get all views with the layout among the ones that will be deleted
+    const mapEditorsToClose = [
+      ...getAllViews(MapEditorContext, (view: MapEditorContext) => {
+        const viewLayout = view.map.$data.layout.index;
+
+        // If the layout is anywhere in the list of layouts that could be deleted
+        for (const layoutAction in actionableLayoutToMap) {
+          if (actionableLayoutToMap[layoutAction].action === "Nothing")
+            continue;
+          for (const actionData of actionableLayoutToMap[layoutAction].maps) {
+            if (actionData.layout === viewLayout) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      }),
+    ];
+
+    // If there are views that are at risk of deletion
+    // Ask the user if to close the mapEditors
+    if (mapEditorsToClose.length > 0) {
+      const closed = await spawnDialog(CloseViewsDialog, {
+        title: "Close these Map Editors to Proceed",
+        views: mapEditorsToClose,
+      });
+
+      if (!closed) {
+        deleting = false;
+        noEscapeClose = noOutsideClose = false;
+        return;
+      }
+    }
 
     try {
       const deleted: MapId[] = await invoke("delete_maps", {

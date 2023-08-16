@@ -61,4 +61,14 @@ export async function safeCloseViews(views: ViewContext[]) {
     return true;
 }
 
+/** Returns all the open views of the specified class */
+export function* getAllViews<T>(type: any, filter?: (view: T) => boolean): Generator<T> {
+    for (const view of get(openViews)) {
+        if (!(view instanceof type) || (<EditorContext>view)?.isLoading) continue;
+        if (filter && !filter(view as T)) continue;
+        yield view as T;
+    }
+}
+
+
 export { ViewContext, EditorContext };

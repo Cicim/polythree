@@ -68,7 +68,7 @@ export class MapModule {
     public get identifier() { return this.context.identifier }
     public get data() { return this.context.data }
     public get loading() { return this.context.loading }
-    private get $data() { return get(this.data) }
+    public get $data() { return get(this.data) }
 
     public get tileset1Offset() { return this.context.tileset1Offset }
     public set tileset1Offset(value: number) { this.context.tileset1Offset = value }
