@@ -112,11 +112,11 @@
                 />
                 <TextToolButton
                     title="Change Tilesets"
-                    icon="material-symbols:palette"
+                    icon="mdi:puzzle"
                     menu={new Menu([
                         new IconOption(
                             "Change Tilesets",
-                            "material-symbols:palette",
+                            "mdi:puzzle",
                             () => {}
                         ),
                         new Separator(),
