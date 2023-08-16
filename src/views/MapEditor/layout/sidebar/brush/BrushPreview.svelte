@@ -1,6 +1,6 @@
 <script lang="ts">
     import ImagePreview from "src/components/ImagePreview.svelte";
-    import type { MapEditorContext, TilesetsData } from "src/views/MapEditor";
+    import type { MapEditorContext } from "src/views/MapEditor";
     import type { BrushMaterial } from "src/views/MapEditor/editor/brushes";
     import { getContext } from "svelte";
 
@@ -9,8 +9,8 @@
 
     async function load() {
         return editingBrush.createPreviewImage(
-            context.botTiles,
-            context.topTiles
+            context.map.botTiles,
+            context.map.topTiles
         );
     }
 </script>

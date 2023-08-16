@@ -79,7 +79,7 @@
         if (!previewContainer) return;
         previewContainer.innerHTML = "";
         previewContainer.appendChild(
-            brush.renderThumbnail(context.botTiles, context.topTiles)
+            brush.renderThumbnail(context.map.botTiles, context.map.topTiles)
         );
     }
 

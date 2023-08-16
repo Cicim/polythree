@@ -14,14 +14,14 @@
     const changed = changes.updateStore;
     let selectedToolStore = context.selectedTool;
     const layoutLocked = context.layoutLocked;
-    const playingAnimations = context.playingAnimations;
+    const playingAnimations = context.animations.playing;
 
     $: $playingAnimations,
         (() => {
             if ($playingAnimations) {
-                context.startAnimations();
+                context.animations.play();
             } else {
-                context.stopAnimations();
+                context.animations.stop();
             }
         })();
 

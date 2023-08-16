@@ -82,7 +82,7 @@
 
         for (let j = 0; j < blocks.height; j++) {
             ctx.drawImage(
-                context.botTiles.canvas,
+                context.map.botTiles.canvas,
                 j * 16 * 8,
                 0,
                 16 * 8,
@@ -93,7 +93,7 @@
                 16
             );
             ctx.drawImage(
-                context.topTiles.canvas,
+                context.map.topTiles.canvas,
                 j * 16 * 8,
                 0,
                 16 * 8,

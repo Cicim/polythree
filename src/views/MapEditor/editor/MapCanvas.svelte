@@ -248,13 +248,15 @@
         draw();
     });
 
-    const unsubscribeFromAnimations = context.animationsChange.subscribe(() => {
-        if (!mainCanvas) return;
-        initialized = false;
-        redrawAllMetatileChunks();
-        initialized = true;
-        draw();
-    });
+    const unsubscribeFromAnimations = context.animations.changeStore.subscribe(
+        () => {
+            if (!mainCanvas) return;
+            initialized = false;
+            redrawAllMetatileChunks();
+            initialized = true;
+            draw();
+        }
+    );
 
     // ANCHOR Draw
     /** Draw a full frame of the canvas from scratch. */
@@ -547,8 +549,8 @@
         }
 
         // Redraw only the chunks that have changed in part or in full
-        const botData = context.botTiles.canvas;
-        const topData = context.topTiles.canvas;
+        const botData = context.map.botTiles.canvas;
+        const topData = context.map.topTiles.canvas;
         for (let cy = 0; cy < unchangedHeight; cy++)
             for (let cx = unchangedWidth; cx < chunksWidth; cx++) {
                 drawMetatileChunk(cx, cy, botData, topData);
@@ -615,8 +617,8 @@
     }
 
     function redrawAllMetatileChunks() {
-        const botData = context.botTiles.canvas;
-        const topData = context.topTiles.canvas;
+        const botData = context.map.botTiles.canvas;
+        const topData = context.map.topTiles.canvas;
         const chunksWidth = Math.ceil(blocks.width / chunkSize);
         const chunksHeight = Math.ceil(blocks.height / chunkSize);
 
@@ -1120,7 +1122,7 @@
 
         // Draw the top and bot metatiles from the palette
         botChunk.drawImage(
-            context.botTiles.canvas,
+            context.map.botTiles.canvas,
             metatile * 16,
             0,
             16,
@@ -1131,7 +1133,7 @@
             16
         );
         topChunk.drawImage(
-            context.topTiles.canvas,
+            context.map.topTiles.canvas,
             metatile * 16,
             0,
             16,
