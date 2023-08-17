@@ -92,6 +92,8 @@
 
     /** Whether this is the main map canvas */
     export let mainCanvas: boolean = false;
+    /** Whether animations should be allowed on this canvas */
+    export let allowAnimations: boolean = false;
 
     /** Whether or not this map allows having null levels */
     export let nullLevels: boolean = false;
@@ -307,7 +309,7 @@
 
     const unsubscribeFromAnimations = context.animations.changeStore.subscribe(
         () => {
-            if (!mainCanvas) return;
+            if (!allowAnimations) return;
             initialized = false;
             redrawAllMetatileChunks();
             initialized = true;

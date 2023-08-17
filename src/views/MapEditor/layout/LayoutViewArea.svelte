@@ -18,6 +18,7 @@
 <div class="container">
     <MapCanvas
         bind:this={mapCanvas}
+        allowAnimations={true}
         {editLevels}
         {blocks}
         mainCanvas={true}

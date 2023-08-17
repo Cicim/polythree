@@ -155,6 +155,7 @@
                 {#key $editingBrush}
                     <MapCanvas
                         images={$editingBrush.canvasImages}
+                        allowAnimations={true}
                         blocks={$editingBrush.blocks}
                         centerOnResize={true}
                         editLevels={state === SidebarState.BrushLevel}

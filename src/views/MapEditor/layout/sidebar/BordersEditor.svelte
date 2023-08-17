@@ -42,6 +42,7 @@
     <div class="borders-container">
         <MapCanvas
             bind:this={mapCanvas}
+            allowAnimations={true}
             blocks={borders}
             centerOnResize={true}
             allowPan={false}
