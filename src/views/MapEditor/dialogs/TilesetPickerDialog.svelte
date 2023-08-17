@@ -36,7 +36,7 @@
         if (primaryIndex === -1) {
             tileset1 = tileset1Options[0][0];
         } else {
-            tileset1 = primaryIndex;
+            tileset1 = primaryTileset;
         }
 
         tileset2Options = Object.values(tilesets)
@@ -54,7 +54,7 @@
         if (secondaryIndex === -1) {
             tileset2 = tileset2Options[0][0];
         } else {
-            tileset2 = secondaryIndex;
+            tileset2 = secondaryTileset;
         }
     });
 </script>
@@ -95,7 +95,12 @@
         <Button
             disabled={tileset1 === null || tileset2 === null}
             color="secondary"
-            on:click={() => close([tileset1, tileset2])}
+            on:click={() =>
+                close(
+                    tileset1 === primaryTileset && tileset2 === secondaryTileset
+                        ? null
+                        : [tileset1, tileset2]
+                )}
         >
             Choose
         </Button>

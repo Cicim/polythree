@@ -9,8 +9,9 @@
     export let close: (value: any) => void;
     export let reason: string | null = null;
     export let isReasonError = true;
-    export let layout: number = null;
+    export let initialLayout: number = null;
 
+    let layout: number;
     let layoutOptions: [number, string][] = null;
 
     onMount(async () => {
@@ -21,7 +22,7 @@
             $config.layout_names[v] ?? "Unnamed",
         ]);
         // If the given layout is not in the list, default to the first one
-        if (!layoutOptions.some((v) => v[0] === layout))
+        if (!layoutOptions.some((v) => v[0] === initialLayout))
             layout = layoutOptions[0][0];
     });
 </script>
@@ -55,7 +56,8 @@
         <Button
             disabled={layout === null}
             color="secondary"
-            on:click={() => close(layout)}
+            on:click={() =>
+                close(layout === initialLayout ? null : initialLayout)}
         >
             Choose
         </Button>

@@ -1,5 +1,6 @@
 import { redefineBindings } from "src/systems/bindings";
 import { spawnDialog } from "src/systems/dialogs";
+import { getPtrOffset } from "src/systems/rom";
 import type { MapEditorContext } from "src/views/MapEditor";
 import { get } from "svelte/store";
 import LayoutPickerDialog from "../dialogs/LayoutPickerDialog.svelte";
@@ -80,7 +81,7 @@ export class ActionsModule {
         const newIdResult: number = await spawnDialog(LayoutPickerDialog, {
             reason: "Choose a new layout to use for this map.",
             isReasonError: false,
-            layout: this.$data.header.header.map_layout_id,
+            initialLayout: this.$data.header.header.map_layout_id,
         });
         // If the user didn't choose a layout, cancel
         if (!newIdResult) return;
@@ -100,8 +101,8 @@ export class ActionsModule {
         const dialogResult: [number, number] | null = await spawnDialog(TilesetPickerDialog, {
             reason: "Choose a new tileset to use for this map.",
             isReasonError: false,
-            primaryTileset: this.$data.layout.header.primary_tileset,
-            secondaryTileset: this.$data.layout.header.secondary_tileset,
+            primaryTileset: getPtrOffset(this.$data.layout.header.primary_tileset),
+            secondaryTileset: getPtrOffset(this.$data.layout.header.secondary_tileset),
         });
         // If the user didn't choose a tileset, cancel
         if (!dialogResult) return;
