@@ -102,6 +102,7 @@ export class PainterState {
 }
 
 export class PaintChange extends Change {
+    static changeName = "Brush Stroke";
     protected state: PainterState;
 
     constructor(state: PainterState) {

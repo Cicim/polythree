@@ -21,6 +21,7 @@
     }
 
     export class MapResizeChange extends Change {
+        static changeName = "Resizing";
         private oldBlocks: BlocksData;
         private newBlocks: BlocksData;
 

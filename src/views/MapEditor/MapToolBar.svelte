@@ -1,7 +1,13 @@
-<script>
+<script lang="ts">
     import { IconOption, Menu, Separator } from "src/systems/context_menu";
     import TextToolButton from "./TextToolButton.svelte";
-    import { getActionsShortcut } from "src/systems/bindings";
+    import { getContext } from "svelte";
+    import type { MapEditorContext } from "../MapEditor";
+    import ToolButton from "./ToolButton.svelte";
+
+    const context: MapEditorContext = getContext("context");
+    const changes = context.changes;
+    const changed = changes.updateStore;
 </script>
 
 <div class="toolbar">
@@ -80,6 +86,26 @@
                 new IconOption("Export Tileset Levels", "mdi:map", () => {}),
             ])}
         />
+        {#key $changed}
+            <ToolButton
+                icon="mdi:undo"
+                title="Undo {changes.stack[
+                    changes.top - 1
+                ]?.changeName?.()} ({changes.stack[changes.top - 1]?.tab})"
+                disabled={changes.top === 0}
+                on:click={() => context.undo()}
+            />
+        {/key}
+        {#key $changed}
+            <ToolButton
+                icon="mdi:redo"
+                title="Redo {changes.stack[
+                    changes.top
+                ]?.changeName?.()} ({changes.stack[changes.top]?.tab})"
+                disabled={changes.stack.length === changes.top}
+                on:click={() => context.redo()}
+            />
+        {/key}
     </div>
 </div>
 

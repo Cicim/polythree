@@ -145,9 +145,16 @@ export abstract class Change {
         return this.uid++;
     }
 
+    static changeName: string = "??? Change";
     protected timestamp: number = Date.now();
     protected uid: number = Change.getUID();
     public tab: string;
+
+    /** Returns a simple HTML description for the change */
+    public changeName(): string {
+        // @ts-ignore
+        return this.constructor.changeName ?? Change.changeName;
+    };
 
     /** Updates the before value of this change
      * returns true if the change is invalid
@@ -160,6 +167,7 @@ export abstract class Change {
 }
 
 export class ValueChange extends Change {
+    static changeName = "Value Changed";
     protected edits: string[];
     public prevValue: any;
 

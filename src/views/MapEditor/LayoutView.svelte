@@ -12,9 +12,7 @@
     import { IconOption, Menu, Separator } from "src/systems/context_menu";
 
     const context: MapEditorContext = getContext("context");
-    const changes = context.changes;
     const tab = context.selectedTab;
-    const changed = changes.updateStore;
     let selectedToolStore = context.selectedTool;
     const layoutLocked = context.layoutLocked;
     const playingAnimations = context.animations.playing;
@@ -65,25 +63,6 @@
                     title="Replace"
                 />
                 <span class="separator" />
-            {/if}
-            {#key $changed}
-                <ToolButton
-                    icon="mdi:undo"
-                    title="Undo ({changes.top})"
-                    disabled={changes.top === 0}
-                    on:click={() => context.undo()}
-                />
-            {/key}
-            {#key $changed}
-                <ToolButton
-                    icon="mdi:redo"
-                    title="Redo ({changes.stack.length - changes.top})"
-                    disabled={changes.stack.length === changes.top}
-                    on:click={() => context.redo()}
-                />
-            {/key}
-            {#if $tab !== "scripts"}
-                <span class="separator" />
                 <ToolButton
                     icon="mdi:pinwheel"
                     title="Start/Stop Animations"
@@ -92,6 +71,7 @@
                     rotateOnActive={true}
                     on:click={() => ($playingAnimations = !$playingAnimations)}
                 />
+                <span class="separator" />
             {/if}
         </div>
         <div class="actions">
@@ -104,12 +84,12 @@
                         new IconOption("Change Layout", "mdi:grid", () => {}),
                         new Separator("This Layout"),
                         new IconOption(
-                            "Resize Layout",
+                            "Resize Map",
                             "mdi:resize",
                             "map_editor/resize_main_map"
                         ),
                         new IconOption(
-                            "Resize Borders Layout",
+                            "Resize Borders",
                             "mdi:resize",
                             "map_editor/resize_borders_map"
                         ),
