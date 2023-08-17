@@ -37,6 +37,9 @@
     $: noEscapeClose = resizing;
     $: noOutsideClose = resizing;
 
+    $: maxAreaExceeded = (width + 15) * (height + 14) > MAX_MAP_AREA;
+    $: sizeSameAsInitial = width === initialWidth && height === initialHeight;
+
     async function addResizeChange() {
         if (initialWidth === width && initialHeight === height)
             return close(null);
@@ -94,14 +97,14 @@
                 </div>
             </div>
         </div>
-        {#if width * height > MAX_MAP_AREA}
+        {#if maxAreaExceeded}
             <div class="row">
                 <WarningDiv
-                    ><i>(width * height)</i>
+                    ><i>(width + 15) * (height + 14)</i>
                     cannot exceed {MAX_MAP_AREA}</WarningDiv
                 >
             </div>
-        {:else if width === initialWidth && height === initialHeight}
+        {:else if sizeSameAsInitial}
             <div class="row subtitle dark">
                 Size is the same as the original,<br /> no changes will be applied
             </div>
@@ -112,7 +115,7 @@
         <Button
             color="secondary"
             on:click={addResizeChange}
-            disabled={width * height > MAX_MAP_AREA || resizing}
+            disabled={maxAreaExceeded || resizing}
         >
             Resize Map
         </Button>
@@ -122,10 +125,12 @@
 <style lang="scss">
     .dialog-content {
         max-width: 400px;
-        min-height: 240px;
-        max-height: 320px;
     }
     .content {
         display: grid;
+
+        :global(.input) {
+            font-size: 13.333px !important;
+        }
     }
 </style>

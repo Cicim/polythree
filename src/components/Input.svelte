@@ -104,10 +104,11 @@
     {spellcheck}
     {...$$restProps}
     autocomplete="no"
+    class="input"
 />
 
 <style lang="scss">
-    input {
+    .input {
         background: var(--input-bg);
         color: var(--input-fg);
         border: 1px solid var(--input-border);
