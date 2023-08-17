@@ -1,10 +1,9 @@
 import { EditorChanges } from "src/systems/changes";
-import { spawnDialog } from "src/systems/dialogs";
+import { spawnErrorDialog } from "src/systems/dialogs";
 import type { MapEditorContext } from "src/views/MapEditor";
 import { get, writable, type Writable } from "svelte/store";
-import { BlocksData, NULL, type BlocksChangedEvent } from "../editor/blocks_data";
+import { BlocksData, NULL } from "../editor/blocks_data";
 import type MapCanvas from "../editor/MapCanvas.svelte";
-import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import { config } from "src/systems/global";
 import { invoke } from "@tauri-apps/api";
 
@@ -60,11 +59,8 @@ export class PaletteModule {
             try {
                 await this.exportLevels();
             }
-            catch (err) {
-                await spawnDialog(AlertDialog, {
-                    title: "Error while saving Tileset Levels",
-                    message: err
-                });
+            catch (e) {
+                await spawnErrorDialog(e, "Error while saving Tileset Levels");
             }
         }
 

@@ -1,8 +1,7 @@
 import { invoke } from "@tauri-apps/api";
-import { get, writable, type Writable } from "svelte/store";
+import { get } from "svelte/store";
 import { open } from "@tauri-apps/api/dialog";
-import { spawnDialog } from "./dialogs";
-import AlertDialog from "src/components/dialog/AlertDialog.svelte";
+import { spawnDialog, spawnErrorDialog } from "./dialogs";
 import CloseViewsDialog from "src/components/dialog/CloseViewsDialog.svelte";
 import { HomePageContext } from "src/views/HomePage";
 import { openViews } from "./views";
@@ -46,10 +45,7 @@ export async function openRom() {
             path: filePath,
         });
     } catch (err) {
-        await spawnDialog(AlertDialog, {
-            message: err,
-            title: "Error while loading ROM"
-        });
+        await spawnErrorDialog(err, "Error while loading ROM");
     }
 
     try {
@@ -59,10 +55,7 @@ export async function openRom() {
         config.set(configs);
     }
     catch (err) {
-        await spawnDialog(AlertDialog, {
-            message: err,
-            title: "Error while loading configs"
-        });
+        await spawnErrorDialog(err, "Error while loading configs");
     }
 }
 

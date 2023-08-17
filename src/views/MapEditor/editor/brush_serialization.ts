@@ -1,6 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import AlertDialog from "src/components/dialog/AlertDialog.svelte";
-import { spawnDialog } from "src/systems/dialogs";
+import { spawnErrorDialog } from "src/systems/dialogs";
 import { config } from "src/systems/global";
 import { get } from "svelte/store";
 import type { SerializedBlocksData } from "./blocks_data";
@@ -126,10 +125,7 @@ export async function saveBrushesForTilesets(
             tileset1, tileset2, tileset1Brushes, tileset2Brushes
         });
     }
-    catch (err) {
-        await spawnDialog(AlertDialog, {
-            title: "Failed to save brushes",
-            message: err
-        });
+    catch (e) {
+        await spawnErrorDialog(e, "Failed to save brushes");
     }
 }

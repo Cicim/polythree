@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dialog } from "@tauri-apps/api";
     import { writeBinaryFile } from "@tauri-apps/api/fs";
-    import { spawnDialog } from "src/systems/dialogs";
+    import { spawnErrorDialog } from "src/systems/dialogs";
     import { onMount } from "svelte";
     import viewport from "src/systems/intersection";
     import {
@@ -10,7 +10,6 @@
         IconOption,
     } from "src/systems/context_menu";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
-    import AlertDialog from "./dialog/AlertDialog.svelte";
 
     /** The image alt in case it didn't load */
     export let alt: string = null;
@@ -117,10 +116,7 @@
                 contents: buffer,
             });
         } catch (e) {
-            await spawnDialog(AlertDialog, {
-                title: "Failed to save image",
-                message: e,
-            });
+            await spawnErrorDialog(e, "Failed to save image");
         }
     }
 

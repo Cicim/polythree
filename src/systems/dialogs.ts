@@ -1,7 +1,7 @@
 import type { SvelteComponent } from "svelte";
 
 import Dialog from "src/components/dialog/Dialog.svelte";
-import type AlertDialog from "src/components/dialog/AlertDialog.svelte";
+import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import type ConfirmDialog from "src/components/dialog/ConfirmDialog.svelte";
 
 
@@ -56,4 +56,8 @@ export async function spawnDialog(
         const dialog = component.getDialog();
         dialog.showModal();
     })
+}
+
+export async function spawnErrorDialog(message: string, title: string = "An Unexpected Error has occurred") {
+    return spawnDialog(AlertDialog, { title, message });
 }

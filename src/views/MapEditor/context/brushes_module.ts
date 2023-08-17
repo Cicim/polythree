@@ -8,8 +8,7 @@ import {
     loadBrushesForSecondaryTileset,
     saveBrushesForTilesets
 } from "../editor/brush_serialization";
-import { spawnDialog } from "src/systems/dialogs";
-import AlertDialog from "src/components/dialog/AlertDialog.svelte";
+import { spawnErrorDialog } from "src/systems/dialogs";
 
 export class BrushesModule {
     private context: MapEditorContext;
@@ -52,7 +51,6 @@ export class BrushesModule {
 
         // Sets the primary and secondary stores
         await this.loadBrushesForTilesets();
-
     }
 
     /** Function to save data for the brushes */
@@ -61,10 +59,7 @@ export class BrushesModule {
             await this.saveBrushesForTilesets();
         }
         catch (err) {
-            await spawnDialog(AlertDialog, {
-                title: "Error while saving Brushes",
-                message: err
-            });
+            await spawnErrorDialog(err, "Error while saving Brushes");
         }
     }
 

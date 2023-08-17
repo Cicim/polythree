@@ -1429,8 +1429,8 @@
 
         if (mainCanvas) {
             // Add the zoomIn and zoomOut function to the context
-            context.zoomIn = zoomIn;
-            context.zoomOut = zoomOut;
+            context.actions.zoomIn = zoomIn;
+            context.actions.zoomOut = zoomOut;
         }
     });
     onDestroy(() => {

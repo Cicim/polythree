@@ -1,8 +1,7 @@
 import type { SvelteComponent } from "svelte";
 import { get, writable, type Unsubscriber, type Writable } from "svelte/store";
 import { rom } from "./global";
-import { spawnDialog } from "./dialogs";
-import AlertDialog from "src/components/dialog/AlertDialog.svelte";
+import { spawnDialog, spawnErrorDialog } from "./dialogs";
 import SaveDialog from "src/components/dialog/SaveDialog.svelte";
 import { EditorChanges } from "./changes";
 import { openViews, lastClosedViews, activeView } from "./views";
@@ -54,10 +53,7 @@ export abstract class ViewContext {
             // Check if the ROM is loaded
             if (get(rom) === null) {
                 // Send an alert message that the ROM is not loaded
-                spawnDialog(AlertDialog, {
-                    title: "No ROM Loaded",
-                    message: "You must load a ROM before you can open this tab.",
-                });
+                spawnErrorDialog("You must load a ROM before you can open this tab.", "No ROM Loaded");
                 return { select: () => { } } as this;
             }
         }

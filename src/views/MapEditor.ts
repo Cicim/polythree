@@ -56,6 +56,8 @@ export class MapEditorContext extends TabbedEditorContext {
     public tileset2Offset: number;
     public tileset1Length: number;
     public tileset2Length: number;
+    public layoutId: number;
+    public layoutOffset: number;
 
     public tabs: TabbedEditorTabs = {
         "header": {
@@ -115,8 +117,11 @@ export class MapEditorContext extends TabbedEditorContext {
         this._cosmeticHasSideTabs = false;
 
         // Load the header data
-        if (!await this.map.load()) return;
-        // Load the tileset
+        if (!await this.map.load()) {
+            this.close();
+            return;
+        }
+        // Load the palette
         await this.palette.load(this.map.tilesetLengths);
         // Load brushes
         await this.brushes.load();

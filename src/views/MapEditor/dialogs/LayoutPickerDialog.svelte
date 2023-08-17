@@ -8,9 +8,10 @@
 
     export let close: (value: any) => void;
     export let reason: string | null = null;
+    export let isReasonError = true;
+    export let layout: number = null;
 
     let layoutOptions: [number, string][] = null;
-    let layout: number = null;
 
     onMount(async () => {
         const layoutIds: number[] = await invoke("get_layout_ids");
@@ -19,16 +20,24 @@
             v,
             $config.layout_names[v] ?? "Unnamed",
         ]);
-        layout = layoutOptions[0][0];
+        // If the given layout is not in the list, default to the first one
+        if (!layoutOptions.some((v) => v[0] === layout))
+            layout = layoutOptions[0][0];
     });
 </script>
 
 <div class="dialog-content">
     <div class="title">Pick a layout</div>
-    <div class="content">
+    <div class="content form">
         {#if reason}
             <div class="reason">
-                <ErrorDiv>{reason}</ErrorDiv>
+                {#if isReasonError}
+                    <ErrorDiv>{reason}</ErrorDiv>
+                {:else}
+                    <div class="row subtitle dark">
+                        {reason}
+                    </div>
+                {/if}
             </div>
         {/if}
 

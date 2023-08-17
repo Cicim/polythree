@@ -96,11 +96,12 @@
                 <TextToolButton
                     title="Change Tilesets"
                     icon="mdi:puzzle"
+                    action="map_editor/change_tilesets"
                     menu={new Menu([
                         new IconOption(
                             "Change Tilesets",
                             "mdi:puzzle",
-                            () => {}
+                            "map_editor/change_tilesets"
                         ),
                         new Separator(),
                         new IconOption(

@@ -1,6 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import AlertDialog from "src/components/dialog/AlertDialog.svelte";
-import { spawnDialog } from "src/systems/dialogs";
+import { spawnErrorDialog } from "src/systems/dialogs";
 import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
 import type { Writable } from "svelte/store";
@@ -156,10 +155,7 @@ export class MapListContext extends EditorContext {
             // Set the name writable
             mapNames.set(names);
         } catch (err) {
-            await spawnDialog(AlertDialog, {
-                title: "Could not retrieve map names",
-                message: err + "\nThey will not be shown",
-            })
+            await spawnErrorDialog(err + "\nThey will not be shown", "Could not retrieve map names")
         }
 
         // Load the map list from the backend
@@ -173,10 +169,7 @@ export class MapListContext extends EditorContext {
 
             this.data.set(mapCards);
         } catch (err) {
-            await spawnDialog(AlertDialog, {
-                title: "Failed to load map list",
-                message: err,
-            })
+            await spawnErrorDialog(err, "Could not retrieve map list");
 
             // Close the view on failure
             this.close();

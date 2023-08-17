@@ -1,8 +1,12 @@
 import { redefineBindings } from "src/systems/bindings";
 import { spawnDialog } from "src/systems/dialogs";
 import type { MapEditorContext } from "src/views/MapEditor";
+import { get } from "svelte/store";
+import LayoutPickerDialog from "../dialogs/LayoutPickerDialog.svelte";
 import ResizeMapDialog from "../dialogs/ResizeMapDialog.svelte";
+import TilesetPickerDialog from "../dialogs/TilesetPickerDialog.svelte";
 import { EditorTool } from "../editor/tools";
+import { UpdateLayoutChange, UpdateTilesetsChange } from "./map_module";
 import type { PaletteModule } from "./palette_module";
 
 export class ActionsModule {
@@ -16,8 +20,7 @@ export class ActionsModule {
     public get animations() { return this.context.animations; }
     public get selectedTool() { return this.context.selectedTool; }
     public get material() { return this.context.material; }
-
-
+    public get $data() { return get(this.context.data); }
 
     // ANCHOR Methods
     public selectLayoutEditor() {
@@ -70,6 +73,48 @@ export class ActionsModule {
             MAX_HEIGHT: 4,
             MAX_MAP_AREA: 4,
         });
+    }
+    public async updateLayout() {
+        if (this.tab !== "header") return;
+        // Ask the user for confirmation
+        const newIdResult: number = await spawnDialog(LayoutPickerDialog, {
+            reason: "Choose a new layout to use for this map.",
+            isReasonError: false,
+            layout: this.$data.header.header.map_layout_id,
+        });
+        // If the user didn't choose a layout, cancel
+        if (!newIdResult) return;
+
+        // Update the layout
+        const change = new UpdateLayoutChange(this.context, newIdResult);
+        // Apply the change
+        change.tab = "layout";
+        await change.firstApply();
+        if (!change.applyWorked) return;
+        // Push the change if it worked
+        else this.context.changes.pushNoApply(change);
+    }
+    public async updateTilesets() {
+        if (this.tab !== "level" && this.tab !== "layout") return;
+        // Ask the user for confirmation
+        const dialogResult: [number, number] | null = await spawnDialog(TilesetPickerDialog, {
+            reason: "Choose a new tileset to use for this map.",
+            isReasonError: false,
+            primaryTileset: this.$data.layout.header.primary_tileset,
+            secondaryTileset: this.$data.layout.header.secondary_tileset,
+        });
+        // If the user didn't choose a tileset, cancel
+        if (!dialogResult) return;
+
+        // Update the tilesets
+        const change = new UpdateTilesetsChange(this.context, ...dialogResult);
+
+        // Apply the change
+        change.tab = "layout";
+        await change.firstApply();
+        if (!change.applyWorked) return;
+        // Push the change if it worked
+        else this.context.changes.pushNoApply(change);
     }
 
     public static redefineBindings() {
@@ -160,6 +205,12 @@ export class ActionsModule {
             "map_editor/resize_borders_map": (view: MapEditorContext) => {
                 view.actions.resizeBorders();
             },
+            "map_editor/change_layout": (view: MapEditorContext) => {
+                view.actions.updateLayout();
+            },
+            "map_editor/change_tilesets": (view: MapEditorContext) => {
+                view.actions.updateTilesets();
+            }
         });
     }
 }

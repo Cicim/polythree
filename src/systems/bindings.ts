@@ -204,6 +204,8 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/toggle_animations": new KeyBinding("Play/Stop the Animations", "F7", undefined, "active.name === 'Map Editor'"),
     "map_editor/resize_main_map": new KeyBinding("Resize the Layout Canvas", "Ctrl+R", undefined, "active.name === 'Map Editor'"),
     "map_editor/resize_borders_map": new KeyBinding("Resize the Borders Canvas", "Ctrl+Shift+R", undefined, "active.name === 'Map Editor'"),
+    "map_editor/change_layout": new KeyBinding("Change the Map's Layout", "Ctrl+L", undefined, "active.name === 'Map Editor'"),
+    "map_editor/change_tilesets": new KeyBinding("Change the Layouts's Tilesets", "Ctrl+T", undefined, "active.name === 'Map Editor'"),
 };
 
 /** The object containing all the existing shortcuts */
