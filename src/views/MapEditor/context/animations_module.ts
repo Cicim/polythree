@@ -119,7 +119,7 @@ export class AnimationsModule {
             for (const anim of this.list.primary) {
                 if (this.primaryCounter % anim.interval === anim.start_time) {
                     somethingChanged = true;
-                    let frame = (this.primaryCounter - anim.start_time) / anim.interval;
+                    let frame = (this.primaryCounter - anim.start_time) / anim.interval | 0;
                     let bytes = anim.graphics[frame % anim.graphics.length];
                     replace_tiles(this.tileset1Offset, this.tileset2Offset, anim.start_tile, bytes);
                 }
@@ -127,7 +127,7 @@ export class AnimationsModule {
             for (const anim of this.list.secondary) {
                 if (this.secondaryCounter % anim.interval === anim.start_time) {
                     somethingChanged = true;
-                    let frame = (this.primaryCounter - anim.start_time) / anim.interval;
+                    let frame = (this.secondaryCounter - anim.start_time) / anim.interval | 0;
                     let bytes = anim.graphics[frame % anim.graphics.length];
                     replace_tiles(this.tileset1Offset, this.tileset2Offset, anim.start_tile, bytes);
                 }
