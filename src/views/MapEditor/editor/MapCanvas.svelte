@@ -1083,6 +1083,7 @@
         nullLevels,
         update: () => draw(),
         canPaint: (x, y) => canPaintOnTile(x, y),
+        canUpdateMetatiles: () => !editLevels,
         getMetatile: (x: number, y: number) =>
             blocks.metatiles[y * blocks.width + x],
         getLevel: (x: number, y: number) => blocks.levels[y * blocks.width + x],
@@ -1096,11 +1097,9 @@
             const oldMetatile = blocks.getMetatile(x, y);
             const oldLevel = blocks.getLevel(x, y);
 
-            if (
-                oldMetatile !== metatile &&
-                !(editLevels && state === State.Painting)
-            ) {
-                // Re-render everything
+            // If the tile changed and it can be updated
+            if (oldMetatile !== metatile) {
+                // Redraw the tile that has been changed
                 drawSingleMetatile(x, y, metatile);
                 // Update the metatile
                 blocks.setMetatile(x, y, metatile);

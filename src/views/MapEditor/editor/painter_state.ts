@@ -18,6 +18,8 @@ export interface PainterMethods {
     getLevel(x: number, y: number): number;
     /** Update the screen */
     update(): void;
+    /** Returns whether you can write on the metatiles part of the blocks */
+    canUpdateMetatiles(): boolean;
 }
 
 export class PainterState {
@@ -33,6 +35,11 @@ export class PainterState {
     /** Sets the given block and updates the chunk */
     public set(x: number, y: number, metatile: number, level: number) {
         if (!this.methods.canPaint(x, y)) return;
+
+        // If editing metatiles is not allowed, set the input to NULL
+        // so that it won't overwrite the current metatile
+        if (!this.methods.canUpdateMetatiles())
+            metatile = NULL;
 
         const oldMetatile = this.getMetatile(x, y);
         const oldLevel = this.getLevel(x, y);
