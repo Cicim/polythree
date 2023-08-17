@@ -76,6 +76,11 @@ export class AnimationsModule {
         clearTimeout(this.timeout);
     }
 
+    /** Toggles the playing state */
+    public togglePlaying() {
+        this.playing.update(v => !v);
+    }
+
     // ANCHOR Private Method
     private async loadAnimations() {
         this.list = null;

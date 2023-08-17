@@ -77,12 +77,10 @@
         <div class="actions">
             {#if $tab !== "scripts"}
                 <TextToolButton
-                    title="Change Layout"
-                    icon="mdi:grid"
+                    title="Resize Map"
+                    icon="mdi:resize"
+                    action="map_editor/resize_main_map"
                     menu={new Menu([
-                        new Separator("This Map"),
-                        new IconOption("Change Layout", "mdi:grid", () => {}),
-                        new Separator("This Layout"),
                         new IconOption(
                             "Resize Map",
                             "mdi:resize",

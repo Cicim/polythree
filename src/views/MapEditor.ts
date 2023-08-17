@@ -1,7 +1,6 @@
 import MapEditor from "./MapEditor.svelte";
 import { TabbedEditorContext, type TabbedEditorTabs } from "../systems/contexts";
 import { activeView, ViewContext } from "src/systems/views";
-import { redefineBindings } from "src/systems/bindings";
 import { get, writable, type Writable } from "svelte/store";
 import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
@@ -10,8 +9,7 @@ import { BrushesModule } from "./MapEditor/context/brushes_module";
 import { PaletteModule } from "./MapEditor/context/palette_module";
 import { MapModule, type MapHeaderData, type MapLayoutData, type TilesetsData } from "./MapEditor/context/map_module";
 import { AnimationsModule } from "./MapEditor/context/animations_module";
-import { spawnDialog } from "src/systems/dialogs";
-import ResizeMapDialog from "./MapEditor/dialogs/ResizeMapDialog.svelte";
+import { ActionsModule } from "./MapEditor/context/actions_module";
 
 export interface MapEditorProperties {
     group: number;
@@ -51,6 +49,7 @@ export class MapEditorContext extends TabbedEditorContext {
     public brushes: BrushesModule = new BrushesModule(this);
     public palette: PaletteModule = new PaletteModule(this);
     public animations: AnimationsModule = new AnimationsModule(this);
+    public actions: ActionsModule = new ActionsModule(this);
 
     // Tileset
     public tileset1Offset: number;
@@ -145,33 +144,6 @@ export class MapEditorContext extends TabbedEditorContext {
 
 
     // ANCHOR Editor Actions
-    public selectLayoutEditor() {
-        this.changeTab("layout");
-    }
-    public selectLevelEditor() {
-        this.changeTab("level");
-    }
-    public selectScriptsEditor() {
-        this.changeTab("scripts");
-    }
-    public selectEncountersEditor() {
-        this.changeTab("encounters");
-    }
-    public selectConnectionsEditor() {
-        this.changeTab("connections");
-    }
-    public selectHeaderEditor() {
-        this.changeTab("header");
-    }
-    public zoomIn: () => void = () => { };
-    public zoomOut: () => void = () => { };
-
-    public undoTilesetChanges() {
-        this.palette.undoChanges();
-    }
-    public redoTilesetChanges() {
-        this.palette.redoChanges();
-    }
     public async undo() {
         if (this.brushes.isEditing)
             this.brushes.undoBrushChanges();
@@ -184,119 +156,6 @@ export class MapEditorContext extends TabbedEditorContext {
         else
             super.redo();
     }
-    public toggleAnimations() {
-        this.animations.playing.update(v => !v);
-    }
-    public async resizeMap() {
-        if (this.tab !== "level" && this.tab !== "layout") return
-        // Ask the user for confirmation
-        await spawnDialog(ResizeMapDialog, {
-            layoutName: "Map",
-            context: this,
-            canvas: this.map.mainCanvas,
-            blocks: this.map.$data.layout.map_data,
-        });
-    }
-    public async resizeBorders() {
-        if (this.tab !== "level" && this.tab !== "layout") return
-        // Ask the user for confirmation
-        await spawnDialog(ResizeMapDialog, {
-            layoutName: "Borders",
-            context: this,
-            canvas: this.map.bordersCanvas,
-            blocks: this.map.$data.layout.border_data,
-            MAX_WIDTH: 4,
-            MAX_HEIGHT: 4,
-            MAX_MAP_AREA: 4,
-        });
-    }
 }
 
-redefineBindings({
-    "map_editor/select_layout": (view: MapEditorContext) => {
-        view.selectLayoutEditor();
-    },
-    "map_editor/select_level": (view: MapEditorContext) => {
-        view.selectLevelEditor();
-    },
-    "map_editor/select_scripts": (view: MapEditorContext) => {
-        view.selectScriptsEditor();
-    },
-    "map_editor/select_encounters": (view: MapEditorContext) => {
-        view.selectEncountersEditor();
-    },
-    "map_editor/select_connections": (view: MapEditorContext) => {
-        view.selectConnectionsEditor();
-    },
-    "map_editor/select_header": (view: MapEditorContext) => {
-        view.selectHeaderEditor();
-    },
-    "map_editor/zoom_in": (view: MapEditorContext) => {
-        view.zoomIn();
-    },
-    "map_editor/zoom_out": (view: MapEditorContext) => {
-        view.zoomOut();
-    },
-    "map_editor/undo_tileset_level_changes": (view: MapEditorContext) => {
-        view.undoTilesetChanges();
-    },
-    "map_editor/redo_tileset_level_changes": (view: MapEditorContext) => {
-        view.redoTilesetChanges();
-    },
-    "map_editor/palette_move_up": (view: MapEditorContext) => {
-        view.palette.move(0, -1, false);
-    },
-    "map_editor/palette_select_up": (view: MapEditorContext) => {
-        view.palette.move(0, -1, true);
-    },
-    "map_editor/palette_move_down": (view: MapEditorContext) => {
-        view.palette.move(0, 1, false);
-    },
-    "map_editor/palette_select_down": (view: MapEditorContext) => {
-        view.palette.move(0, 1, true);
-    },
-    "map_editor/palette_move_left": (view: MapEditorContext) => {
-        view.palette.move(-1, 0, false);
-    },
-    "map_editor/palette_select_left": (view: MapEditorContext) => {
-        view.palette.move(-1, 0, true);
-    },
-    "map_editor/palette_move_right": (view: MapEditorContext) => {
-        view.palette.move(1, 0, false);
-    },
-    "map_editor/palette_select_right": (view: MapEditorContext) => {
-        view.palette.move(1, 0, true);
-    },
-    "map_editor/select_pencil": (view: MapEditorContext) => {
-        if (view.tab === "layout" || view.tab === "level")
-            view.selectedTool.set(EditorTool.Pencil);
-    },
-    "map_editor/select_rectangle": (view: MapEditorContext) => {
-        if (view.tab === "layout" || view.tab === "level")
-            view.selectedTool.set(EditorTool.Rectangle);
-    },
-    "map_editor/select_fill": (view: MapEditorContext) => {
-        if (view.tab === "layout" || view.tab === "level")
-            view.selectedTool.set(EditorTool.Fill);
-    },
-    "map_editor/select_replace": (view: MapEditorContext) => {
-        if (view.tab === "layout" || view.tab === "level")
-            view.selectedTool.set(EditorTool.Replace);
-    },
-    "map_editor/export_map": (view: MapEditorContext) => {
-        console.log("Export Map");
-    },
-    "map_editor/import_map": (view: MapEditorContext) => {
-        console.log("Import Map");
-    },
-    "map_editor/toggle_animations": (view: MapEditorContext) => {
-        if (view.tab === "layout" || view.tab === "level")
-            view.toggleAnimations();
-    },
-    "map_editor/resize_main_map": (view: MapEditorContext) => {
-        view.resizeMap();
-    },
-    "map_editor/resize_borders_map": (view: MapEditorContext) => {
-        view.resizeBorders();
-    },
-});
+ActionsModule.redefineBindings();
