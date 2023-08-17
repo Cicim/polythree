@@ -202,6 +202,8 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/import_map": new KeyBinding("Import the Map from File", "Ctrl+I", undefined, "active.name === 'Map Editor'"),
     "map_editor/export_map": new KeyBinding("Export the Map to File", "Ctrl+E", undefined, "active.name === 'Map Editor'"),
     "map_editor/toggle_animations": new KeyBinding("Play/Stop the Animations", "F7", undefined, "active.name === 'Map Editor'"),
+    "map_editor/resize_main_map": new KeyBinding("Resize the Layout Canvas", "Ctrl+R", undefined, "active.name === 'Map Editor'"),
+    "map_editor/resize_borders_map": new KeyBinding("Resize the Borders Canvas", "Ctrl+Shift+R", undefined, "active.name === 'Map Editor'"),
 };
 
 /** The object containing all the existing shortcuts */

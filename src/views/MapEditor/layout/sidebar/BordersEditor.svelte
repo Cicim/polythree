@@ -1,17 +1,22 @@
 <script lang="ts">
-    import type { MapEditorData } from "src/views/MapEditor";
-    import type { Writable } from "svelte/store";
+    import type { MapEditorContext } from "src/views/MapEditor";
     import { resizeY } from "src/systems/resize";
     import { SidebarState } from "../LayoutSidebar.svelte";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ToolButton from "../../ToolButton.svelte";
     import MapCanvas from "../../editor/MapCanvas.svelte";
 
     export let state: SidebarState;
     export let levelMode: boolean;
+    let mapCanvas: MapCanvas;
 
-    const data: Writable<MapEditorData> = getContext("data");
+    const context: MapEditorContext = getContext("context");
+    const data = context.data;
     const borders = $data.layout.border_data;
+
+    onMount(() => {
+        context.map.bordersCanvas = mapCanvas;
+    });
 </script>
 
 <div
@@ -36,6 +41,7 @@
     </div>
     <div class="borders-container">
         <MapCanvas
+            bind:this={mapCanvas}
             blocks={borders}
             centerOnResize={true}
             allowPan={false}

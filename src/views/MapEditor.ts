@@ -10,6 +10,8 @@ import { BrushesModule } from "./MapEditor/context/brushes_module";
 import { PaletteModule } from "./MapEditor/context/palette_module";
 import { MapModule, type MapHeaderData, type MapLayoutData, type TilesetsData } from "./MapEditor/context/map_module";
 import { AnimationsModule } from "./MapEditor/context/animations_module";
+import { spawnDialog } from "src/systems/dialogs";
+import ResizeMapDialog from "./MapEditor/dialogs/ResizeMapDialog.svelte";
 
 export interface MapEditorProperties {
     group: number;
@@ -185,6 +187,29 @@ export class MapEditorContext extends TabbedEditorContext {
     public toggleAnimations() {
         this.animations.playing.update(v => !v);
     }
+    public async resizeMap() {
+        if (this.tab !== "level" && this.tab !== "layout") return
+        // Ask the user for confirmation
+        await spawnDialog(ResizeMapDialog, {
+            layoutName: "Map",
+            context: this,
+            canvas: this.map.mainCanvas,
+            blocks: this.map.$data.layout.map_data,
+        });
+    }
+    public async resizeBorders() {
+        if (this.tab !== "level" && this.tab !== "layout") return
+        // Ask the user for confirmation
+        await spawnDialog(ResizeMapDialog, {
+            layoutName: "Borders",
+            context: this,
+            canvas: this.map.bordersCanvas,
+            blocks: this.map.$data.layout.border_data,
+            MAX_WIDTH: 4,
+            MAX_HEIGHT: 4,
+            MAX_MAP_AREA: 4,
+        });
+    }
 }
 
 redefineBindings({
@@ -267,5 +292,11 @@ redefineBindings({
     "map_editor/toggle_animations": (view: MapEditorContext) => {
         if (view.tab === "layout" || view.tab === "level")
             view.toggleAnimations();
-    }
+    },
+    "map_editor/resize_main_map": (view: MapEditorContext) => {
+        view.resizeMap();
+    },
+    "map_editor/resize_borders_map": (view: MapEditorContext) => {
+        view.resizeBorders();
+    },
 });

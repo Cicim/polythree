@@ -103,11 +103,15 @@
                         new Separator("This Map"),
                         new IconOption("Change Layout", "mdi:grid", () => {}),
                         new Separator("This Layout"),
-                        new IconOption("Resize Layout", "mdi:resize", () => {}),
+                        new IconOption(
+                            "Resize Layout",
+                            "mdi:resize",
+                            "map_editor/resize_main_map"
+                        ),
                         new IconOption(
                             "Resize Borders Layout",
                             "mdi:resize",
-                            () => {}
+                            "map_editor/resize_borders_map"
                         ),
                     ])}
                 />

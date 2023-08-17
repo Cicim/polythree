@@ -35,10 +35,12 @@ export class EditorChanges<T> {
     }
 
     /** Pushes the change into the stack and applies it */
-    public push(change: Change) {
+    public push(change: Change): Promise<void> {
         // Queue changes while the editor is saving
-        if (this.locked)
-            return this.queue.push(change);
+        if (this.locked) {
+            this.queue.push(change);
+            return Promise.resolve();
+        }
 
         // Calculate the change's previous value
         const noUpdate = change.updatePrev(this);
@@ -54,9 +56,10 @@ export class EditorChanges<T> {
         // Edit the top index
         this.top = this.stack.length;
         // Execute the change
-        change.apply(this.data);
+        const applied = change.apply(this.data);
 
         this.updateChanges();
+        return applied;
     }
 
     /** Pushes a change without applying it */

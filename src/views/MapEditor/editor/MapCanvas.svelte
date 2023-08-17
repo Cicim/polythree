@@ -19,6 +19,44 @@
         maxHeight: number;
         maxArea: number;
     }
+
+    export class MapResizeChange extends Change {
+        private oldBlocks: BlocksData;
+        private newBlocks: BlocksData;
+
+        constructor(
+            private resizeChangeApplied: Writable<BlocksData>,
+            private blocks: BlocksData,
+            private data: Writable<MapEditorData>,
+            newWidth: number,
+            newHeight: number,
+            newLevels: number
+        ) {
+            super();
+
+            this.oldBlocks = blocks.clone();
+            this.newBlocks = blocks.resize(newWidth, newHeight, newLevels);
+        }
+
+        public updatePrev(): boolean {
+            return false;
+        }
+        public async revert(): Promise<void> {
+            this.update(this.oldBlocks);
+        }
+        public async apply(): Promise<void> {
+            this.update(this.newBlocks);
+        }
+
+        private update(blocks: BlocksData) {
+            // Update the blocks
+            this.blocks.update(blocks);
+            // Update the data
+            this.data?.update?.((_) => _);
+            // Redraw the mapCanvas
+            this.resizeChangeApplied.set(blocks);
+        }
+    }
 </script>
 
 <script lang="ts">
@@ -30,7 +68,7 @@
         onMount,
         tick,
     } from "svelte";
-    import type { Writable } from "svelte/store";
+    import { writable, type Writable } from "svelte/store";
     import type { MapEditorContext, MapEditorData } from "src/views/MapEditor";
     import { SelectionMaterial, type PaintingMaterial } from "./materials";
     import {
@@ -215,6 +253,24 @@
     };
     /** What border you're hovering on */
     let resizeDirection: ResizeDirection = ResizeDirection.None;
+    /** A writable that is passed to a resize change and changes
+     * when the change is applied or reverted */
+    export const resizeChangeApplied: Writable<BlocksData> = writable(null);
+    $: $resizeChangeApplied,
+        (() => {
+            if ($resizeChangeApplied === null) return;
+            initialized = false;
+            // Update the chunks
+            buildAllChunks();
+            buildLevelMinimap();
+            // Updates the cursor
+            resizeDirection = getResizeDirection();
+            cursorStyle = getCursor();
+            // Center the canvas
+            centerCanvas();
+            initialized = true;
+            draw();
+        })();
 
     // Selection
     /** The tile where the selection starts */
@@ -750,40 +806,6 @@
     }
 
     // ANCHOR Resizing
-    class MapResizeChange extends Change {
-        constructor(
-            private oldBlocks: BlocksData,
-            private newBlocks: BlocksData
-        ) {
-            super();
-        }
-
-        public updatePrev(): boolean {
-            return false;
-        }
-        public async revert(): Promise<void> {
-            this.redraw(this.oldBlocks);
-        }
-        public async apply(): Promise<void> {
-            this.redraw(this.newBlocks);
-        }
-
-        private redraw(_blocks: BlocksData) {
-            initialized = false;
-            blocks = blocks.update(_blocks);
-            data.update((_) => _);
-            // Update the chunks
-            buildAllChunks();
-            buildLevelMinimap();
-            // Updates the cursor
-            resizeDirection = getResizeDirection();
-            cursorStyle = getCursor();
-
-            initialized = true;
-            draw();
-        }
-    }
-
     /** Returns whether the mouse is on a resizing border */
     function getResizeDirection(): ResizeDirection {
         if (!resizeOptions) return ResizeDirection.None;
@@ -900,10 +922,14 @@
     function resizeMap(width: number, height: number) {
         if (width === blocks.width && height === blocks.height) return;
 
-        const oldBlocks = blocks.clone();
-        const newBlocks = blocks.resize(width, height, nullLevels ? NULL : 0);
-
-        const change = new MapResizeChange(oldBlocks, newBlocks);
+        const change = new MapResizeChange(
+            resizeChangeApplied,
+            blocks,
+            data,
+            width,
+            height,
+            nullLevels ? NULL : 0
+        );
         changes.push(change);
     }
 
@@ -1332,6 +1358,27 @@
     $: resizeDirection, (cursorStyle = getCursor());
 
     // ANCHOR Other Event handlers
+    function centerCanvas() {
+        if (!centerOnResize) return;
+        const mapWidth = blocks.width * 16;
+        const mapHeight = blocks.height * 16;
+
+        // Compute the biggest zoom that will make the whole map fit
+        const biggestZoom = Math.min(
+            canvasWidth / mapWidth,
+            canvasHeight / mapHeight
+        );
+        // Set the zoom to the closest one to biggestZoom
+        zoomIndex = ZOOM_LEVELS.findIndex((zoom) => zoom > biggestZoom);
+        if (zoomIndex === -1) zoomIndex = ZOOM_LEVELS.length - 1;
+        else zoomIndex--;
+        if (zoomIndex < 0) zoomIndex = 0;
+        zoom = ZOOM_LEVELS[zoomIndex];
+        // Center the map
+        offset.x = Math.round((canvasWidth - mapWidth * zoom) / 2);
+        offset.y = Math.round((canvasHeight - mapHeight * zoom) / 2);
+    }
+
     /** Updates the canvas size and redraws the canvas. */
     function updateSize() {
         if (constantWidth !== null) return;
@@ -1347,26 +1394,7 @@
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
-        if (centerOnResize) {
-            const mapWidth = blocks.width * 16;
-            const mapHeight = blocks.height * 16;
-
-            // Compute the biggest zoom that will make the whole map fit
-            const biggestZoom = Math.min(
-                canvasWidth / mapWidth,
-                canvasHeight / mapHeight
-            );
-            // Set the zoom to the closest one to biggestZoom
-            zoomIndex = ZOOM_LEVELS.findIndex((zoom) => zoom > biggestZoom);
-            if (zoomIndex === -1) zoomIndex = ZOOM_LEVELS.length - 1;
-            else zoomIndex--;
-            if (zoomIndex < 0) zoomIndex = 0;
-            zoom = ZOOM_LEVELS[zoomIndex];
-            // Center the map
-            offset.x = Math.round((canvasWidth - mapWidth * zoom) / 2);
-            offset.y = Math.round((canvasHeight - mapHeight * zoom) / 2);
-        }
-
+        centerCanvas();
         draw();
     }
 

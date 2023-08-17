@@ -9,6 +9,7 @@ import { BlocksData, type ImportedBlocksData } from "../editor/blocks_data";
 import AlertDialog from "src/components/dialog/AlertDialog.svelte";
 import LayoutPickerDialog from "../dialogs/LayoutPickerDialog.svelte";
 import TilesetPickerDialog from "../dialogs/TilesetPickerDialog.svelte";
+import type MapCanvas from "../../MapEditor/editor/MapCanvas.svelte";
 
 export interface MapHeaderData {
     header: MapHeader,
@@ -63,6 +64,10 @@ export class MapModule {
     private botTilesData: ImageData;
     /** The image data of the top tiles */
     private topTilesData: ImageData;
+    /** The main map data canvas */
+    public mainCanvas: MapCanvas;
+    /** The borders data canvas */
+    public bordersCanvas: MapCanvas;
 
     // ANCHOR Getters & Setters
     public get identifier() { return this.context.identifier }
