@@ -24,7 +24,9 @@
     const editingBrushChanges = context.brushes.editingChanges;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
+    const loading = context.brushes.loading;
 
+    /** Modifies the brush currently being edited and updates the state */
     function applyChanges() {
         // If the brush was originally primary
         if ($editingBrushClone.onlyUsesPrimaryTiles(context.tileset1Length)) {
@@ -76,6 +78,12 @@
         context.brushes.editingIndex = null;
         state = context.brushes.editingEnteredFromState;
     }
+
+    // Apply the changes to the brush if you were start reloading the brushes
+    $: $loading,
+        (() => {
+            if ($loading && $editingBrush) applyChanges();
+        })();
 </script>
 
 <div

@@ -89,7 +89,7 @@ export class ActionsModule {
         // Update the layout
         const change = new UpdateLayoutChange(this.context, newIdResult);
         // Apply the change
-        change.tab = "layout";
+        change.tab = this.context.tab;
         await change.firstApply();
         if (!change.applyWorked) return;
         // Push the change if it worked
@@ -111,7 +111,7 @@ export class ActionsModule {
         const change = new UpdateTilesetsChange(this.context, ...dialogResult);
 
         // Apply the change
-        change.tab = "layout";
+        change.tab = this.context.tab;
         await change.firstApply();
         if (!change.applyWorked) return;
         // Push the change if it worked

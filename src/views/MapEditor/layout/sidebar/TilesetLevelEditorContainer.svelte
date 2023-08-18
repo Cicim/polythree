@@ -1,12 +1,21 @@
 <script lang="ts">
+    import { getContext } from "svelte";
     import TilesetLevelEditor from "../TilesetLevelEditor.svelte";
+    import type { MapEditorContext } from "src/views/MapEditor";
 
     export let levelMode: boolean;
+
+    const context: MapEditorContext = getContext("context");
+    const loading = context.palette.loading;
 </script>
 
-<div class="tileset-level-editor-view" class:hidden={!levelMode}>
-    <TilesetLevelEditor />
-</div>
+{#if $loading}
+    Loading...
+{:else}
+    <div class="tileset-level-editor-view" class:hidden={!levelMode}>
+        <TilesetLevelEditor />
+    </div>
+{/if}
 
 <style lang="scss">
     .tileset-level-editor-view {

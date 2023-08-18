@@ -13,9 +13,9 @@ export class PaletteModule {
     /** Length of the two tilesets (might not be a multiple of 8) */
     public fullLength: number;
     /** The block data for the tileset level editor */
-    public blocks: Writable<BlocksData>;
+    public blocks: Writable<BlocksData> = writable(null);
     /** The reference to the MapCanvas for the tilesetBlocks */
-    public mapCanvas: Writable<MapCanvas>;
+    public mapCanvas: Writable<MapCanvas> = writable(null);
     /** The changes that are applied to the tileset level editor */
     public changes: EditorChanges<null>;
     // Keybindings callbacks
@@ -23,12 +23,16 @@ export class PaletteModule {
     /** The number of blocks at the end that are not in the tileset */
     public lastRowLength: number;
 
+    /** If the palette is currently loading */
+    public loading: Writable<boolean> = writable(false);
+
     // ANCHOR Main Methods
     constructor(context: MapEditorContext) {
         this.context = context;
     }
 
     public async load(metatilesLength: number) {
+        this.loading.set(true);
         // Get the levels for these tilesets from config
         const importedTilesetLevels = await this.importLevels();
         // Compose the block data for the tileset level editor
@@ -49,9 +53,10 @@ export class PaletteModule {
                 tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL, NULL);
 
         // Update the blocks
-        this.blocks = writable(tilesetBlocks);
-        this.mapCanvas = writable(null);
+        this.blocks.set(tilesetBlocks);
+        this.mapCanvas.set(null);
         this.changes = new EditorChanges(null);
+        this.loading.set(false);
     }
 
     public async save() {

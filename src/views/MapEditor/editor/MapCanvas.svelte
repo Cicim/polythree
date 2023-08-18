@@ -264,7 +264,7 @@
             if ($resizeChangeApplied === null) return;
             initialized = false;
             // Update the chunks
-            buildAllChunks();
+            buildAllChunks(true);
             buildLevelMinimap();
             // Updates the cursor
             resizeDirection = getResizeDirection();
@@ -301,7 +301,7 @@
 
     const unsubscribeFromData = data.subscribe((value) => {
         initialized = false;
-        buildAllChunks();
+        buildAllChunks(false);
         buildLevelMinimap();
         initialized = true;
         draw();
@@ -568,7 +568,7 @@
 
     // ANCHOR Chunking
     /** Rebuilds both the metatile and level chunks for when the map is reloaded or resized. */
-    function buildAllChunks() {
+    export function buildAllChunks(keepOldMap: boolean) {
         // Compute the number of chunks in each direction
         const chunksWidth = Math.ceil(blocks.width / chunkSize);
         const chunksHeight = Math.ceil(blocks.height / chunkSize);
@@ -581,16 +581,21 @@
         topMetatileChunks = new Array(chunksHeight);
         textLevelChunks = new Array(chunksHeight);
 
-        let unchangedWidth = oldBotTileChunks?.[0]?.length ?? 1;
-        unchangedWidth = Math.min(
-            unchangedWidth - 1,
-            Math.floor(blocks.width / chunkSize)
-        );
-        let unchangedHeight = oldBotTileChunks?.length ?? 1;
-        unchangedHeight = Math.min(
-            unchangedHeight - 1,
-            Math.floor(blocks.height / chunkSize)
-        );
+        let unchangedWidth = 0;
+        let unchangedHeight = 0;
+
+        if (keepOldMap) {
+            unchangedWidth = oldBotTileChunks?.[0]?.length ?? 1;
+            unchangedWidth = Math.min(
+                unchangedWidth - 1,
+                Math.floor(blocks.width / chunkSize)
+            );
+            unchangedHeight = oldBotTileChunks?.length ?? 1;
+            unchangedHeight = Math.min(
+                unchangedHeight - 1,
+                Math.floor(blocks.height / chunkSize)
+            );
+        }
 
         for (let cy = 0; cy < chunksHeight; cy++) {
             botMetatileChunks[cy] = new Array(chunksWidth);

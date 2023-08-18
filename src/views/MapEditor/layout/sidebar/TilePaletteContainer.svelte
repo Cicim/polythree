@@ -2,9 +2,14 @@
     import { tooltip } from "src/systems/tooltip";
     import { SidebarState } from "../LayoutSidebar.svelte";
     import TilePalette from "../TilePalette.svelte";
+    import type { MapEditorContext } from "src/views/MapEditor";
+    import { getContext } from "svelte";
 
     export let levelMode: boolean;
     export let state: SidebarState;
+
+    const context: MapEditorContext = getContext("context");
+    const loading = context.palette.loading;
 
     let tilePalette: TilePalette;
 
@@ -17,80 +22,86 @@
     }
 </script>
 
-<div
-    class:hidden={levelMode ||
-        state === SidebarState.BrushList ||
-        state === SidebarState.BrushLevel}
-    class="tile-palette-view"
->
-    <div class="palette-container">
-        <TilePalette
-            bind:this={tilePalette}
-            bind:fitToContainer
-            bind:hoveringTile
-            bind:selectedTile
-            showEraserOverlay={state === SidebarState.Brush}
-        />
+{#if $loading}
+    Loading palette
+{:else}
+    <!-- ANCHOR Palette -->
+    <div
+        class:hidden={levelMode ||
+            state === SidebarState.BrushList ||
+            state === SidebarState.BrushLevel}
+        class="tile-palette-view"
+    >
+        <div class="palette-container">
+            <TilePalette
+                bind:this={tilePalette}
+                bind:fitToContainer
+                bind:hoveringTile
+                bind:selectedTile
+                showEraserOverlay={state === SidebarState.Brush}
+            />
+        </div>
     </div>
-</div>
-<div
-    class:hidden={levelMode ||
-        state === SidebarState.BrushList ||
-        state === SidebarState.BrushLevel}
-    class="footbar"
->
-    {#if hoveringTile != null}
-        <span class="hover">
-            <iconify-icon inline icon="ri:cursor-fill" />
-            <span class="number">
-                {hoveringTile.toString().padStart(4, "0")}
-            </span>
-        </span>
-    {/if}
-    <!-- Toggle fitToContainer -->
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    {#if fitToContainer}
-        <span
-            use:tooltip
-            tooltip="Reset to fixed size"
-            class="toggle-size"
-            on:click={() => (fitToContainer = !fitToContainer)}
-        >
-            <iconify-icon icon="fluent:arrow-fit-16-regular" inline />Reset
-            Width
-        </span>
-    {:else}
-        <span
-            use:tooltip
-            tooltip={"Fit the Palette to the Container"}
-            class="toggle-size"
-            on:click={() => (fitToContainer = !fitToContainer)}
-        >
-            <iconify-icon icon="fluent:arrow-fit-in-16-regular" inline />Fit
-            Width
-        </span>
-    {/if}
-    {#if selectedTile != null}
-        <span
-            class="selected"
-            use:tooltip
-            tooltip={`Selected Tile${
-                typeof selectedTile === "number" ? "" : "s"
-            }`}
-        >
-            <iconify-icon inline icon="mdi:selection" />
-            {#if typeof selectedTile === "number"}
+    <!-- ANCHOR Footbar -->
+    <div
+        class:hidden={levelMode ||
+            state === SidebarState.BrushList ||
+            state === SidebarState.BrushLevel}
+        class="footbar"
+    >
+        {#if hoveringTile != null}
+            <span class="hover">
+                <iconify-icon inline icon="ri:cursor-fill" />
                 <span class="number">
-                    {selectedTile.toString().padStart(4, "0")}
+                    {hoveringTile.toString().padStart(4, "0")}
                 </span>
-            {:else}
-                <span class="number"
-                    >{selectedTile[0].toString().padStart(4, "0")}</span
-                >, ({selectedTile[1]}x{selectedTile[2]})
-            {/if}
-        </span>
-    {/if}
-</div>
+            </span>
+        {/if}
+        <!-- Toggle fitToContainer -->
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        {#if fitToContainer}
+            <span
+                use:tooltip
+                tooltip="Reset to fixed size"
+                class="toggle-size"
+                on:click={() => (fitToContainer = !fitToContainer)}
+            >
+                <iconify-icon icon="fluent:arrow-fit-16-regular" inline />Reset
+                Width
+            </span>
+        {:else}
+            <span
+                use:tooltip
+                tooltip={"Fit the Palette to the Container"}
+                class="toggle-size"
+                on:click={() => (fitToContainer = !fitToContainer)}
+            >
+                <iconify-icon icon="fluent:arrow-fit-in-16-regular" inline />Fit
+                Width
+            </span>
+        {/if}
+        {#if selectedTile != null}
+            <span
+                class="selected"
+                use:tooltip
+                tooltip={`Selected Tile${
+                    typeof selectedTile === "number" ? "" : "s"
+                }`}
+            >
+                <iconify-icon inline icon="mdi:selection" />
+                {#if typeof selectedTile === "number"}
+                    <span class="number">
+                        {selectedTile.toString().padStart(4, "0")}
+                    </span>
+                {:else}
+                    <span class="number"
+                        >{selectedTile[0].toString().padStart(4, "0")}</span
+                    >, ({selectedTile[1]}x{selectedTile[2]})
+                {/if}
+            </span>
+        {/if}
+    </div>
+{/if}
 
 <style lang="scss">
     .tile-palette-view {

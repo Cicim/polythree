@@ -22,6 +22,7 @@
     import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
     import { SelectionMaterial } from "../editor/materials";
     import { EditorChanges } from "src/systems/changes";
+    import LoadingScreen from "src/components/LoadingScreen.svelte";
 
     /** Set this to true if you are editing the levels */
     export let levelMode: boolean;
@@ -37,6 +38,7 @@
     const material = context.material;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
+    const loadingBrushes = context.brushes.loading;
 
     // Update the moveOnPalette callback
     context.palette.setMoveCallback(
@@ -91,12 +93,20 @@
 <svelte:window />
 
 <div class="sidebar-container" class:hidden>
-    <!-- Brush List -->
-    <BrushList {levelMode} bind:state />
+    {#if $loadingBrushes}
+        <LoadingScreen />
+    {:else}
+        <!-- Brush List -->
+        <BrushList {levelMode} bind:state />
+    {/if}
     <!-- Top bar -->
     <TopBar {levelMode} bind:state />
-    <!-- Brushes Container -->
-    <BrushPalette {levelMode} bind:state />
+    {#if $loadingBrushes}
+        <LoadingScreen />
+    {:else}
+        <!-- Brushes Container -->
+        <BrushPalette {levelMode} bind:state />
+    {/if}
     <!-- Borders editing view -->
     <BordersEditor {levelMode} bind:state />
     <!-- Brush editing view -->

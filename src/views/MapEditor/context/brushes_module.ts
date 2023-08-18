@@ -19,16 +19,19 @@ export class BrushesModule {
     public secondary: Writable<BrushMaterial[]>;
 
     /** The brush that's being currently edited */
-    public editing: Writable<BrushMaterial>;
+    public editing: Writable<BrushMaterial> = writable(null);
     /** The changes that are applied to the editing brush */
-    public editingChanges: Writable<EditorChanges<null>>;
+    public editingChanges: Writable<EditorChanges<null>> = writable(null);
     /** A clone of the brush you've just started editing right
      * before you made any edits to it */
-    public editingClone: Writable<BrushMaterial>;
+    public editingClone: Writable<BrushMaterial> = writable(null);
     /** The state from which you entered brush editing */
-    public editingEnteredFromState: SidebarState;
+    public editingEnteredFromState: SidebarState = null;
     /** The index of the editing brush within the brushes */
-    public editingIndex: number;
+    public editingIndex: number = null;
+
+    /** If the brushes are currently loading */
+    public loading: Writable<boolean> = writable(false);
 
     // ANCHOR Main Methods
     constructor(context: MapEditorContext) {
@@ -40,17 +43,14 @@ export class BrushesModule {
      * 
      */
     public async load() {
+        this.loading.set(true);
         // Reset everything before loading
         this.primary = writable([]);
         this.secondary = writable([]);
-        this.editing = writable(null);
-        this.editingClone = writable(null);
-        this.editingChanges = writable(null);
-        this.editingEnteredFromState = null;
-        this.editingIndex = null;
 
         // Sets the primary and secondary stores
         await this.loadBrushesForTilesets();
+        this.loading.set(false);
     }
 
     /** Function to save data for the brushes */

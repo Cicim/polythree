@@ -403,8 +403,8 @@ export class MapModule {
         }
 
         // Reupdate the brushes and palette after saving them
-        await this.context.brushes.save();
         await this.context.palette.save();
+        await this.context.brushes.save();
 
         // Update the tilesetLength and offsets
         try {
