@@ -70,16 +70,11 @@ export class UpdateLayoutChange extends Change {
     }
 
     private async update(layoutId: number) {
-        this.context.loading.set(true);
-        const success = await this.context.map.updateLayout(layoutId);
-        this.context.loading.set(false);
-        return success;
+        return await this.context.map.updateLayout(layoutId);
     }
 
     public async revert(): Promise<void> {
-        this.context.loading.set(true);
         await this.context.map.setLayout(this.oldLayoutId, this.oldLayoutData);
-        this.context.loading.set(false);
     }
     public async apply(): Promise<void> {
         const res = this.update(this.newLayoutId);
@@ -124,9 +119,7 @@ export class UpdateTilesetsChange extends Change {
     }
 
     private async update(tileset1: number, tileset2: number): Promise<boolean> {
-        this.context.loading.set(true);
         const result = await this.context.map.updateTilesets(tileset1, tileset2);
-        this.context.loading.set(false);
         return result;
     }
 }
@@ -335,7 +328,11 @@ export class MapModule {
         this.layoutOffset = layoutOffset;
         this.data.update(data => {
             data.header.header.map_layout_id = layoutId;
-            return { ...data, layout: layoutData }
+
+            return {
+                ...data,
+                layout: this.updateLayoutData(data.layout, layoutData)
+            }
         });
         return true;
     }
@@ -361,7 +358,10 @@ export class MapModule {
             this.layoutOffset = offset;
             this.data.update(data => {
                 data.header.header.map_layout_id = index;
-                return { ...data, layout: layoutData }
+                return {
+                    ...data,
+                    layout: this.updateLayoutData(data.layout, layoutData)
+                }
             });
             return true;
         }
@@ -379,6 +379,15 @@ export class MapModule {
             map_data: data.map_data.clone(),
             header: { ...data.header },
         };
+    }
+    /** Updates the given layoutData with the given data and returns the same updated reference */
+    public updateLayoutData(toUpdate: MapLayoutData, data: MapLayoutData): MapLayoutData {
+        toUpdate.bits_per_block = data.bits_per_block;
+        toUpdate.border_data.update(data.border_data);
+        toUpdate.map_data.update(data.map_data);
+        toUpdate.index = data.index;
+        toUpdate.header = data.header;
+        return toUpdate;
     }
 
     /** Updates the tilesets to the given offsets. Returns true if all went well, false otherwise */
@@ -429,6 +438,7 @@ export class MapModule {
 
         return true;
     }
+
     /** Updates the tileset cache */
     public updateTilesetCache() {
         const size = this.botTilesData.width / 16;

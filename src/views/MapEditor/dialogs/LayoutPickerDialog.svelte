@@ -56,8 +56,7 @@
         <Button
             disabled={layout === null}
             color="secondary"
-            on:click={() =>
-                close(layout === initialLayout ? null : initialLayout)}
+            on:click={() => close(layout === initialLayout ? null : layout)}
         >
             Choose
         </Button>

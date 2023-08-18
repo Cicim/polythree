@@ -76,7 +76,7 @@ export class ActionsModule {
         });
     }
     public async updateLayout() {
-        if (this.tab !== "header") return;
+        if (this.tab !== "header" && this.tab !== "level" && this.tab !== "layout") return;
         // Ask the user for confirmation
         const newIdResult: number = await spawnDialog(LayoutPickerDialog, {
             reason: "Choose a new layout to use for this map.",
