@@ -22,6 +22,7 @@ export class ActionsModule {
     public get selectedTool() { return this.context.selectedTool; }
     public get material() { return this.context.material; }
     public get $data() { return get(this.context.data); }
+    public get layoutLocked() { return get(this.context.layoutLocked); }
 
     // ANCHOR Methods
     public selectLayoutEditor() {
@@ -53,7 +54,7 @@ export class ActionsModule {
     }
 
     public async resizeMap() {
-        if (this.tab !== "level" && this.tab !== "layout") return
+        if (this.tab !== "level" && this.tab !== "layout" || this.layoutLocked) return
         // Ask the user for confirmation
         await spawnDialog(ResizeMapDialog, {
             layoutName: "Map",
@@ -63,7 +64,7 @@ export class ActionsModule {
         });
     }
     public async resizeBorders() {
-        if (this.tab !== "level" && this.tab !== "layout") return
+        if (this.tab !== "level" && this.tab !== "layout" || this.layoutLocked) return
         // Ask the user for confirmation
         await spawnDialog(ResizeMapDialog, {
             layoutName: "Borders",
@@ -96,7 +97,7 @@ export class ActionsModule {
         else this.context.changes.pushNoApply(change);
     }
     public async updateTilesets() {
-        if (this.tab !== "level" && this.tab !== "layout") return;
+        if (this.tab !== "level" && this.tab !== "layout" || this.layoutLocked) return;
         // Ask the user for confirmation
         const dialogResult: [number, number] | null = await spawnDialog(TilesetPickerDialog, {
             reason: "Choose a new tileset to use for this map.",

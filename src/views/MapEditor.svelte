@@ -40,6 +40,7 @@
     // Update the lock as soon as the
     $: $isLoading === false, updateLayoutLock();
     $: $openViews, updateLayoutLock();
+    $: $data, updateLayoutLock();
 
     $: context.tabs.layout.isLocked = $layoutLocked;
     $: context.tabs.level.isLocked = $layoutLocked;
