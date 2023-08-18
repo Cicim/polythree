@@ -4,8 +4,17 @@
     import { SidebarState } from "../../LayoutSidebar.svelte";
     import ToolButton from "../../../ToolButton.svelte";
     import BrushCard from "./BrushCard.svelte";
-    import { SimpleBrush } from "src/views/MapEditor/editor/brushes";
+    import {
+        SimpleBrush,
+        NinePatchBrush,
+    } from "src/views/MapEditor/editor/brushes";
     import Input from "src/components/Input.svelte";
+    import {
+        IconOption,
+        Menu,
+        Separator,
+        showContextMenu,
+    } from "src/systems/context_menu";
 
     export let state: SidebarState;
     export let levelMode: boolean;
@@ -22,13 +31,23 @@
         }
     }
 
-    function createBrush() {
-        // Add it to the list of brushes
-        primaryBrushes.update((brushes) => {
-            brushes.push(new SimpleBrush(context.tileset1Offset));
-            return brushes;
-        });
+    /** Returns a callback that when executed creates a brush of the initially given class */
+    function createBrushCreateCallback(Type: any) {
+        return () => {
+            primaryBrushes.update((brushes) => {
+                brushes.push(new Type(context.tileset1Offset));
+                return brushes;
+            });
+        };
     }
+
+    // List of options for new brushes
+    const newBrushMenu = new Menu([
+        ...[SimpleBrush, NinePatchBrush].map(
+            (B) =>
+                new IconOption(B.typeName, B.icon, createBrushCreateCallback(B))
+        ),
+    ]);
 </script>
 
 <div
@@ -40,8 +59,9 @@
             <ToolButton
                 icon="mdi:plus"
                 title="Create Brush"
-                on:click={createBrush}
                 theme="transparent"
+                on:click={(event) =>
+                    showContextMenu(event.detail.target, newBrushMenu)}
             />
         </div>
         <div class="center">BRUSH LIST</div>
