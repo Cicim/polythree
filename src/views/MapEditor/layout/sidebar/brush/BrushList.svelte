@@ -15,6 +15,7 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
+    import SearchBar from "src/components/SearchBar.svelte";
 
     export let state: SidebarState;
     export let permissionMode: boolean;
@@ -27,11 +28,8 @@
     const brushNew = context.brushes.brushNew;
 
     let filterString: string = "";
-    function clearFilter(event: KeyboardEvent) {
-        if (event.key === "Escape") {
-            filterString = "";
-            (event.target as HTMLInputElement).value = "";
-        }
+    function clearFilter(event: CustomEvent) {
+        filterString = "";
     }
 
     /** Returns a callback that when executed creates a brush of the initially given class */
@@ -82,11 +80,11 @@
         </div>
     </div>
     <div class="searchbar">
-        <Input
-            type="text"
+        <SearchBar
+            submitOnInput={true}
             placeholder="Filter"
             bind:value={filterString}
-            on:keydown={clearFilter}
+            on:escape={clearFilter}
         />
     </div>
     <div class="brush-container">
@@ -123,8 +121,7 @@
         .searchbar {
             display: grid;
 
-            :global(input) {
-                padding: 8px;
+            :global(.searchbar) {
                 margin: 8px 8px 2px;
                 z-index: 10;
             }

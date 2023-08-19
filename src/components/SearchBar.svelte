@@ -1,11 +1,13 @@
 <script lang="ts">
     import { handleKeydown } from "src/systems/bindings";
+    import { tooltip } from "src/systems/tooltip";
     import { createEventDispatcher } from "svelte";
 
     /** The innerText of the search bar */
     export let value = "";
     /** If true will dispatch submit search on:input */
     export let submitOnInput = false;
+    export let placeholder = "Search...";
 
     const dispatch = createEventDispatcher();
     // The search bar input
@@ -15,10 +17,13 @@
         if (event.key === "Enter") {
             event.preventDefault();
             if (!submitOnInput) dispatch("submit");
+        } else if (event.key === "Escape") {
+            dispatch("escape");
+            searchBar.blur();
         }
     }
 
-    function handleInput(event: InputEvent) {
+    function handleInput() {
         if (submitOnInput) dispatch("submit");
     }
 
@@ -33,13 +38,21 @@
         <iconify-icon icon="mdi:search" inline />
     </div>
     <input
+        {placeholder}
         class="input search-input"
         bind:this={searchBar}
         bind:value
         on:input={handleInput}
         on:keydown={handleKeyDown}
     />
-    <div class="clear-icon" class:hidden={value === ""} on:click={onClearClick}>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div
+        class="clear-icon"
+        class:hidden={value === ""}
+        on:click={onClearClick}
+        use:tooltip
+        tooltip="Clear Search bar"
+    >
         <iconify-icon icon="mdi:close" inline />
     </div>
 </div>
