@@ -1,9 +1,39 @@
-<script lang="ts">
+<script lang="ts" context="module">
     import {
         BrushType,
         SimpleBrush,
         NinePatchBrush,
+        BrushMaterial,
     } from "src/views/MapEditor/editor/brushes";
+    import { Change } from "src/systems/changes";
+    import type { Writable } from "svelte/store";
+    import type MapCanvas from "src/views/MapEditor/editor/MapCanvas.svelte";
+
+    export class BrushSettingsChange extends Change {
+        constructor(
+            public editingBrush: Writable<BrushMaterial>,
+            private brushCanvas: MapCanvas,
+            private oldBrush: BrushMaterial,
+            private newBrush: BrushMaterial
+        ) {
+            super();
+        }
+
+        public updatePrev(): boolean {
+            return this.oldBrush.equals(this.newBrush);
+        }
+        public async revert(): Promise<void> {
+            this.editingBrush.set(this.oldBrush.clone());
+            this.brushCanvas.buildAllChunks(false);
+        }
+        public async apply(): Promise<void> {
+            this.editingBrush.set(this.newBrush.clone());
+            this.brushCanvas.buildAllChunks(false);
+        }
+    }
+</script>
+
+<script lang="ts">
     import Button from "src/components/Button.svelte";
     import Select from "src/components/Select.svelte";
     import Input from "src/components/Input.svelte";
@@ -15,6 +45,8 @@
 
     export let context: MapEditorContext;
     const editingBrush = context.brushes.editing;
+    const brushChanges = context.brushes.editingChanges;
+    const brushCanvas = context.brushes.editingCanvas;
     const material = context.material;
 
     export let close: (value: any) => void;
@@ -23,6 +55,8 @@
     let brush = $editingBrush.clone();
     /** The selected brush's type */
     let brushType: BrushType = brush.type;
+    /** The selected brush's name */
+    let brushName: string = brush.name;
 
     let isDisabled = true;
     $: {
@@ -60,6 +94,9 @@
     ];
 
     function apply() {
+        let oldBrush = brush.clone();
+        let newBrush: BrushMaterial;
+
         // When you apply to the same brush
         if (brushType === $editingBrush.type) {
             // Apply all the apported changes to the editing brush
@@ -85,24 +122,35 @@
             }
 
             // Change the name
-            $editingBrush.name = brush.name;
+            $editingBrush.name = brushName;
             // Update the current brush
-            $editingBrush = $editingBrush;
+            newBrush = $editingBrush.clone();
         } else {
             // Create a new brush
-            const newBrush = new brushToTypeClass[brushType](
+            const recreatedBrush = new brushToTypeClass[brushType](
                 context.tileset1Offset
             );
             // Copy the name
-            newBrush.name = brush.name;
+            recreatedBrush.name = brushName;
             // Apply all the properties
             for (const [key, value] of Object.entries(brushSettings)) {
                 if (key === "width" || key === "height") continue;
-                newBrush[key] = value;
+                recreatedBrush[key] = value;
             }
             // Update the current brush
-            $editingBrush = newBrush;
+            newBrush = recreatedBrush;
         }
+
+        // Apply the change
+        $brushChanges.push(
+            new BrushSettingsChange(
+                editingBrush,
+                $brushCanvas,
+                oldBrush,
+                newBrush
+            )
+        );
+
         close(true);
     }
 
@@ -120,7 +168,7 @@
     <div class="content form">
         <div class="row">
             <span class="title"> Brush Name </span>
-            <Input bind:value={brush.name} />
+            <Input bind:value={brushName} />
         </div>
         <div class="row">
             <span class="title"> Brush Type </span>

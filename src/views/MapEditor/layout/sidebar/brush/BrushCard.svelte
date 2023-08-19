@@ -19,6 +19,7 @@
     const editingBrush = context.brushes.editing;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
+    const editingList = context.brushes.editingList;
 
     /** This brush */
     export let brush: BrushMaterial;
@@ -33,6 +34,10 @@
     let brushName = brush.brushName;
     $: selected = $material === brush;
 
+    let blocked = false;
+    $: $editingList,
+        (blocked = context.brushes.brushIsBeingEditedAnywhere(brush));
+
     function setPinned() {
         $pinned = true;
     }
@@ -46,6 +51,7 @@
     }
 
     function editBrush() {
+        if (blocked) return;
         $editingBrush = brush;
     }
 
@@ -85,16 +91,25 @@
 
     $: updateThumbnail();
 
-    $: contextMenu = new Menu([
-        new Separator(name),
-        new IconOption("Edit", "mdi:edit", editBrush),
-        new IconOption("Settings", "mdi:cog", openSettings),
-        $pinned
-            ? new IconOption("Unpin", "mdi:pin-off", setUnpinned)
-            : new IconOption("Pin", "mdi:pin", setPinned),
-        new Separator(),
-        new IconOption("Delete", "mdi:trash", deleteBrush),
-    ]);
+    $: contextMenu = new Menu(
+        blocked
+            ? [
+                  new Separator(name + " (locked)"),
+                  $pinned
+                      ? new IconOption("Unpin", "mdi:pin-off", setUnpinned)
+                      : new IconOption("Pin", "mdi:pin", setPinned),
+              ]
+            : [
+                  new Separator(name),
+                  new IconOption("Edit", "mdi:edit", editBrush),
+                  new IconOption("Settings", "mdi:cog", openSettings),
+                  $pinned
+                      ? new IconOption("Unpin", "mdi:pin-off", setUnpinned)
+                      : new IconOption("Pin", "mdi:pin", setPinned),
+                  new Separator(),
+                  new IconOption("Delete", "mdi:trash", deleteBrush),
+              ]
+    );
 
     onMount(() => {
         updateThumbnail();
@@ -153,15 +168,29 @@
                     tooltip={"Brush uses <i>primary</i> <br> and <i>secondary</i> tilesets"}
                 />
             {/if}
+            {#if blocked}
+                <iconify-icon
+                    icon="mdi:lock"
+                    class="warn"
+                    inline
+                    use:tooltip
+                    tooltip={"Brush is locked from editing"}
+                />
+            {/if}
         </div>
         <ClickableIcons
             vertical_alignment="bottom"
             icons={[
-                {
-                    icon: "mdi:edit",
-                    text: "Edit",
-                    onclick: () => editBrush(),
-                },
+                // Disallow editing if the brush is blocked
+                ...(!blocked
+                    ? [
+                          {
+                              icon: "mdi:edit",
+                              text: "Edit",
+                              onclick: () => editBrush(),
+                          },
+                      ]
+                    : []),
                 $pinned
                     ? {
                           icon: "mdi:pin-off",
@@ -197,6 +226,10 @@
             iconify-icon {
                 font-size: 20px;
                 color: var(--weak-fg);
+
+                &.warn {
+                    color: var(--warn-fg);
+                }
             }
         }
 

@@ -51,31 +51,6 @@
 
     let state: SidebarState = SidebarState.Palette;
 
-    $: (() => {
-        if ($editingBrush !== null) {
-            if (state === SidebarState.BrushLevel) return;
-            if (state === SidebarState.Brush) return;
-            // Here you have just started editing the brush
-            // so create a clone of the brush
-            $editingBrushClone = $editingBrush.clone();
-            // Save the index of the current brush
-            if ($editingBrush.onlyUsesPrimaryTiles(context.tileset1Length))
-                context.brushes.editingIndex = $primaryBrushes.findIndex(
-                    (brush) => $editingBrush === brush
-                );
-            else
-                context.brushes.editingIndex = $secondaryBrushes.findIndex(
-                    (brush) => $editingBrush === brush
-                );
-            // Create a change for the brush's tiles
-            $editingBrushChanges = new EditorChanges(null);
-            // Save the original state
-            context.brushes.editingEnteredFromState = state;
-            // Update the state
-            state = SidebarState.Brush;
-        }
-    })();
-
     // Exit from the BrushList state if you just selected a material that was not a brush
     const unsubscribeFromMaterial = material.subscribe((material) => {
         if (

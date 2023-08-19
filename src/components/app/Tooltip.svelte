@@ -52,8 +52,10 @@
             0,
             Math.min(windowWidth - tooltipWidth, mouseX - tooltipWidth / 2)
         );
+        // If the target is <= 200px center the tooltip on the target
+        if (targetWidth <= 200)
+            placementX = targetX + targetWidth / 2 - tooltipWidth / 2;
 
-        // If the target is <= 40px, then center the arrow
         const mouseOffset =
             targetWidth <= 200
                 ? targetWidth / 2 + targetX

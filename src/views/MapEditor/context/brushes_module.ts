@@ -9,6 +9,7 @@ import {
     saveBrushesForTilesets
 } from "../editor/brush_serialization";
 import { spawnErrorDialog } from "src/systems/dialogs";
+import type MapCanvas from "../editor/MapCanvas.svelte";
 
 export class BrushesModule {
     private context: MapEditorContext;
@@ -29,6 +30,11 @@ export class BrushesModule {
     public editingEnteredFromState: SidebarState = null;
     /** The index of the editing brush within the brushes */
     public editingIndex: number = null;
+    /** The Map Canvas of the currently edited blocks */
+    public editingCanvas: Writable<MapCanvas> = writable(null);
+
+    /** All the brushes that are currently being edited anywhere */
+    public editingList: Writable<BrushMaterial[]> = writable([]);
 
     /** If the brushes are currently loading */
     public loading: Writable<boolean> = writable(false);
@@ -56,6 +62,8 @@ export class BrushesModule {
     /** Function to save data for the brushes */
     public async save() {
         try {
+            // Close the brush currently being edited
+            this.notifyClosedEditedBrush();
             await this.saveBrushesForTilesets();
         }
         catch (err) {
@@ -63,7 +71,39 @@ export class BrushesModule {
         }
     }
 
-    // ANCHOR Secondary Methods
+    // ANCHOR Other view updating
+    /** Loops through all other MapEditors and pushes this brush into the editing ones */
+    public notifyBrushEditingStarted(brush: BrushMaterial) {
+        for (const view of this.context.getOtherViews()) {
+            view.brushes.editingList.update(list => {
+                list.push(brush);
+                return list;
+            });
+        }
+    }
+    /** Loops through all other MapEditors and removes this brush from the editing ones */
+    public notifyBrushEditingDone(brush: BrushMaterial) {
+        for (const view of this.context.getOtherViews()) {
+            view.brushes.editingList.update(list => {
+                list.splice(list.findIndex((b) => b === brush), 1);
+                return list;
+            })
+        }
+    }
+    /** Returns if the given brush is being edited inside any other MapEditor */
+    public brushIsBeingEditedAnywhere(brush: BrushMaterial) {
+        const list = get(this.editingList);
+        for (const b of list) {
+            if (b.equals(brush)) return true;
+        }
+        return false;
+    }
+    private notifyClosedEditedBrush() {
+        if (!get(this.editing)) return;
+        this.notifyBrushEditingDone(get(this.editing));
+    }
+
+    // ANCHOR Changes Methods
     public undoBrushChanges() {
         this.$editingChanges.undo();
     }
