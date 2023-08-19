@@ -10,6 +10,7 @@
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
+    const loadingPalette = context.palette.loading;
 
     $: selection =
         $material instanceof SelectionMaterial
@@ -17,6 +18,10 @@
                 ? null
                 : $material
             : null;
+
+    $: $loadingPalette === true
+        ? ($material = context.palette.getMetatileZeroBrush())
+        : null;
 </script>
 
 <div

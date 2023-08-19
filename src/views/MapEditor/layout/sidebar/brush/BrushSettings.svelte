@@ -25,10 +25,12 @@
         public async revert(): Promise<void> {
             this.editingBrush.set(this.oldBrush.clone());
             this.brushCanvas.buildAllChunks(false);
+            this.brushCanvas.resizeChangeApplied.set(new BlocksData(1, 1));
         }
         public async apply(): Promise<void> {
             this.editingBrush.set(this.newBrush.clone());
             this.brushCanvas.buildAllChunks(false);
+            this.brushCanvas.resizeChangeApplied.set(new BlocksData(1, 1));
         }
     }
 </script>
@@ -39,6 +41,7 @@
     import Input from "src/components/Input.svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import { PaletteMaterial } from "src/views/MapEditor/editor/materials";
+    import { BlocksData } from "src/views/MapEditor/editor/blocks_data";
 
     const MAX_WIDTH = SimpleBrush.MAX_WIDTH;
     const MAX_HEIGHT = SimpleBrush.MAX_HEIGHT;

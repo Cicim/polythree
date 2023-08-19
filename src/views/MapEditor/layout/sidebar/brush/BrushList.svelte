@@ -8,7 +8,6 @@
         SimpleBrush,
         NinePatchBrush,
     } from "src/views/MapEditor/editor/brushes";
-    import Input from "src/components/Input.svelte";
     import {
         IconOption,
         Menu,
@@ -28,7 +27,7 @@
     const brushNew = context.brushes.brushNew;
 
     let filterString: string = "";
-    function clearFilter(event: CustomEvent) {
+    function clearFilter() {
         filterString = "";
     }
 

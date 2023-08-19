@@ -6,6 +6,7 @@ import { BlocksData, NULL } from "../editor/blocks_data";
 import type MapCanvas from "../editor/MapCanvas.svelte";
 import { config } from "src/systems/global";
 import { invoke } from "@tauri-apps/api";
+import { PaletteMaterial } from "../editor/materials";
 
 export class PaletteModule {
     private context: MapEditorContext;
@@ -72,6 +73,9 @@ export class PaletteModule {
     }
 
     // ANCHOR Secondary Methods
+    public getMetatileZeroBrush(): PaletteMaterial {
+        return new PaletteMaterial(new BlocksData(1, 1, ...this.$blocks.get(0, 0)));
+    }
     public tryToRebuildLevels() {
         this.$mapCanvas?.rebuildLevels();
     }

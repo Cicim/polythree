@@ -169,7 +169,7 @@
     // Apply the changes to the brush if you were start reloading the brushes
     $: $loading,
         (() => {
-            if ($loading && $editingBrush) applyChanges();
+            if ($loading && $editingBrush) discardChanges();
         })();
 </script>
 
