@@ -12,14 +12,15 @@
     import {
         IconOption,
         Menu,
-        Separator,
         showContextMenu,
     } from "src/systems/context_menu";
+    import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
 
     export let state: SidebarState;
     export let levelMode: boolean;
 
     const context: MapEditorContext = getContext("context");
+    const editingList = BrushesModule.editingList;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
 
@@ -83,16 +84,18 @@
         />
     </div>
     <div class="brush-container">
-        {#each [...$primaryBrushes, ...$secondaryBrushes] as brush (brush.uid)}
-            <BrushCard
-                show={brush.name
-                    .toLowerCase()
-                    .includes(filterString.toLowerCase())}
-                {brush}
-            />
-        {:else}
-            <div class="no-brushes">There are no brushes</div>
-        {/each}
+        {#key $editingList}
+            {#each [...$primaryBrushes, ...$secondaryBrushes] as brush (brush.uid)}
+                <BrushCard
+                    show={brush.name
+                        .toLowerCase()
+                        .includes(filterString.toLowerCase())}
+                    {brush}
+                />
+            {:else}
+                <div class="no-brushes">There are no brushes</div>
+            {/each}
+        {/key}
     </div>
 </div>
 

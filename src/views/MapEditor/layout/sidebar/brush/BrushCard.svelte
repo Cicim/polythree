@@ -13,13 +13,14 @@
     import BrushSettings from "./BrushSettings.svelte";
     import { tooltip } from "src/systems/tooltip";
     import type { Writable } from "svelte/store";
+    import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
     const editingBrush = context.brushes.editing;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
-    const editingList = context.brushes.editingList;
+    const editingList = BrushesModule.editingList;
 
     /** This brush */
     export let brush: BrushMaterial;

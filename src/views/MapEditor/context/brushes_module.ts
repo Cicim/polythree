@@ -34,7 +34,7 @@ export class BrushesModule {
     public editingCanvas: Writable<MapCanvas> = writable(null);
 
     /** All the brushes that are currently being edited anywhere */
-    public editingList: Writable<BrushMaterial[]> = writable([]);
+    static editingList: Writable<BrushMaterial[]> = writable([]);
 
     /** If the brushes are currently loading */
     public loading: Writable<boolean> = writable(false);
@@ -74,25 +74,21 @@ export class BrushesModule {
     // ANCHOR Other view updating
     /** Loops through all other MapEditors and pushes this brush into the editing ones */
     public notifyBrushEditingStarted(brush: BrushMaterial) {
-        for (const view of this.context.getOtherViews()) {
-            view.brushes.editingList.update(list => {
-                list.push(brush);
-                return list;
-            });
-        }
+        BrushesModule.editingList.update(list => {
+            list.push(brush);
+            return list;
+        });
     }
     /** Loops through all other MapEditors and removes this brush from the editing ones */
     public notifyBrushEditingDone(brush: BrushMaterial) {
-        for (const view of this.context.getOtherViews()) {
-            view.brushes.editingList.update(list => {
-                list.splice(list.findIndex((b) => b === brush), 1);
-                return list;
-            })
-        }
+        BrushesModule.editingList.update(list => {
+            list.splice(list.findIndex((b) => b === brush), 1);
+            return list;
+        });
     }
     /** Returns if the given brush is being edited inside any other MapEditor */
     public brushIsBeingEditedAnywhere(brush: BrushMaterial) {
-        const list = get(this.editingList);
+        const list = get(BrushesModule.editingList);
         for (const b of list) {
             if (b.equals(brush)) return true;
         }

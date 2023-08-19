@@ -4,11 +4,13 @@
     import { getContext } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import BrushCard from "./BrushCard.svelte";
+    import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
 
     export let state: SidebarState;
     export let levelMode: boolean;
 
     const context: MapEditorContext = getContext("context");
+    const editingList = BrushesModule.editingList;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
     const layoutLocked = context.layoutLocked;
@@ -28,9 +30,11 @@
         class:no-brushes={$primaryBrushes.length === 0 &&
             $secondaryBrushes.length === 0}
     >
-        {#each [...$primaryBrushes, ...$secondaryBrushes] as brush (brush.uid)}
-            <BrushCard small={true} {brush} />
-        {/each}
+        {#key editingList}
+            {#each [...$primaryBrushes, ...$secondaryBrushes] as brush (brush.uid)}
+                <BrushCard small={true} {brush} />
+            {/each}
+        {/key}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class="view-all" on:click={() => (state = SidebarState.BrushList)}>
             <iconify-icon icon="material-symbols:list" width="2em" />
