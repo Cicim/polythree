@@ -11,6 +11,8 @@
     import BrushPreview from "./BrushPreview.svelte";
     import BrushSettings from "./BrushSettings.svelte";
     import { EditorChanges } from "src/systems/changes";
+    import TextToolButton from "src/views/MapEditor/TextToolButton.svelte";
+    import { IconOption, Menu } from "src/systems/context_menu";
 
     export let state: SidebarState;
     export let permissionMode: boolean;
@@ -24,10 +26,19 @@
     const editingBrush = context.brushes.editing;
     const editingBrushClone = context.brushes.editingClone;
     const editingBrushChanges = context.brushes.editingChanges;
+    const brushNew = context.brushes.brushNew;
     const brushCanvas = context.brushes.editingCanvas;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
     const loading = context.brushes.loading;
+
+    function resetEditingBrush() {
+        $brushNew = false;
+        $editingBrushChanges = null;
+        $editingBrush = null;
+        context.brushes.editingIndex = null;
+        state = context.brushes.editingEnteredFromState;
+    }
 
     /** Modifies the brush currently being edited and updates the state */
     function applyChanges() {
@@ -79,10 +90,45 @@
             }
         }
 
-        $editingBrushChanges = null;
-        $editingBrush = null;
-        context.brushes.editingIndex = null;
-        state = context.brushes.editingEnteredFromState;
+        resetEditingBrush();
+    }
+
+    function discardChanges() {
+        // Notify that the clone is now free
+        context.brushes.notifyBrushEditingDone($editingBrushClone);
+
+        // If the brush was originally primary
+        if ($editingBrushClone.onlyUsesPrimaryTiles(context.tileset1Length)) {
+            if ($brushNew) {
+                primaryBrushes.update((brushes) => {
+                    brushes.pop();
+                    return brushes;
+                });
+            } else {
+                primaryBrushes.update((brushes) => {
+                    brushes[context.brushes.editingIndex] =
+                        $editingBrushClone.clone();
+                    return brushes;
+                });
+            }
+        }
+        // Otherwise if the brush was secondary
+        else {
+            if ($brushNew) {
+                secondaryBrushes.update((brushes) => {
+                    brushes.pop();
+                    return brushes;
+                });
+            } else {
+                secondaryBrushes.update((brushes) => {
+                    brushes[context.brushes.editingIndex] =
+                        $editingBrushClone.clone();
+                    return brushes;
+                });
+            }
+        }
+
+        resetEditingBrush();
     }
 
     /** Starts editing the brushes if you are not editing a brush already */
@@ -134,7 +180,7 @@
     use:resizeY={{
         minHeight: () => Math.min(100, window.innerHeight * 0.2),
         maxHeight: () => window.innerHeight * 0.5,
-        startHeight: 200,
+        startHeight: 291,
     }}
 >
     <div class="brush-editor">
@@ -194,11 +240,20 @@
                             on:click={() => (state = SidebarState.Brush)}
                         />
                     {/if}
-                    <ToolButton
+                    <TextToolButton
                         icon="mdi:tick"
                         theme="transparent"
                         title="Done Editing"
+                        smallChevron={true}
                         on:click={applyChanges}
+                        menu={new Menu([
+                            new IconOption("Apply Changes", "mdi:tick", () =>
+                                applyChanges()
+                            ),
+                            new IconOption("Discard Changes", "mdi:close", () =>
+                                discardChanges()
+                            ),
+                        ])}
                     />
                 </div>
             </div>

@@ -23,6 +23,8 @@
     const editingList = BrushesModule.editingList;
     const primaryBrushes = context.brushes.primary;
     const secondaryBrushes = context.brushes.secondary;
+    const editingBrush = context.brushes.editing;
+    const brushNew = context.brushes.brushNew;
 
     let filterString: string = "";
     function clearFilter(event: KeyboardEvent) {
@@ -35,10 +37,14 @@
     /** Returns a callback that when executed creates a brush of the initially given class */
     function createBrushCreateCallback(Type: any) {
         return () => {
+            const brush = new Type(context.tileset1Offset);
             primaryBrushes.update((brushes) => {
-                brushes.push(new Type(context.tileset1Offset));
+                brushes.push(brush);
                 return brushes;
             });
+            // Start editing the brush
+            $editingBrush = brush;
+            $brushNew = true;
         };
     }
 

@@ -32,6 +32,8 @@ export class BrushesModule {
     public editingIndex: number = null;
     /** The Map Canvas of the currently edited blocks */
     public editingCanvas: Writable<MapCanvas> = writable(null);
+    /** If you are editing a newly created brush */
+    public brushNew: Writable<boolean> = writable(false);
 
     /** All the brushes that are currently being edited anywhere */
     static editingList: Writable<BrushMaterial[]> = writable([]);

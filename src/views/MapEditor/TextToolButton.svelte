@@ -7,6 +7,7 @@
 
     const context: EditorContext = getContext("context");
 
+    export let smallChevron: boolean = false;
     export let text: string = "";
     export let title: string = "";
     export let moreActionString: string = "More actions...";
@@ -34,6 +35,7 @@
 
 <div
     class="toolbutton"
+    class:small-chevron={smallChevron}
     class:primary={theme === "primary"}
     class:secondary={theme === "secondary"}
     class:transparent={theme === "transparent"}
@@ -124,7 +126,7 @@
         button {
             background: var(--bg);
             border: 1px solid var(--border);
-            color: var(--fg);
+            color: var(--fg) !important;
 
             display: flex;
             align-items: center;
@@ -144,7 +146,7 @@
             &:focus {
                 background: var(--bg-hover);
                 border-color: var(--border-hover);
-                color: var(--fg-hover);
+                color: var(--fg-hover) !important;
             }
             &:active {
                 background: var(--bg-hover);
@@ -166,6 +168,17 @@
             width: 1px;
             height: 75%;
             align-self: center;
+        }
+
+        &.small-chevron {
+            .text {
+                padding-left: 2px;
+                padding-right: 6px;
+            }
+            .more,
+            .separator {
+                padding: 0;
+            }
         }
     }
 </style>
