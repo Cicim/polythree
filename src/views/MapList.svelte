@@ -30,6 +30,7 @@
     import CloseViewsDialog from "../components/dialog/CloseViewsDialog.svelte";
     import CreateMapDialog from "./MapList/CreateMapDialog.svelte";
     import { resizeX } from "src/systems/resize";
+    import SearchBar from "src/components/SearchBar.svelte";
 
     export let context: MapListContext;
     let data = context.data;
@@ -294,14 +295,11 @@
                 />
 
                 <div class="searchbar" bind:this={searchBarEl}>
-                    <Input
+                    <SearchBar
                         on:submit={submitSearch}
+                        submitOnInput={true}
                         bind:value={searchString}
-                        placeholder="Search"
                     />
-                    <Button color="secondary" on:click={submitSearch}
-                        >Search</Button
-                    >
                 </div>
                 <div class="filters">
                     {#each Object.values(groupCriteriaTable) as groupCriteria, i}
@@ -396,11 +394,7 @@
             display: grid;
             flex-direction: column;
             grid-template-columns: 1fr minmax(0, min-content);
-
-            :global(> *) {
-                padding: 0.5em 1em;
-                font-size: inherit;
-            }
+            font-size: 20px;
         }
 
         > :global(.icons-container) {
