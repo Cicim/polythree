@@ -464,8 +464,8 @@
         if (level === NULL) return ["#888888", ""];
 
         const color = LEVEL_COLORS[level] ?? "#FFFFFF";
-        const layer = level & 0xff;
-        const obstacle = level >> 8;
+        const obstacle = level & 1;
+        const layer = level >> 1;
 
         if (obstacle === 0) return [color, layer.toString()];
 

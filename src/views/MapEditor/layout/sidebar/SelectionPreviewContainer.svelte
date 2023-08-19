@@ -5,7 +5,7 @@
     import SelectionPreview from "../SelectionPreview.svelte";
     import { SelectionMaterial } from "../../editor/materials";
 
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
     export let state: SidebarState;
 
     const context: MapEditorContext = getContext("context");
@@ -21,12 +21,12 @@
 
 <div
     class:hidden={selection === null ||
-        (!levelMode && state === SidebarState.BrushList)}
+        (!permissionMode && state === SidebarState.BrushList)}
     class="multi-selection-view"
 >
     {#key selection}
         {#if selection !== null}
-            <SelectionPreview {selection} showLevels={levelMode} />
+            <SelectionPreview {selection} showLevels={permissionMode} />
         {/if}
     {/key}
 </div>

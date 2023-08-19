@@ -7,7 +7,7 @@
     import MapCanvas from "../../editor/MapCanvas.svelte";
 
     export let state: SidebarState;
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
     let mapCanvas: MapCanvas;
 
     const context: MapEditorContext = getContext("context");
@@ -21,7 +21,7 @@
 
 <div
     class="borders-view"
-    class:hidden={levelMode || state !== SidebarState.Borders}
+    class:hidden={permissionMode || state !== SidebarState.Borders}
     use:resizeY={{
         minHeight: () => window.innerHeight * 0.1,
         maxHeight: () => window.innerHeight * 0.33,

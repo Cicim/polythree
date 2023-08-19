@@ -17,7 +17,7 @@
     import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
 
     export let state: SidebarState;
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
 
     const context: MapEditorContext = getContext("context");
     const editingList = BrushesModule.editingList;
@@ -52,7 +52,7 @@
 </script>
 
 <div
-    class:hidden={levelMode || state !== SidebarState.BrushList}
+    class:hidden={permissionMode || state !== SidebarState.BrushList}
     class="brush-list-view"
 >
     <div class="topbar">

@@ -22,7 +22,18 @@ export interface MapEditorData {
     tilesets?: TilesetsData,
 }
 
-export class MapEditorContext extends TabbedEditorContext {
+type MapEditorTabsIds = "layout" | "permissions" | "events" | "connections" | "encounters" | "header";
+
+export enum MapEditorTabs {
+    Layout = "layout",
+    Permissions = "permissions",
+    Events = "events",
+    Connections = "connections",
+    Encounters = "encounters",
+    Header = "header",
+}
+
+export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
     public name = "Map Editor";
     public singularTab = true;
     declare public identifier: MapEditorProperties;
@@ -59,29 +70,29 @@ export class MapEditorContext extends TabbedEditorContext {
     public layoutId: number;
     public layoutOffset: number;
 
-    public tabs: TabbedEditorTabs = {
-        "header": {
+    public tabs: TabbedEditorTabs<MapEditorTabsIds> = {
+        [MapEditorTabs.Header]: {
             title: "Header",
             icon: "mdi:file-document-edit-outline",
         },
-        "encounters": {
+        [MapEditorTabs.Encounters]: {
             title: "Encounters",
             icon: "mdi:account-group",
         },
-        "connections": {
+        [MapEditorTabs.Connections]: {
             title: "Connections",
             icon: "mdi:link",
         },
-        "scripts": {
-            title: "Scripts",
+        [MapEditorTabs.Events]: {
+            title: "Events",
             icon: "mdi:script-text",
         },
-        "level": {
-            title: "Level",
+        [MapEditorTabs.Permissions]: {
+            title: "Permissions",
             icon: "mdi:map",
             isLocked: false,
         },
-        "layout": {
+        [MapEditorTabs.Layout]: {
             title: "Layout",
             icon: "mdi:grid",
             isLocked: false,

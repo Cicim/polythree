@@ -5,7 +5,7 @@
     import type { MapEditorContext } from "src/views/MapEditor";
     import { getContext } from "svelte";
 
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
     export let state: SidebarState;
 
     const context: MapEditorContext = getContext("context");
@@ -27,7 +27,7 @@
 {:else}
     <!-- ANCHOR Palette -->
     <div
-        class:hidden={levelMode ||
+        class:hidden={permissionMode ||
             state === SidebarState.BrushList ||
             state === SidebarState.BrushLevel}
         class="tile-palette-view"
@@ -44,7 +44,7 @@
     </div>
     <!-- ANCHOR Footbar -->
     <div
-        class:hidden={levelMode ||
+        class:hidden={permissionMode ||
             state === SidebarState.BrushList ||
             state === SidebarState.BrushLevel}
         class="footbar"

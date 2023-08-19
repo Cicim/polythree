@@ -7,7 +7,7 @@
     import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
 
     export let state: SidebarState;
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
 
     const context: MapEditorContext = getContext("context");
     const editingList = BrushesModule.editingList;
@@ -18,7 +18,9 @@
 
 <div
     class="brushes-container"
-    class:hidden={$layoutLocked || levelMode || state !== SidebarState.Palette}
+    class:hidden={$layoutLocked ||
+        permissionMode ||
+        state !== SidebarState.Palette}
     use:resizeY={{
         minHeight: () => Math.max(100, window.innerHeight * 0.1),
         maxHeight: () => Math.min(288, window.innerHeight * 0.33),

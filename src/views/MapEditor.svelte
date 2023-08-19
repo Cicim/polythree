@@ -43,7 +43,7 @@
     $: $data, updateLayoutLock();
 
     $: context.tabs.layout.isLocked = $layoutLocked;
-    $: context.tabs.level.isLocked = $layoutLocked;
+    $: context.tabs.permissions.isLocked = $layoutLocked;
 
     let activeTab = context.selectedTab;
 
@@ -63,8 +63,8 @@
         <div
             class="editor-container layout"
             class:hidden={$activeTab !== "layout" &&
-                $activeTab !== "level" &&
-                $activeTab !== "scripts"}
+                $activeTab !== "permissions" &&
+                $activeTab !== "events"}
         >
             <LayoutView />
         </div>

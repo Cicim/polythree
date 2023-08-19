@@ -53,8 +53,14 @@
             Math.min(windowWidth - tooltipWidth, mouseX - tooltipWidth / 2)
         );
         // If the target is <= 200px center the tooltip on the target
-        if (targetWidth <= 200)
+        if (targetWidth <= 200) {
             placementX = targetX + targetWidth / 2 - tooltipWidth / 2;
+            // If there isn't enough space to the left, move it to the right
+            if (placementX < 0) placementX = 0;
+            // If there isn't enough space to the right, move it to the left
+            if (placementX + tooltipWidth > windowWidth)
+                placementX = windowWidth - tooltipWidth;
+        }
 
         const mouseOffset =
             targetWidth <= 200

@@ -28,11 +28,11 @@ export class ActionsModule {
     public selectLayoutEditor() {
         this.context.changeTab("layout");
     }
-    public selectLevelEditor() {
-        this.context.changeTab("level");
+    public selectPermissionsEditor() {
+        this.context.changeTab("permissions");
     }
-    public selectScriptsEditor() {
-        this.context.changeTab("scripts");
+    public selectEventsEditor() {
+        this.context.changeTab("events");
     }
     public selectEncountersEditor() {
         this.context.changeTab("encounters");
@@ -54,7 +54,7 @@ export class ActionsModule {
     }
 
     public async resizeMap() {
-        if (this.tab !== "level" && this.tab !== "layout" || this.layoutLocked) return
+        if (this.tab !== "permissions" && this.tab !== "layout" || this.layoutLocked) return
         // Ask the user for confirmation
         await spawnDialog(ResizeMapDialog, {
             layoutName: "Map",
@@ -64,7 +64,7 @@ export class ActionsModule {
         });
     }
     public async resizeBorders() {
-        if (this.tab !== "level" && this.tab !== "layout" || this.layoutLocked) return
+        if (this.tab !== "permissions" && this.tab !== "layout" || this.layoutLocked) return
         // Ask the user for confirmation
         await spawnDialog(ResizeMapDialog, {
             layoutName: "Borders",
@@ -77,7 +77,7 @@ export class ActionsModule {
         });
     }
     public async updateLayout() {
-        if (this.tab !== "header" && this.tab !== "level" && this.tab !== "layout") return;
+        if (this.tab !== "header" && this.tab !== "permissions" && this.tab !== "layout") return;
         // Ask the user for confirmation
         const newIdResult: number = await spawnDialog(LayoutPickerDialog, {
             reason: "Choose a new layout to use for this map.",
@@ -97,7 +97,7 @@ export class ActionsModule {
         else this.context.changes.pushNoApply(change);
     }
     public async updateTilesets() {
-        if (this.tab !== "level" && this.tab !== "layout" || this.layoutLocked) return;
+        if (this.tab !== "permissions" && this.tab !== "layout" || this.layoutLocked) return;
         // Ask the user for confirmation
         const dialogResult: [number, number] | null = await spawnDialog(TilesetPickerDialog, {
             reason: "Choose a new tileset to use for this map.",
@@ -124,11 +124,11 @@ export class ActionsModule {
             "map_editor/select_layout": (view: MapEditorContext) => {
                 view.actions.selectLayoutEditor();
             },
-            "map_editor/select_level": (view: MapEditorContext) => {
-                view.actions.selectLevelEditor();
+            "map_editor/select_permissions": (view: MapEditorContext) => {
+                view.actions.selectPermissionsEditor();
             },
-            "map_editor/select_scripts": (view: MapEditorContext) => {
-                view.actions.selectScriptsEditor();
+            "map_editor/select_events": (view: MapEditorContext) => {
+                view.actions.selectEventsEditor();
             },
             "map_editor/select_encounters": (view: MapEditorContext) => {
                 view.actions.selectEncountersEditor();
@@ -145,10 +145,10 @@ export class ActionsModule {
             "map_editor/zoom_out": (view: MapEditorContext) => {
                 view.actions.zoomOut();
             },
-            "map_editor/undo_tileset_level_changes": (view: MapEditorContext) => {
+            "map_editor/undo_tileset_permissions_changes": (view: MapEditorContext) => {
                 view.actions.undoTilesetChanges();
             },
-            "map_editor/redo_tileset_level_changes": (view: MapEditorContext) => {
+            "map_editor/redo_tileset_permissions_changes": (view: MapEditorContext) => {
                 view.actions.redoTilesetChanges();
             },
             "map_editor/palette_move_up": (view: MapEditorContext) => {
@@ -176,19 +176,19 @@ export class ActionsModule {
                 view.palette.move(1, 0, true);
             },
             "map_editor/select_pencil": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "level")
+                if (view.tab === "layout" || view.tab === "permissions")
                     view.selectedTool.set(EditorTool.Pencil);
             },
             "map_editor/select_rectangle": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "level")
+                if (view.tab === "layout" || view.tab === "permissions")
                     view.selectedTool.set(EditorTool.Rectangle);
             },
             "map_editor/select_fill": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "level")
+                if (view.tab === "layout" || view.tab === "permissions")
                     view.selectedTool.set(EditorTool.Fill);
             },
             "map_editor/select_replace": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "level")
+                if (view.tab === "layout" || view.tab === "permissions")
                     view.selectedTool.set(EditorTool.Replace);
             },
             "map_editor/export_map": (view: MapEditorContext) => {
@@ -198,7 +198,7 @@ export class ActionsModule {
                 console.log("Import Map");
             },
             "map_editor/toggle_animations": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "level")
+                if (view.tab === "layout" || view.tab === "permissions")
                     view.animations.togglePlaying();
             },
             "map_editor/resize_main_map": (view: MapEditorContext) => {

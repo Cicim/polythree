@@ -5,13 +5,13 @@
     import type { MapEditorContext } from "src/views/MapEditor";
 
     export let state: SidebarState;
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
     const context: MapEditorContext = getContext("context");
     const layoutLocked = context.layoutLocked;
 </script>
 
 <div
-    class:hidden={levelMode || state !== SidebarState.Palette}
+    class:hidden={permissionMode || state !== SidebarState.Palette}
     class="topbar-view"
 >
     <Button color="secondary" on:click={() => (state = SidebarState.Borders)}>

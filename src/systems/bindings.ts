@@ -30,7 +30,7 @@ enum ConditionType {
 };
 type Condition = [ConditionType, string?, string?];
 type Conditions = Condition[];
-type BindingFunction = (view: ViewContext | EditorContext | TabbedEditorContext) => void | undefined;
+type BindingFunction = (view: ViewContext | EditorContext | TabbedEditorContext<any>) => void | undefined;
 
 class KeyBinding {
     public name: string;
@@ -177,16 +177,16 @@ const keybindings: Record<string, KeyBinding> = {
     "maplist/clear_and_focus_search": new KeyBinding("Clear and Focus Search", "Ctrl+G", undefined, "active.name === 'Map List'"),
     "maplist/delete_selected": new KeyBinding("Delete Selected", "Delete", undefined, "active.name === 'Map List'"),
     "maplist/new_map": new KeyBinding("New Map", "Ctrl+N", undefined, "active.name === 'Map List'"),
-    "map_editor/select_layout": new KeyBinding("Select Layout", "Ctrl+1", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_level": new KeyBinding("Select Level", "Ctrl+2", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_scripts": new KeyBinding("Select Scripts", "Ctrl+3", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_connections": new KeyBinding("Select Connections", "Ctrl+4", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_encounters": new KeyBinding("Select Encounters", "Ctrl+5", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_header": new KeyBinding("Select Header", "Ctrl+6", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_layout": new KeyBinding("Select Layout Editor", "Ctrl+1", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_permissions": new KeyBinding("Select Permissions Editor", "Ctrl+2", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_events": new KeyBinding("Select Events Editor", "Ctrl+3", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_connections": new KeyBinding("Select Connections Editor", "Ctrl+4", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_encounters": new KeyBinding("Select Encounters Editor", "Ctrl+5", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_header": new KeyBinding("Select Header Editor", "Ctrl+6", undefined, "active.name === 'Map Editor'"),
     "map_editor/zoom_in": new KeyBinding("Zoom In", "Ctrl++", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
     "map_editor/zoom_out": new KeyBinding("Zoom Out", "Ctrl+-", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
-    "map_editor/undo_tileset_level_changes": new KeyBinding("Undo Tileset Level Changes", "Ctrl+Shift+Z", undefined, "active.name === 'Map Editor' && active.tab === 'level'"),
-    "map_editor/redo_tileset_level_changes": new KeyBinding("Redo Tileset Level Changes", "Ctrl+Shift+Y", undefined, "active.name === 'Map Editor' && active.tab === 'level'"),
+    "map_editor/undo_tileset_permissions_changes": new KeyBinding("Undo Tileset Permissions Changes", "Ctrl+Shift+Z", undefined, "active.name === 'Map Editor' && active.tab === 'permissions'"),
+    "map_editor/redo_tileset_permissions_changes": new KeyBinding("Redo Tileset Permissions Changes", "Ctrl+Shift+Y", undefined, "active.name === 'Map Editor' && active.tab === 'permissions'"),
     "map_editor/palette_move_up": new KeyBinding("Move Up on the Palette", "W", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_select_up": new KeyBinding("Move Up on the Palette while Selecting", "Shift+W", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_move_down": new KeyBinding("Move down on the Palette", "S", undefined, "active.name === 'Map Editor'"),

@@ -33,7 +33,7 @@
 <div class="editor">
     <div class="toolbar">
         <div class="buttons">
-            {#if $tab !== "scripts"}
+            {#if $tab !== "events"}
                 <ToolButton
                     bind:group={$selectedToolStore}
                     value={EditorTool.Pencil}
@@ -75,7 +75,7 @@
             {/if}
         </div>
         <div class="actions">
-            {#if $tab !== "scripts"}
+            {#if $tab !== "events"}
                 <TextToolButton
                     title="Resize Map"
                     icon="mdi:resize"
@@ -112,7 +112,7 @@
                     ])}
                 />
             {/if}
-            {#if $layoutLocked && ($tab === "layout" || $tab === "level")}
+            {#if $layoutLocked && ($tab === "layout" || $tab === "permissions")}
                 <span class="separator" />
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
@@ -128,7 +128,7 @@
         </div>
     </div>
     <div class="area">
-        <LayoutViewArea editLevels={$activeTab === "level"} />
+        <LayoutViewArea editLevels={$activeTab === "permissions"} />
     </div>
     <div
         class="sidebar"
@@ -140,10 +140,10 @@
     >
         <div class="resize-handle left" />
         <LayoutSidebar
-            hidden={$activeTab !== "layout" && $activeTab !== "level"}
-            levelMode={$activeTab === "level"}
+            hidden={$activeTab !== "layout" && $activeTab !== "permissions"}
+            permissionMode={$activeTab === "permissions"}
         />
-        <ScriptsSidebar hidden={$activeTab !== "scripts"} />
+        <ScriptsSidebar hidden={$activeTab !== "events"} />
     </div>
 </div>
 

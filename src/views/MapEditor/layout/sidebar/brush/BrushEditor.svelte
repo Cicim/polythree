@@ -13,7 +13,7 @@
     import { EditorChanges } from "src/systems/changes";
 
     export let state: SidebarState;
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
 
     let bodyEl: HTMLDivElement;
     let mapCanvas: MapCanvas;
@@ -129,7 +129,7 @@
 
 <div
     class="brush-view"
-    class:hidden={levelMode ||
+    class:hidden={permissionMode ||
         (state !== SidebarState.Brush && state !== SidebarState.BrushLevel)}
     use:resizeY={{
         minHeight: () => Math.min(100, window.innerHeight * 0.2),

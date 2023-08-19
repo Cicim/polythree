@@ -16,34 +16,28 @@
     import BrushPalette from "./sidebar/brush/BrushPalette.svelte";
     import BordersEditor from "./sidebar/BordersEditor.svelte";
     import BrushEditor from "./sidebar/brush/BrushEditor.svelte";
-    import LevelPaletteContainer from "./sidebar/LevelPaletteContainer.svelte";
+    import PermissionPaletteContainer from "./sidebar/PermissionPaletteContainer.svelte";
     import TilePaletteContainer from "./sidebar/TilePaletteContainer.svelte";
     import TilesetLevelEditorContainer from "./sidebar/TilesetLevelEditorContainer.svelte";
     import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
     import { SelectionMaterial } from "../editor/materials";
-    import { EditorChanges } from "src/systems/changes";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
 
     /** Set this to true if you are editing the levels */
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
     export let hidden: boolean;
 
-    let levelPalette: LevelPaletteContainer;
+    let levelPalette: PermissionPaletteContainer;
     let tilePalette: TilePaletteContainer;
 
     const context: MapEditorContext = getContext("context");
-    const editingBrush = context.brushes.editing;
-    const editingBrushChanges = context.brushes.editingChanges;
-    const editingBrushClone = context.brushes.editingClone;
     const material = context.material;
-    const primaryBrushes = context.brushes.primary;
-    const secondaryBrushes = context.brushes.secondary;
     const loadingBrushes = context.brushes.loading;
 
     // Update the moveOnPalette callback
     context.palette.setMoveCallback(
         (dirX: number, dirY: number, select: boolean) => {
-            if (levelMode || state === SidebarState.BrushLevel)
+            if (permissionMode || state === SidebarState.BrushLevel)
                 levelPalette.moveOnPalette(dirX, dirY, select);
             else tilePalette.moveOnPalette(dirX, dirY, select);
         }
@@ -72,28 +66,32 @@
         <LoadingScreen />
     {:else}
         <!-- Brush List -->
-        <BrushList {levelMode} bind:state />
+        <BrushList {permissionMode} bind:state />
     {/if}
     <!-- Top bar -->
-    <TopBar {levelMode} bind:state />
+    <TopBar {permissionMode} bind:state />
     {#if $loadingBrushes}
         <LoadingScreen />
     {:else}
         <!-- Brushes Container -->
-        <BrushPalette {levelMode} bind:state />
+        <BrushPalette {permissionMode} bind:state />
     {/if}
     <!-- Borders editing view -->
-    <BordersEditor {levelMode} bind:state />
+    <BordersEditor {permissionMode} bind:state />
     <!-- Brush editing view -->
-    <BrushEditor {levelMode} bind:state />
-    <!-- Level Palette -->
-    <LevelPaletteContainer {levelMode} bind:state bind:this={levelPalette} />
+    <BrushEditor {permissionMode} bind:state />
+    <!-- Permissions Palette -->
+    <PermissionPaletteContainer
+        {permissionMode}
+        bind:state
+        bind:this={levelPalette}
+    />
     <!-- Tile palette view -->
-    <TilePaletteContainer {levelMode} bind:state bind:this={tilePalette} />
+    <TilePaletteContainer {permissionMode} bind:state bind:this={tilePalette} />
     <!-- Palette Permissions Editing -->
-    <TilesetLevelEditorContainer {levelMode} />
+    <TilesetLevelEditorContainer {permissionMode} />
     <!-- Mutliselect preview -->
-    <SelectionPreviewContainer {levelMode} bind:state />
+    <SelectionPreviewContainer {permissionMode} bind:state />
 </div>
 
 <style lang="scss">

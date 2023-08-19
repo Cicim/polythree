@@ -404,24 +404,30 @@ export interface EditorSubTab {
     isLocked?: boolean;
 }
 
-export type TabbedEditorTabs = Record<string, EditorSubTab>;
+export type TabbedEditorTabs<T extends string = string> = Record<T, EditorSubTab>;
 
 /** A context that has multiple vertical tabs */
-export abstract class TabbedEditorContext extends EditorContext {
-    public tabs: TabbedEditorTabs;
-    public selectedTab: Writable<string> = writable("");
+export abstract class TabbedEditorContext<T extends string> extends EditorContext {
+    /** List of all this context's tabs */
+    public tabs: TabbedEditorTabs<T>;
+    /** A store containing the currently selected tab */
+    public selectedTab: Writable<T> = writable(null);
+
+    /** Quick and dirty variable to achieve removal of some contours while loading */
     public _cosmeticHasSideTabs = true;
 
     /** Getter for the selected tab's id, used in keybindings */
-    public get tab() {
+    public get tab(): T {
         return get(this.selectedTab);
     }
 
-    public set tab(tab: string) {
+    /** Setter to quickly change tab */
+    public set tab(tab: T) {
         this.changeTab(tab);
     }
 
-    public changeTab(tab: string) {
+    /** Changes the tab to the specified one */
+    public changeTab(tab: T) {
         this.selectedTab.set(tab);
     }
 
@@ -432,10 +438,11 @@ export abstract class TabbedEditorContext extends EditorContext {
         this.changes = new EditorChanges(this.data, this.selectedTab);
     }
 
+    /** Creates the view's component */
     public create(): this {
         // If the selected tab is empty, set it to the first tab
-        if (get(this.selectedTab) === "")
-            this.selectedTab.set(Object.keys(this.tabs)[0]);
+        if (get(this.selectedTab) === null)
+            this.selectedTab.set(Object.keys(this.tabs)[0] as T);
         return super.create();
     }
 }

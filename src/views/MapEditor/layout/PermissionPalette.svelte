@@ -9,40 +9,37 @@
     const context: MapEditorContext = getContext("context");
     const material = context.material;
 
-    interface LevelCard {
+    interface PermissionCard {
         text: string;
         obstacle: boolean;
         color: string;
-        level: number;
+        permission: number;
         layer: number;
     }
 
-    let levels: LevelCard[] = [];
-    let levelCount = 64;
+    let permissions: PermissionCard[] = [];
+    let permissionsCount = 32;
     let selected: number = 0;
 
-    for (let i = 0; i < levelCount; i++) {
-        const layer = (i / 2) | 0;
-        const obstacle = i % 2 === 1;
-        const value = layer + (obstacle ? 256 : 0);
-        levels.push({
-            level: value,
+    for (let p = 0; p < permissionsCount; p++) {
+        const layer = p >> 1;
+        const obstacle = !!(p & 1);
+        permissions.push({
+            permission: p,
             layer,
             text: obstacle ? LAYER_CHARS[layer] : layer.toString(),
-            obstacle: i % 2 === 1,
-            color: LEVEL_COLORS[value],
+            obstacle: p % 2 === 1,
+            color: LEVEL_COLORS[p],
         });
     }
 
     let lastXOffset: number = 0;
-    const LAST_Y_LEVEL = 7;
-    function selectLevel(level: number) {
-        selected = level;
-        if (level !== NULL) {
-            const level = (selected % 256) % 4;
-            const obstacle = selected & 0x100;
-            lastXOffset = level + obstacle;
-        }
+    const ROW_WIDTH = 8;
+    const LAST_ROW = 3;
+
+    function selectPermission(permission: number) {
+        selected = permission;
+        if (permission !== NULL) lastXOffset = permission % ROW_WIDTH;
         buildMaterial();
     }
 
@@ -50,71 +47,85 @@
         $material = new PaletteMaterial(new BlocksData(1, 1, null, selected));
     }
 
+    $: $material,
+        (() => {
+            if ($material instanceof PaletteMaterial && $material.isSingular) {
+                const permission = $material.blocks.levels[0];
+                selected = permission;
+                if (permission !== NULL) lastXOffset = permission % ROW_WIDTH;
+            }
+        })();
+
     export function moveOnPalette(
         dirX: number,
         dirY: number,
         _select: boolean
     ) {
+        const GO_DOWN = dirY > 0;
+        const GO_UP = dirY < 0;
+        const GO_RIGHT = dirX > 0;
+        const GO_LEFT = dirX < 0;
+
         if (selected === NULL) {
-            if (dirY > 0) selectLevel(lastXOffset);
-            else if (dirY < 0) selectLevel(LAST_Y_LEVEL * 4 + lastXOffset);
-            else if (dirX < 0) selectLevel(LAST_Y_LEVEL * 4 + 256 + 3);
-            else selectLevel(0);
+            if (GO_DOWN) selectPermission(lastXOffset);
+            else if (GO_UP)
+                selectPermission(LAST_ROW * ROW_WIDTH + lastXOffset);
+            else if (GO_LEFT) selectPermission(LAST_ROW * ROW_WIDTH + 7);
+            else selectPermission(0);
         } else {
-            const level = selected % 256;
-            const isObstacle = selected & 0x100;
-            if (dirX > 0) {
-                if (level === 31 && isObstacle) return selectLevel(NULL);
-
-                if (isObstacle) selectLevel(level + 1);
-                else selectLevel(level + 256);
-            } else if (dirX < 0) {
-                if (level === 0 && !isObstacle) return selectLevel(NULL);
-
-                if (isObstacle) selectLevel(level);
-                else selectLevel(level + 255);
-            } else if (dirY > 0) {
-                if (Math.floor(level / 4) >= LAST_Y_LEVEL)
-                    return selectLevel(NULL);
-                selectLevel(selected + 4);
-            } else if (dirY < 0) {
-                if (Math.floor(level / 4) <= 0) return selectLevel(NULL);
-                selectLevel(selected - 4);
+            if (GO_UP) {
+                // If you're on the first row select NULL
+                if (selected < ROW_WIDTH) selectPermission(NULL);
+                // Else, go up a row
+                else selectPermission(selected - ROW_WIDTH);
+            } else if (GO_DOWN) {
+                // If you're on the last row select NULL
+                if (selected >= ROW_WIDTH * LAST_ROW) selectPermission(NULL);
+                // Else, go down a row
+                else selectPermission(selected + ROW_WIDTH);
+            } else if (GO_LEFT) {
+                // If you're on first tile select NULL
+                if (selected === 0) selectPermission(NULL);
+                // Else, go left with wrapping
+                else selectPermission(selected - 1);
+            } else if (GO_RIGHT) {
+                // If you're on the last tile select NULL
+                if (selected === (LAST_ROW + 1) * ROW_WIDTH - 1)
+                    selectPermission(NULL);
+                // Else, go right with wrapping
+                else selectPermission(selected + 1);
             }
         }
     }
-
-    $: $material,
-        (() => {
-            if ($material instanceof PaletteMaterial && $material.isSingular) {
-                selected = $material.blocks.levels[0];
-            }
-        })();
 </script>
 
 <div class="palette">
     <div class="palette-container">
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
-            class="none-card any-level-card"
+            class="none-card any-perm-card"
             class:selected={selected === NULL}
-            on:click={() => selectLevel(NULL)}
+            on:click={() => selectPermission(NULL)}
             use:tooltip
-            tooltip="Does not change the level"
+            tooltip="Does not change the permission"
         >
             <iconify-icon inline icon="mdi:eraser" /> NONE
         </div>
-        {#each levels as { text, layer, color, level, obstacle } (level)}
+        {#each permissions as { text, layer, color, permission, obstacle } (permission)}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div
-                class="level-card any-level-card"
+                class="perm-card any-perm-card"
                 class:obstacle
-                class:selected={level === selected}
+                class:selected={permission === selected}
                 style="background-color: {color}"
-                on:mousedown={() => selectLevel(level)}
+                on:mousedown={() => selectPermission(permission)}
                 use:tooltip
                 tooltip={`${
-                    layer === 0 ? "Junction Level" : `Level ${layer}`
+                    layer === 0
+                        ? "Junction Level"
+                        : layer === 15
+                        ? "Special Level"
+                        : `Level ${layer}`
                 }, ${obstacle ? "Obstacle" : "Traversable"}`}
             >
                 {text}
@@ -140,7 +151,7 @@
         padding: 4px 0;
     }
 
-    .any-level-card {
+    .any-perm-card {
         cursor: pointer;
 
         &:not(.selected) {
@@ -163,7 +174,7 @@
         }
     }
 
-    .level-card {
+    .perm-card {
         width: 30px;
         height: 30px;
         display: flex;

@@ -1,12 +1,12 @@
 <script lang="ts">
     import { resizeY } from "src/systems/resize";
     import { SidebarState } from "../LayoutSidebar.svelte";
-    import LevelPalette from "../LevelPalette.svelte";
+    import PermissionPalette from "../PermissionPalette.svelte";
 
-    export let levelMode: boolean;
+    export let permissionMode: boolean;
     export let state: SidebarState;
 
-    let levelPalette: LevelPalette;
+    let levelPalette: PermissionPalette;
 
     export function moveOnPalette(dirX: number, dirY: number, select: boolean) {
         levelPalette.moveOnPalette(dirX, dirY, select);
@@ -14,23 +14,23 @@
 </script>
 
 <div
-    class="level-palette-view"
-    class:flexed={!levelMode}
-    class:hidden={!levelMode && state !== SidebarState.BrushLevel}
+    class="permission-palette-view"
+    class:flexed={!permissionMode}
+    class:hidden={!permissionMode && state !== SidebarState.BrushLevel}
     use:resizeY={{
-        maxHeight: () => Math.min(310, window.innerHeight * 0.33),
+        maxHeight: () => Math.min(176, window.innerHeight * 0.33),
         minHeight: () => window.innerHeight * 0.1,
-        startHeight: 310,
+        startHeight: 176,
     }}
 >
-    <div class="level-palette-container">
-        <LevelPalette bind:this={levelPalette} />
+    <div class="permission-palette-container">
+        <PermissionPalette bind:this={levelPalette} />
     </div>
-    <div class="resize-handle top" class:hidden={!levelMode} />
+    <div class="resize-handle top" class:hidden={!permissionMode} />
 </div>
 
 <style lang="scss">
-    .level-palette-view {
+    .permission-palette-view {
         display: grid;
         grid-template-rows: minmax(0, 1fr) 0;
         overflow: hidden;
@@ -39,7 +39,7 @@
             flex: 1;
         }
 
-        .level-palette-container {
+        .permission-palette-container {
             overflow-y: auto;
         }
     }

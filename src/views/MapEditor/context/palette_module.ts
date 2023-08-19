@@ -83,7 +83,7 @@ export class PaletteModule {
     }
     public move(dirX: number, dirY: number, select: boolean) {
         const tab = get(this.context.selectedTab);
-        if (tab !== "layout" && tab !== "level") return;
+        if (tab !== "layout" && tab !== "permissions") return;
 
         this.moveCB(dirX, dirY, select);
     }
@@ -192,14 +192,7 @@ export class PaletteModule {
                 const char = levelChars[i];
                 if (char === "=") data[i] = NULL;
                 else {
-                    if (char === "/") data[i] = 29;
-                    else data[i] = levelChars.charCodeAt(i) - 63;
-
-                    // Convert it back to the original format
-                    if (data[i] % 2 === 0)
-                        data[i] = Math.floor(data[i] / 2);
-                    else
-                        data[i] = Math.floor(data[i] / 2) + 0x100;
+                    data[i] = levelChars.charCodeAt(i) - 63;
                 }
             }
 
@@ -225,12 +218,7 @@ export class PaletteModule {
                 encodedString += "=".repeat(nullsEncountered);
                 nullsEncountered = 0;
 
-                let compressedLevel = (level & 0xFF) * 2;
-                if (level & 0x100)
-                    compressedLevel++;
-
-                if (compressedLevel === 29) encodedString += "/";
-                else encodedString += String.fromCharCode(compressedLevel + 63);
+                encodedString += String.fromCharCode(level + 63);
             }
         }
 
