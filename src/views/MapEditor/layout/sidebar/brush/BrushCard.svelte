@@ -151,7 +151,9 @@
         class:hidden={!show}
     >
         <div class="preview" bind:this={previewContainer} />
-        <div class="name">{name}</div>
+        <div class="name">
+            <span use:tooltip tooltip={name}>{name}</span>
+        </div>
         <div class="icon">
             <iconify-icon {icon} inline use:tooltip tooltip={brushName} />
             {#if brush.onlyUsesPrimaryTiles(context.tileset1Length)}
@@ -215,6 +217,9 @@
         border-radius: 4px;
         color: var(--hard-shadow);
 
+        word-wrap: break-word;
+        overflow: hidden;
+
         display: grid;
         grid-template-areas: "preview name";
         grid-template-columns: 96px 1fr;
@@ -261,6 +266,9 @@
         text-shadow: 2px 2px 0 var(--main-bg);
         color: white;
 
+        overflow: hidden;
+        word-wrap: break-word;
+
         &:not(:hover) {
             .name {
                 transition: background 100ms ease-in-out,
@@ -275,6 +283,7 @@
         &:hover {
             color: white;
             border-color: var(--card-hover-border);
+            overflow: initial;
         }
 
         &.selected {

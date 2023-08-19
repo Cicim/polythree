@@ -60,13 +60,15 @@
 
     let isDisabled = true;
     $: {
-        if (brushType === BrushType.Simple)
+        if (!brushName.match(/^([\w|\d]+[\s]*\b)+$/) || brushName.length > 32)
+            isDisabled = true;
+        else if (brushType === BrushType.Simple)
             isDisabled =
                 brushSettings.width < 1 ||
                 brushSettings.height < 1 ||
                 brushSettings.width > MAX_WIDTH ||
                 brushSettings.height > MAX_HEIGHT;
-        if (brushType === BrushType.NinePatch) isDisabled = false;
+        else if (brushType === BrushType.NinePatch) isDisabled = false;
     }
 
     const brushToTypeClass = {

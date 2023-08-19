@@ -174,7 +174,9 @@
                     />
                 </div>
                 <div class="center" use:tooltip tooltip={$editingBrush.name}>
-                    {$editingBrush.name}
+                    <span class="title">
+                        {$editingBrush.name}
+                    </span>
                 </div>
                 <div class="right">
                     {#if state === SidebarState.Brush}
@@ -225,11 +227,21 @@
         .brush-editor {
             display: grid;
             grid-template-rows: min-content minmax(0, 1fr);
-
             .topbar .center {
+                width: 100%;
                 display: flex;
                 justify-content: center;
-                text-overflow: ellipsis;
+                word-break: break-all;
+                white-space: nowrap;
+                justify-self: first baseline;
+                text-transform: none;
+
+                .title {
+                    width: 100%;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    text-align: center;
+                }
             }
 
             .editor {
