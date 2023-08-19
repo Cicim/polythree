@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { config } from "src/systems/global";
     import {
         groupCriteriaTable,
         type GroupCriteria,
@@ -8,7 +9,7 @@
         type MapId,
     } from "../MapList";
     import GroupSeparator from "./GroupSeparator.svelte";
-    import MapCard from "./MapCard.svelte";
+    import MapCard, { type FilterReason } from "./MapCard.svelte";
 
     /** The data from which this component gets the info about the cards */
     export let allCards: MapCardProps[];
@@ -23,42 +24,138 @@
     export let lastSelected: { group: number; index: number };
     export let removeFromSelection: (group: number, index: number) => void;
 
+    let filterReasons: Record<number, Record<number, FilterReason>> = {};
+    const layoutNames = $config.layout_names;
+
+    /** Adds data to a reason in the object */
+    function addToReason(group: number, index: number, reason: FilterReason) {
+        if (!filterReasons[group]) filterReasons[group] = {};
+        if (!filterReasons[group][index]) filterReasons[group][index] = reason;
+        else
+            filterReasons[group][index] = {
+                ...filterReasons[group][index],
+                ...reason,
+            };
+    }
+
     /** Filters the cards based on the current filter string */
     function filterCards() {
-        let match = filter.match(/#(\d+)(\.(\d+))?/);
+        // Clear the reasons
+        filterReasons = {};
 
+        // If the filter is empty, return all cards
+        if (filter === "") return (filteredCards = allCards);
+
+        // If the filter matches a \d+.\d*
+        const groupIndexMatch = filter.match(/\d+\.\d*/g);
+        let matchedGroup: number, matchedIndex: number;
+        if (groupIndexMatch) {
+            matchedGroup = parseInt(groupIndexMatch[0].split(".")[0]);
+            matchedIndex = parseInt(groupIndexMatch[0].split(".")[1]);
+        }
+
+        // If the filter is a string, match the card's name or the card's layout
         filteredCards = allCards.filter((card) => {
-            // If the filter is empty, return all cards
-            if (filter === "") return true;
+            // If you found a group match
+            if (card.group === matchedGroup) {
+                if (!isNaN(matchedIndex)) {
+                    const searchIndexString = matchedIndex.toString();
+                    const cardIndexString = card.index.toString();
+                    const cardStart =
+                        cardIndexString.indexOf(searchIndexString);
 
-            let valid = false;
-
-            // If the text is an hashtag
-            if (filter.startsWith("#")) {
-                if (!match) return false;
-
-                const group = +match[1];
-                const index = +match[3];
-
-                valid ||=
-                    card.group === group &&
-                    (isNaN(index) || card.index === index);
+                    if (cardStart !== -1) {
+                        addToReason(card.group, card.index, {
+                            matchesGroup: [0, card.index.toString().length],
+                            matchesIndex: [
+                                cardStart,
+                                cardStart + searchIndexString.length,
+                            ],
+                        });
+                        return true;
+                    }
+                } else {
+                    // Just match the group
+                    addToReason(card.group, card.index, {
+                        matchesGroup: [0, card.group.toString().length],
+                    });
+                    return true;
+                }
             }
 
-            // If the card has a name, check if it matches the filter
-            if (!valid && card.name) {
-                valid ||= card.name
-                    .toLowerCase()
-                    .includes(filter.toLowerCase());
+            const groupString = card.group.toString();
+            const groupStart = groupString.indexOf(filter);
+
+            if (groupStart !== -1) {
+                addToReason(card.group, card.index, {
+                    matchesGroup: [groupStart, groupStart + filter.length],
+                });
+                return true;
             }
 
-            // If the text is a number, match the card's group
-            if (!valid && !isNaN(parseInt(filter))) {
-                valid ||= card.group === +filter;
+            const indexString = card.index.toString();
+            const indexStart = indexString.indexOf(filter);
+
+            if (indexStart !== -1) {
+                addToReason(card.group, card.index, {
+                    matchesIndex: [indexStart, indexStart + filter.length],
+                });
+                return true;
             }
 
-            return valid;
+            // Get the index of the filter in the card's name
+            const nameStart = card.name
+                ? card.name.toLowerCase().indexOf(filter.toLowerCase())
+                : -1;
+
+            if (nameStart !== -1) {
+                addToReason(card.group, card.index, {
+                    matchesName: [nameStart, nameStart + filter.length],
+                });
+                return true;
+            }
+
+            const layoutName = layoutNames[card.layout];
+
+            // Get the index of the filter in the layout name
+            const layoutStart = layoutName
+                ? layoutName.toLowerCase().indexOf(filter.toLowerCase())
+                : -1;
+
+            if (layoutStart !== -1) {
+                addToReason(card.group, card.index, {
+                    matchesLayout: [layoutStart, layoutStart + filter.length],
+                });
+                return true;
+            }
         });
+
+        // let match = filter.match(/#(\d+)(\.(\d+))?/);
+        // filteredCards = allCards.filter((card) => {
+        //     // If the filter is empty, return all cards
+        //     if (filter === "") return true;
+        //     let valid = false;
+        //     // If the text is an hashtag
+        //     if (filter.startsWith("#")) {
+        //         if (!match) return false;
+        //         const group = +match[1];
+        //         const index = +match[3];
+        //         valid ||=
+        //             card.group === group &&
+        //             (isNaN(index) || card.index === index);
+        //     }
+        //     // If the card has a name, check if it matches the filter
+        //     if (!valid && card.name) {
+        //         valid ||= card.name
+        //             .toLowerCase()
+        //             .includes(filter.toLowerCase());
+        //     }
+        //     // If the text is a number, match the card's group
+        //     if (!valid && !isNaN(parseInt(filter))) {
+        //         valid ||= card.group === +filter;
+        //     }
+        //     return valid;
+        // });
     }
 
     /** Groups the cards into MapGroups depending on the predicate
@@ -174,6 +271,7 @@
         {#each group.maps as card ((card.group << 8) + card.index)}
             <MapCard
                 on:select
+                reason={filterReasons[card.group]?.[card.index]}
                 {...card}
                 lastSelected={lastSelected !== null
                     ? lastSelected.group === card.group &&

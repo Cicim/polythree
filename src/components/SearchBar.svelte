@@ -9,12 +9,7 @@
 
     const dispatch = createEventDispatcher();
     // The search bar input
-    let searchBar: HTMLDivElement;
-
-    function handlePaste(event: ClipboardEvent) {
-        const text = event.clipboardData.getData("text/plain");
-        document.execCommand("insertText", false, text);
-    }
+    let searchBar: HTMLInputElement;
 
     function handleKeyDown(event: KeyboardEvent) {
         if (event.key === "Enter") {
@@ -24,33 +19,25 @@
     }
 
     function handleInput(event: InputEvent) {
-        searchHTML = searchBar.innerHTML;
-        value = searchBar.innerText;
         if (submitOnInput) dispatch("submit");
     }
 
     function onClearClick() {
-        searchBar.innerHTML = "";
-        searchHTML = "";
         value = "";
+        dispatch("submit");
     }
-
-    let searchHTML = "";
-    // Strip the html tags from the search bar
-    $: searchHTML = searchHTML.replaceAll(/(<([^>]+)>)/gi, "");
 </script>
 
 <div class="searchbar">
     <div class="search-icon">
         <iconify-icon icon="mdi:search" inline />
     </div>
-    <div
+    <input
         class="input search-input"
         bind:this={searchBar}
+        bind:value
         on:input={handleInput}
         on:keydown={handleKeyDown}
-        on:paste|preventDefault={handlePaste}
-        contenteditable="true"
     />
     <div class="clear-icon" class:hidden={value === ""} on:click={onClearClick}>
         <iconify-icon icon="mdi:close" inline />
@@ -87,6 +74,7 @@
 
         .search-input {
             flex: 1;
+            font-size: inherit;
 
             border: none;
             padding: 4px 2px;

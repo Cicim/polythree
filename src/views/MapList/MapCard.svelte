@@ -1,3 +1,12 @@
+<script lang="ts" context="module">
+    export interface FilterReason {
+        matchesGroup?: [start: number, length: number];
+        matchesIndex?: [start: number, length: number];
+        matchesName?: [start: number, length: number];
+        matchesLayout?: [start: number, length: number];
+    }
+</script>
+
 <script lang="ts">
     import {
         IconOption,
@@ -15,17 +24,22 @@
     import MapPreview from "./MapPreview.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import type { MapListContext, MapSelectionEvent } from "../MapList";
-    import OffsetLabel from "src/components/OffsetLabel.svelte";
     import { fade } from "svelte/transition";
     import { config } from "src/systems/global";
+    import UnderLinedReason from "./UnderLinedReason.svelte";
 
     export let group: number;
     export let index: number;
     export let name: string = null;
     export let mapLayoutId: number = 0;
-    export let offset: number;
     export let selected = false;
     export let lastSelected = false;
+    export let reason: FilterReason;
+
+    $: groupReason = reason?.matchesGroup;
+    $: indexReason = reason?.matchesIndex;
+    $: nameReason = reason?.matchesName;
+    $: layoutReason = reason?.matchesLayout;
 
     $: selected === true && cardEl?.focus();
 
@@ -178,19 +192,36 @@
     {#if loaded}
         <div class="left" in:fade={{ duration: 100 }}>
             <div class="number">
-                <span class="group">{group}</span>.<span class="index"
-                    >{index}</span
+                <span class="group"
+                    ><UnderLinedReason
+                        string={group.toString()}
+                        reason={groupReason}
+                    /></span
+                >.<span class="index"
+                    ><UnderLinedReason
+                        string={index.toString()}
+                        reason={indexReason}
+                    /></span
                 >
             </div>
         </div>
         <div class="right" {...$$restProps} in:fade={{ duration: 100 }}>
             {#if name !== null}
                 <span class="title">Name: </span>
-                <span class="value">{name}</span>
+                <span class="value">
+                    <UnderLinedReason string={name} reason={nameReason} />
+                </span>
             {/if}
             <span class="title">Layout: </span>
             <span class="value">
-                {@html $config.layout_names[mapLayoutId] ?? "<i>Unnamed</i>"}
+                {#if !$config.layout_names[mapLayoutId]}
+                    <i>Unnamed</i>
+                {:else}
+                    <UnderLinedReason
+                        string={$config.layout_names[mapLayoutId]}
+                        reason={layoutReason}
+                    />
+                {/if}
             </span>
         </div>
         <!-- Copy iconify icon -->
