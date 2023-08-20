@@ -8,6 +8,9 @@ import { openViews, lastClosedViews, activeView } from "./views";
 
 
 export abstract class ViewContext {
+    /** This view's kind's icon */
+    public icon: string;
+
     /** The name of the view */
     public abstract name: string;
     /** Whether you can open more than one tab of this type */
@@ -230,6 +233,13 @@ export abstract class ViewContext {
             }
         };
     }
+
+    /** Common getter for view icon, gets it from the static definition in the child class */
+    public get viewIcon(): string {
+        // @ts-ignore
+        return this.constructor.icon;
+    }
+
 }
 
 /** The container for all of the editor's functionalities

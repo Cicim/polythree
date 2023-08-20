@@ -1,12 +1,13 @@
-import { ViewContext, EditorContext } from "./contexts";
+import { ViewContext, EditorContext, TabbedEditorContext } from "./contexts";
 import { get, writable, type Writable } from "svelte/store";
 
+export type AnyContext = ViewContext | EditorContext | TabbedEditorContext<any>;
 /** The currently active view */
-export let activeView = writable<ViewContext | null>(null);
+export let activeView: Writable<AnyContext | null> = writable(null);
 /** All of the currently open views */
-export let openViews: Writable<ViewContext[]> = writable<ViewContext[]>([]);
+export let openViews: Writable<AnyContext[]> = writable([]);
 /** All of the views that have been closed */
-export let lastClosedViews = writable<LastClosedContext[]>([]);
+export let lastClosedViews: Writable<LastClosedContext[]> = writable([]);
 
 export interface LastClosedContext {
     /** The context's constructor */

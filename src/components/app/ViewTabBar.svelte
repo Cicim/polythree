@@ -1,6 +1,4 @@
 <script lang="ts">
-    import Tab from "./Tab.svelte";
-
     import {
         IconOption,
         Menu,
@@ -10,7 +8,6 @@
         showContextMenu,
     } from "src/systems/context_menu";
     import { redefineBindings } from "src/systems/bindings";
-
     import { MapEditorContext } from "src/views/MapEditor";
     import { HomePageContext } from "src/views/HomePage";
     import type { EditorContext } from "src/systems/contexts";
@@ -21,6 +18,7 @@
         draggingId,
         activeView,
     } from "src/systems/views";
+    import ViewTab from "./ViewTab.svelte";
 
     // Redefine the default keybindings for the TabBar
     redefineBindings({
@@ -50,14 +48,14 @@
         },
     });
 
-    let barMenu = new Menu([
+    let viewTabbarMenu = new Menu([
         new SubMenuOption(
-            "New editor",
+            "New View",
             new Menu([
-                new IconOption("Home Page", "material-symbols:home", () => {
+                new IconOption("Home Page", HomePageContext.icon, () => {
                     new HomePageContext().create().select();
                 }),
-                new TextOption("Map Editor", () => {
+                new IconOption("Map Editor", MapEditorContext.icon, () => {
                     new MapEditorContext({
                         group: 0,
                         index: 0,
@@ -65,13 +63,13 @@
                         .create()
                         .select();
                 }),
-                new TextOption("Map List", () => {
+                new IconOption("Map List", MapListContext.icon, () => {
                     new MapListContext().create().select();
                 }),
             ])
         ),
         new Separator(),
-        new IconOption("Close All", "ic:round-close", "tabbar/close_all"),
+        new IconOption("Close All", "codicon:close-all", "tabbar/close_all"),
         new TextOption("Close Saved", "tabbar/close_saved"),
         new TextOption("Reopen Last", "tabbar/reopen_last"),
     ]);
@@ -148,7 +146,7 @@
 <div
     class="tabs-view"
     on:wheel|preventDefault={onWheel}
-    on:contextmenu={(e) => showContextMenu(e, barMenu)}
+    on:contextmenu={(e) => showContextMenu(e, viewTabbarMenu)}
 >
     <!-- Tabs container -->
     <div
@@ -159,7 +157,7 @@
         on:drop={onDrop}
     >
         {#each $openViews as view}
-            <Tab {view} />
+            <ViewTab {view} />
         {/each}
     </div>
 </div>

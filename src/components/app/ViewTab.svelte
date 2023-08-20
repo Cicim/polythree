@@ -18,7 +18,7 @@
     $: subtitle = view.subtitle;
 
     // ANCHOR TabMenu
-    // Closes all tabs except the current tab
+    /** Closes all tabs except the current tab */
     async function closeOthers() {
         const index = $openViews.indexOf(view);
         const toTheLeft = $openViews.slice(0, index);
@@ -28,7 +28,7 @@
             await view.askClose();
         }
     }
-    // Closes all tabs to the right of the current tab
+    /** Closes all tabs to the right of the current tab */
     async function closeToRight() {
         const index = $openViews.indexOf(view);
         const toTheRight = $openViews.slice(index + 1, $openViews.length);
@@ -37,24 +37,33 @@
             await view.askClose();
         }
     }
-    // Closes all tabs to the left of the current tab
+    /** Closes all tabs to the left of the current tab */
     async function closeToLeft() {
         const index = $openViews.indexOf(view);
-        let toTheLeft: ViewContext[] = $openViews.slice(0, index);
+        let toTheLeft = $openViews.slice(0, index);
         // Close all the tabs that were removed
         for (const view of toTheLeft.reverse()) {
             await view.askClose();
         }
     }
 
-    const tabMenu = new Menu([
+    /** Context menu for the tab */
+    const tabContextMenu = new Menu([
         new Separator("This tab"),
         new IconOption("Close", "ic:round-close", () => view.close()),
         new TextOption("Close Others", closeOthers),
-        new TextOption("Close To Left", closeToLeft),
-        new TextOption("Close To Right", closeToRight),
+        new IconOption(
+            "Close To Left",
+            "material-symbols:left-panel-close-outline-rounded",
+            closeToLeft
+        ),
+        new IconOption(
+            "Close To Right",
+            "material-symbols:right-panel-close-outline-rounded",
+            closeToRight
+        ),
         new Separator("Other tabs"),
-        new TextOption("Close All", "tabbar/close_all"),
+        new IconOption("Close All", "codicon:close-all", "tabbar/close_all"),
         new TextOption("Reopen Last", "tabbar/reopen_last"),
         new TextOption("Close Saved", "tabbar/close_saved"),
     ]);
@@ -118,6 +127,7 @@
     class:selected={view === $activeView}
     class:show-anyway={!$needsSave}
     class:dropzone={view.activeDropzone}
+    class:has-subtitle={$subtitle && $subtitle !== ""}
     draggable="true"
     on:mousedown={handleSelect}
     on:mouseup={handleClose}
@@ -126,15 +136,31 @@
     on:dragover|preventDefault={onDragOver}
     on:drop|preventDefault={onDrop}
     on:contextmenu={(e) => {
-        showContextMenu(e, tabMenu);
+        showContextMenu(e, tabContextMenu);
     }}
 >
+    <!-- Icon -->
+    <div
+        class="icon"
+        class:busy-dragging={$draggingId !== null}
+        on:click|stopImmediatePropagation|preventDefault={() => view.close()}
+        draggable="true"
+        on:dragstart|stopPropagation={(e) => e.preventDefault()}
+        on:dragover|stopPropagation={(e) => e.preventDefault()}
+        on:dragleave|stopPropagation={(e) => e.preventDefault()}
+        on:drop|stopPropagation={(e) => e.preventDefault()}
+    >
+        <iconify-icon icon={view.viewIcon} inline />
+    </div>
     <!-- Text -->
     <span class="text">
         {view.name}
-        <span class="subtitle">{$subtitle}</span>
     </span>
-    <!-- Close Buttom -->
+    {#if $subtitle !== "" && $subtitle}
+        <!-- Subtitle -->
+        <span class="subtitle">{$subtitle}</span>
+    {/if}
+    <!-- Close Button -->
     <button
         tabindex="-1"
         class="close"
@@ -160,20 +186,42 @@
 
 <style lang="scss">
     .tab {
-        display: flex;
-        place-items: center;
-        padding: 0 8px;
+        display: grid;
+        align-items: center;
         height: 40px;
+        padding: 0 8px 0 12px;
         cursor: pointer;
+        column-gap: 8px;
+
+        grid-template-columns: min-content 1fr min-content;
+        grid-template-rows: 40px;
+        grid-template-areas: "icon title close";
+        &.has-subtitle {
+            grid-template-rows: 1fr 12px;
+            grid-template-areas: "icon title close" "icon subtitle close";
+        }
 
         &.dropzone {
             background: var(--accent-shadow);
         }
 
+        .icon {
+            grid-area: icon;
+            font-size: 1em;
+
+            pointer-events: none;
+        }
+
+        .subtitle {
+            grid-area: subtitle;
+            font-size: 0.75em;
+            color: var(--weak-fg);
+            padding-bottom: 4px;
+        }
+
         .text {
-            padding: 0 5px 0 16px;
+            grid-area: title;
             white-space: nowrap;
-            max-width: 120px;
             overflow: hidden;
             text-overflow: ellipsis;
             pointer-events: none;
@@ -184,6 +232,7 @@
         }
 
         .close {
+            grid-area: close;
             display: flex;
             justify-content: center;
             align-items: center;

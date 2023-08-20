@@ -131,6 +131,7 @@ export function mapDumpToCardProps(map: MapHeaderDump, names: string[]): MapCard
 }
 
 export class MapListContext extends EditorContext {
+    public static icon = "ph:list-magnifying-glass";
     public name: string = "Map List";
     declare public component: MapList;
     declare public data: Writable<MapCardProps[]>;

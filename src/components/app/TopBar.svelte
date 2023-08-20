@@ -1,12 +1,12 @@
 <script lang="ts">
     import NavBar from "./NavBar.svelte";
-    import TabBar from "./TabBar.svelte";
+    import ViewTabBar from "./ViewTabBar.svelte";
 </script>
 
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <div class="top-bar">
     <NavBar />
-    <TabBar />
+    <ViewTabBar />
 </div>
 
 <style lang="scss">

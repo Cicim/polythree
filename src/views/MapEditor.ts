@@ -34,6 +34,7 @@ export enum MapEditorTabs {
 }
 
 export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
+    public static icon = "mingcute:map-2-fill";
     public name = "Map Editor";
     public singularTab = true;
     declare public identifier: MapEditorProperties;

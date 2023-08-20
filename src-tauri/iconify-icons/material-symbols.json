@@ -23,6 +23,18 @@
     "prefix": "material-symbols",
     "width": 24
   },
+  "left-panel-close-outline-rounded": {
+    "aliases": {},
+    "height": 24,
+    "icons": {
+      "left-panel-close-outline-rounded": {
+        "body": "<path fill=\"currentColor\" d=\"M16.5 14.8V9.2q0-.35-.3-.475t-.55.125L13.2 11.3q-.3.3-.3.7t.3.7l2.45 2.45q.25.25.55.125t.3-.475ZM5 21q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.588 1.413T19 21H5Zm3-2V5H5v14h3Zm2 0h9V5h-9v14Zm-2 0H5h3Z\"/>"
+      }
+    },
+    "lastModified": 1692337930,
+    "prefix": "material-symbols",
+    "width": 24
+  },
   "list": {
     "aliases": {},
     "height": 24,
@@ -44,6 +56,18 @@
       }
     },
     "lastModified": 1691733904,
+    "prefix": "material-symbols",
+    "width": 24
+  },
+  "right-panel-close-outline-rounded": {
+    "aliases": {},
+    "height": 24,
+    "icons": {
+      "right-panel-close-outline-rounded": {
+        "body": "<path fill=\"currentColor\" d=\"M7.5 14.8q0 .35.3.475t.55-.125l2.45-2.45q.3-.3.3-.7t-.3-.7L8.35 8.85q-.25-.25-.55-.125t-.3.475v5.6ZM5 21q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.588 1.413T19 21H5Zm11-2h3V5h-3v14Zm-2 0V5H5v14h9Zm2 0h3h-3Z\"/>"
+      }
+    },
+    "lastModified": 1692337930,
     "prefix": "material-symbols",
     "width": 24
   },

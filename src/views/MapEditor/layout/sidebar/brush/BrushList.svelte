@@ -88,15 +88,16 @@
     </div>
     <div class="brush-container">
         {#key $editingList}
-            {#each [...$primaryBrushes, ...$secondaryBrushes] as brush (brush.uid)}
-                <BrushCard
-                    show={brush.name
+            {#each [...$primaryBrushes, ...$secondaryBrushes].filter( (brush) => brush.name
                         .toLowerCase()
-                        .includes(filterString.toLowerCase())}
-                    {brush}
-                />
+                        .includes(filterString.toLowerCase()) ) as brush (brush.uid)}
+                <BrushCard {brush} />
             {:else}
-                <div class="no-brushes">There are no brushes</div>
+                {#if filterString !== ""}
+                    <div class="no-brushes">No brushes found</div>
+                {:else}
+                    <div class="no-brushes">There are no brushes</div>
+                {/if}
             {/each}
         {/key}
     </div>
