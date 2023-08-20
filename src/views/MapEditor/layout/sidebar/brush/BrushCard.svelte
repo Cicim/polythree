@@ -123,7 +123,6 @@
         class="brush-card small-brush-card"
         on:contextmenu={(e) => showContextMenu(e, contextMenu)}
         on:click={selectBrush}
-        on:dblclick={editBrush}
         class:pinned={$pinned}
         class:selected
     >

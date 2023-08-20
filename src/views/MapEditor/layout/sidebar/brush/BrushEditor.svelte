@@ -212,7 +212,6 @@
                                     component: BrushPreview,
                                     props: {
                                         editingBrush: $editingBrush,
-                                        tilesetData,
                                     },
                                 },
                             });
