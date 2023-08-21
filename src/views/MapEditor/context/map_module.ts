@@ -4,7 +4,7 @@ import { spawnDialog, spawnErrorDialog } from "src/systems/dialogs";
 import { getPtrOffset } from "src/systems/rom";
 import type { MapEditorContext } from "src/views/MapEditor";
 import initWasmFunctions, { load_tileset, render_blocks_data } from "src/wasm/map-canvas/pkg/map_canvas";
-import { get } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 import { BlocksData, type ImportedBlocksData } from "../editor/blocks_data";
 import LayoutPickerDialog from "../dialogs/LayoutPickerDialog.svelte";
 import TilesetPickerDialog from "../dialogs/TilesetPickerDialog.svelte";
@@ -70,11 +70,15 @@ export class UpdateLayoutChange extends Change {
     }
 
     private async update(layoutId: number) {
-        return await this.context.map.updateLayout(layoutId);
+        const result = await this.context.map.updateLayout(layoutId);
+        if (result)
+            this.context.map.updateLayoutLock();
+        return result;
     }
 
     public async revert(): Promise<void> {
         await this.context.map.setLayout(this.oldLayoutId, this.oldLayoutData);
+        this.context.map.updateLayoutLock();
     }
     public async apply(): Promise<void> {
         const res = this.update(this.newLayoutId);
@@ -126,6 +130,14 @@ export class UpdateTilesetsChange extends Change {
 
 export class MapModule {
     private context: MapEditorContext;
+
+    /** List of all the layouts that have been locked from being edited
+     * + only used in the layout editor in the MapEditor */
+    public static lockedLayouts: Writable<number[]> = writable([]);
+    /** The list of layouts this MapEditor owns and doesn't allow other editors to touch */
+    public ownedLayouts: number[] = [];
+    /** If the layout being edited currently is locked by another MapEditor */
+    public isLayoutLocked: Writable<boolean> = writable(false);
 
     /** Tileset bottom tiles for quick drawing */
     public botTiles: CanvasRenderingContext2D;
@@ -179,9 +191,16 @@ export class MapModule {
         const tilesets = await this.loadTilesets(layout);
         if (!tilesets) return false;
 
+        // Update the layout lock
+        this.updateLayoutLock();
+
         // Everything was loaded successfully
         this.data.set({ header, layout, tilesets });
         return true;
+    }
+
+    public async onClose() {
+        this.releaseLayoutLocks();
     }
 
     /** Loads the header data */
@@ -458,6 +477,7 @@ export class MapModule {
         this.topTiles.putImageData(this.topTilesData, 0, 0);
         this.botTiles.putImageData(this.botTilesData, 0, 0);
     }
+
     /** Renders the metatiles onto the given image datas */
     public renderMetatiles(bottomImageData: ImageData, topImageData: ImageData, blocksData: {
         metatiles: Uint16Array,
@@ -481,8 +501,46 @@ export class MapModule {
             range.x, range.y, range.x + range.width, range.y + range.height);
     }
 
-    // ANCHOR Private Methods
 
+    // ANCHOR Layout locking methods
+    /** Updates the isLayoutLocked for this editor */
+    public updateLayoutLock(): void {
+        // Check if the layout is locked
+        const isLocked = get(MapModule.lockedLayouts).includes(this.layoutId);
+        // If it's not locked by someone else, claim it
+        if (!isLocked) this.claimLayoutLock();
+        return this.isLayoutLocked.set(!this.ownedLayouts.includes(this.layoutId));
+    }
+
+    /** Acquires a lock for the current layout and notifies the rest of the editors */
+    private claimLayoutLock() {
+        // Push it to the list of owned layouts
+        this.ownedLayouts.push(this.layoutId);
+        // Notify the rest of the editors
+        MapModule.lockedLayouts.update(layouts => {
+            layouts.push(this.layoutId);
+            return layouts;
+        });
+    }
+
+    /** Releases all locked layouts and notifies the rest of the editors */
+    public releaseLayoutLocks() {
+        // Release all the layouts locked by this editor
+        MapModule.lockedLayouts.update(layouts => {
+            for (const layout of this.ownedLayouts)
+                layouts.splice(layouts.indexOf(layout), 1);
+            return layouts;
+        });
+        // Clear the owned layouts
+        this.ownedLayouts.splice(0, this.ownedLayouts.length);
+        // Update all the other editors
+        for (const view of this.context.getOtherViews()) {
+            view.map.updateLayoutLock();
+        }
+    }
+
+
+    // ANCHOR Private Methods
     /** Constructs the tileset data used by the renderers from the `ImportedTilesetsData` */
     private loadTilesetsData(imported: ImportedTilesetsData): TilesetsData {
         // Compress everything to UIntArrays

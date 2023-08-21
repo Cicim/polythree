@@ -9,8 +9,6 @@
     import EncountersView from "./MapEditor/EncountersView.svelte";
     import ConnectionsView from "./MapEditor/ConnectionsView.svelte";
     import HeaderView from "./MapEditor/HeaderView.svelte";
-    import { openViews } from "src/systems/views";
-    import { get, type Writable } from "svelte/store";
     import MapToolBar from "./MapEditor/MapToolBar.svelte";
 
     export let context: MapEditorContext;
@@ -19,28 +17,7 @@
     setContext("data", data);
 
     const isLoading = context.loading;
-    const layoutLocked = context.layoutLocked;
-
-    function updateLayoutLock() {
-        if ($isLoading) return;
-
-        $layoutLocked = context.anyOtherViewWhere((view) => {
-            const thisLayoutIndex = $data.layout.index;
-
-            if (get(view.loading)) return false;
-
-            const viewLayoutIndex = get(view.data as Writable<any>).layout
-                .index;
-            const viewUnlocked = !get(view.layoutLocked);
-
-            return thisLayoutIndex === viewLayoutIndex && viewUnlocked;
-        });
-    }
-
-    // Update the lock as soon as the
-    $: $isLoading === false, updateLayoutLock();
-    $: $openViews, updateLayoutLock();
-    $: $data, updateLayoutLock();
+    const layoutLocked = context.map.isLayoutLocked;
 
     $: context.tabs.layout.isLocked = $layoutLocked;
     $: context.tabs.permissions.isLocked = $layoutLocked;

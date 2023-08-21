@@ -53,8 +53,6 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
     public material: Writable<PaintingMaterial>;
     /** The selected tool's id */
     public selectedTool: Writable<EditorTool>;
-    /** True if the layout cannot be edited */
-    public layoutLocked: Writable<boolean> = writable(false);
 
     // Modules
     public map: MapModule = new MapModule(this);
@@ -120,6 +118,7 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
             // Save the brushes
             await this.brushes.save();
         }
+        this.map.onClose();
         this.animations.exit();
         return super.close();
     }

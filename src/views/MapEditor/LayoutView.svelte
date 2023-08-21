@@ -9,12 +9,17 @@
     import type { MapEditorContext } from "../MapEditor";
     import { tooltip } from "src/systems/tooltip";
     import TextToolButton from "./TextToolButton.svelte";
-    import { IconOption, Menu, Separator } from "src/systems/context_menu";
+    import {
+        IconOption,
+        Menu,
+        Separator,
+        TextOption,
+    } from "src/systems/context_menu";
 
     const context: MapEditorContext = getContext("context");
     const tab = context.selectedTab;
     let selectedToolStore = context.selectedTool;
-    const layoutLocked = context.layoutLocked;
+    const layoutLocked = context.map.isLayoutLocked;
     const playingAnimations = context.animations.playing;
 
     $: $playingAnimations,
@@ -25,6 +30,29 @@
                 context.animations.stop();
             }
         })();
+
+    function closeOtherEditorsWithSameLayout() {
+        const toClose = [];
+        for (const view of context.getOtherViews()) {
+            if (
+                view.map.ownedLayouts.includes(context.layoutId) ||
+                view.layoutId === context.layoutId
+            )
+                toClose.push(view);
+        }
+        for (const view of toClose.reverse()) {
+            view.close();
+        }
+    }
+
+    function goToLayoutOwner() {
+        for (const view of context.getOtherViews()) {
+            if (view.map.ownedLayouts.includes(context.layoutId)) {
+                view.select();
+                return;
+            }
+        }
+    }
 
     // The currently open tab (layout, level or scripts)
     $: activeTab = context.selectedTab;
@@ -114,16 +142,24 @@
             {/if}
             {#if $layoutLocked && ($tab === "layout" || $tab === "permissions")}
                 <span class="separator" />
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    class="action"
-                    use:tooltip
-                    tooltip="Another Editor was editing this Layout first.<br><br>Close the other Map Editors or click here<br>to see which actions can be performed."
-                    on:click={() => console.log("TODO")}
-                >
-                    <iconify-icon icon="mdi:lock" inline />
-                    Editing Locked
-                </div>
+                <TextToolButton
+                    on:click={closeOtherEditorsWithSameLayout}
+                    title="Another Editor was editing this Layout first.<br><br>Click here to close other Map Editors<br> or click on the menu to see<br> which actions can be performed."
+                    theme="warning"
+                    icon="mdi:lock"
+                    menu={new Menu([
+                        new IconOption(
+                            "Close Owner Editors",
+                            "mdi:close",
+                            closeOtherEditorsWithSameLayout
+                        ),
+                        new IconOption(
+                            "Go to Owner Editor",
+                            "typcn:export",
+                            goToLayoutOwner
+                        ),
+                    ])}
+                />
             {/if}
         </div>
     </div>

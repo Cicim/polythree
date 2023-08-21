@@ -165,7 +165,7 @@ async function setContextMenuPosition(target: HTMLElement, x: number, y: number)
     }
 }
 
-export function showContextMenu(e: MouseEvent | HTMLElement, menu: Menu) {
+export function showContextMenu(e: MouseEvent | HTMLElement | EventTarget, menu: Menu) {
     const isEvent = e instanceof MouseEvent;
 
     // Get the menu
@@ -186,7 +186,7 @@ export function showContextMenu(e: MouseEvent | HTMLElement, menu: Menu) {
     if (isEvent) {
         setContextMenuPosition(ctx, e.clientX, e.clientY);
     } else {
-        const rect = e.getBoundingClientRect();
+        const rect = (<HTMLElement>e).getBoundingClientRect();
         setContextMenuPosition(ctx, rect.left, rect.bottom);
     }
 }

@@ -11,7 +11,8 @@
     export let text: string = "";
     export let title: string = "";
     export let moreActionString: string = "More actions...";
-    export let theme: "primary" | "secondary" | "transparent" = "primary";
+    export let theme: "primary" | "secondary" | "transparent" | "warning" =
+        "primary";
     export let icon: string = null;
     export let menu: Menu = null;
     export let action: string = null;
@@ -39,6 +40,7 @@
     class:primary={theme === "primary"}
     class:secondary={theme === "secondary"}
     class:transparent={theme === "transparent"}
+    class:warning={theme === "warning"}
 >
     <button
         class="text"
@@ -107,6 +109,19 @@
             --bg-disabled: transparent;
             --border-disabled: transparent;
             --fg-disabled: var(--light-shadow);
+        }
+        &.warning {
+            --bg: var(--btn-warning-bg);
+            --border: var(--btn-warning-border);
+            --fg: var(--btn-warning-fg);
+            --bg-hover: var(--btn-warning-bg-hover);
+            --border-hover: var(--btn-warning-border-hover);
+            --fg-hover: var(--btn-warning-fg-hover);
+            --fg-active: var(--fg-hover);
+            --fg-selected: var(--accent-fg);
+            --bg-disabled: var(--btn-warning-bg-disabled);
+            --border-disabled: var(--btn-warning-border-disabled);
+            --fg-disabled: var(--btn-warning-fg-disabled);
         }
 
         min-width: max-content;
