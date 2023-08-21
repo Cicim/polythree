@@ -145,7 +145,7 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
         this.selectedTool = writable(EditorTool.Pencil);
 
         // Update the cosmetics
-        this._cosmeticHasSideTabs = true, activeView.set(this as ViewContext);
+        this._cosmeticHasSideTabs = true, activeView.update(_ => _);
         // Start rendering the editor
         this.loading.set(false);
 
