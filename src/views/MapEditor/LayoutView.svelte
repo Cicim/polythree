@@ -7,7 +7,6 @@
     import ToolButton from "./ToolButton.svelte";
     import { EditorTool } from "./editor/tools";
     import type { MapEditorContext } from "../MapEditor";
-    import { tooltip } from "src/systems/tooltip";
     import TextToolButton from "./TextToolButton.svelte";
     import {
         IconOption,

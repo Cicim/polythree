@@ -78,7 +78,7 @@ export class UpdateLayoutChange extends Change {
 
     public async revert(): Promise<void> {
         await this.context.map.setLayout(this.oldLayoutId, this.oldLayoutData);
-        this.context.map.updateLayoutLock();
+        this.context.map.releaseLayoutLock(this.newLayoutId);
     }
     public async apply(): Promise<void> {
         const res = this.update(this.newLayoutId);
@@ -512,6 +512,23 @@ export class MapModule {
         return this.isLayoutLocked.set(!this.ownedLayouts.includes(this.layoutId));
     }
 
+    /** Release a single layout from the lock */
+    public releaseLayoutLock(layoutIdToUnlock: number) {
+        // See if the layout is locked
+        const index = this.ownedLayouts.indexOf(layoutIdToUnlock);
+        this.updateLayoutLock();
+        if (index !== -1) {
+            // If it is, remove it from the list of owned layouts
+            this.ownedLayouts.splice(index, 1);
+            MapModule.lockedLayouts.update(layouts => {
+                layouts.splice(layouts.indexOf(layoutIdToUnlock), 1);
+                return layouts;
+            });
+            // Update the views
+            this.updateViewsOfLockRelease();
+        }
+    }
+
     /** Acquires a lock for the current layout and notifies the rest of the editors */
     private claimLayoutLock() {
         // Push it to the list of owned layouts
@@ -533,12 +550,16 @@ export class MapModule {
         });
         // Clear the owned layouts
         this.ownedLayouts.splice(0, this.ownedLayouts.length);
+        this.updateViewsOfLockRelease();
+    }
+
+    /** Updates the other views when the lock is released */
+    private updateViewsOfLockRelease() {
         // Update all the other editors
         for (const view of this.context.getOtherViews()) {
             view.map.updateLayoutLock();
         }
     }
-
 
     // ANCHOR Private Methods
     /** Constructs the tileset data used by the renderers from the `ImportedTilesetsData` */
