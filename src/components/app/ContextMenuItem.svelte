@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { getActionEnabledStore } from "src/systems/bindings";
     import {
         type MenuItem,
         Separator,
@@ -8,7 +9,9 @@
         ctxMenu,
         closeContextMenu,
     } from "src/systems/context_menu";
+    import { activeView } from "src/systems/views";
     import { tick } from "svelte";
+    import { readable } from "svelte/store";
 
     /** The menu item this component represents */
     export let item: MenuItem;
@@ -16,6 +19,14 @@
     export let level: number = 0;
     /** The element of this item */
     let element: HTMLElement;
+    /** Store that is false if the button is disabled */
+    let enabled = readable(true);
+    // Get the above store if it exists
+    if (item instanceof TextOption || item instanceof IconOption) {
+        if (item.actionId !== null) {
+            enabled = getActionEnabledStore(item.actionId, $activeView);
+        }
+    }
 
     // ANCHOR Methods for submenus
 
@@ -114,6 +125,7 @@
         on:mouseenter={onButtonEnter}
         class="ctx-item ctx-text-item"
         on:click={runAction}
+        disabled={!$enabled}
     >
         <span />
         <span>{item.text}</span>
@@ -130,6 +142,7 @@
         on:mouseenter={onButtonEnter}
         class="ctx-item ctx-icon-item"
         on:click={runAction}
+        disabled={!$enabled}
     >
         <iconify-icon class="ctx-icon" icon={item.icon} />
         <span>{item.text}</span>
@@ -189,6 +202,14 @@
                 color: var(--ctx-fg-hover);
                 box-shadow: inset 0 0 0 1px var(--ctx-outline-hover) !important;
             }
+
+            &[disabled] {
+                background: var(--ctx-bg-disabled) !important;
+                color: var(--ctx-fg-disabled) !important;
+                box-shadow: inset 0 0 0 1px var(--ctx-outline-disabled) !important;
+                outline: none;
+            }
+
             &:focus {
                 outline: none;
             }

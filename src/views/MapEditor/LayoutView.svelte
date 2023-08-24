@@ -8,12 +8,7 @@
     import { EditorTool } from "./editor/tools";
     import type { MapEditorContext } from "../MapEditor";
     import TextToolButton from "./TextToolButton.svelte";
-    import {
-        IconOption,
-        Menu,
-        Separator,
-        TextOption,
-    } from "src/systems/context_menu";
+    import { IconOption, Menu, Separator } from "src/systems/context_menu";
 
     const context: MapEditorContext = getContext("context");
     const tab = context.selectedTab;

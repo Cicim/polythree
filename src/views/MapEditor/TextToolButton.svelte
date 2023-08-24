@@ -1,9 +1,13 @@
 <script lang="ts">
-    import { getActionsShortcut } from "src/systems/bindings";
+    import {
+        getActionEnabledStore,
+        getActionsShortcut,
+    } from "src/systems/bindings";
     import { showContextMenu, Menu } from "src/systems/context_menu";
     import { tooltip } from "src/systems/tooltip";
-    import type { EditorContext } from "src/systems/views";
+    import type { AnyContext, EditorContext } from "src/systems/views";
     import { getContext } from "svelte";
+    import type { Readable } from "svelte/store";
 
     const context: EditorContext = getContext("context");
 
@@ -17,7 +21,10 @@
     export let menu: Menu = null;
     export let action: string = null;
     export let shortcut: string = null;
-    let actionCallback: (context: EditorContext) => void = null;
+    let actionCallback: (context: AnyContext) => void = null;
+
+    let enabledStore: Readable<boolean> = null;
+    $: disabled = actionCallback ? !$enabledStore : false;
 
     if (action) {
         const actionData = getActionsShortcut(action);
@@ -25,6 +32,7 @@
         else {
             [actionCallback, shortcut] = actionData;
         }
+        enabledStore = getActionEnabledStore(action, context);
     }
 
     let chevronButton: HTMLButtonElement;
@@ -38,11 +46,13 @@
     <button
         class="text"
         use:tooltip
-        tooltip={`${title} ${
-            shortcut ? `<span class=binding>(${shortcut})</span>` : ""
+        tooltip={`${title}${
+            shortcut ? ` <span class=binding>(${shortcut})</span>` : ""
         }`}
         on:click
         on:click={() => (actionCallback ? actionCallback(context) : null)}
+        {disabled}
+        class:disabled
     >
         {#if icon}
             <iconify-icon {icon} class="icon" inline />
@@ -113,6 +123,12 @@
 
         .text {
             padding: 0 10px;
+            &.disabled {
+                background: var(--bg-disabled);
+                border-color: var(--border-disabled);
+                color: var(--fg-disabled) !important;
+                cursor: default;
+            }
         }
 
         .more {

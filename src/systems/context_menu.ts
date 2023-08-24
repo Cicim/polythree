@@ -1,6 +1,6 @@
 import { tick } from "svelte";
-import { get, writable } from "svelte/store";
-import { getActionsShortcut } from "./bindings";
+import { get, readable, writable, type Readable } from "svelte/store";
+import { getActionEnabledStore, getActionsShortcut } from "./bindings";
 import { activeView } from "./views";
 
 /** A context menu action definition */
@@ -55,18 +55,22 @@ export class TextOption extends MenuItem {
     public action: ContextMenuAction;
     /** The action's associated keybinding */
     public keybinding: string;
+    /** The action's name */
+    public actionId: string;
 
     public constructor(text: string, action: string | ContextMenuAction) {
         super();
         this.text = text;
         if (typeof action === "string") {
-            const [binding, shortcut, _] = getActionsShortcut(action);
+            const [binding, shortcut] = getActionsShortcut(action);
             this.action = () => binding(get(activeView));
             this.keybinding = shortcut;
+            this.actionId = action;
         }
         else {
             this.action = action
             this.keybinding = "";
+            this.actionId = null;
         };
     }
 }
@@ -81,19 +85,23 @@ export class IconOption extends MenuItem {
     public action: ContextMenuAction;
     /** The action's associated keybinding */
     public keybinding: string;
+    /** The action's name */
+    public actionId: string;
 
     public constructor(text: string, icon: string, action: string | ContextMenuAction) {
         super();
         this.text = text;
         this.icon = icon;
         if (typeof action === "string") {
-            const [binding, shortcut, _] = getActionsShortcut(action);
+            const [binding, shortcut] = getActionsShortcut(action);
             this.action = () => binding(get(activeView));
             this.keybinding = shortcut;
+            this.actionId = action;
         }
         else {
             this.action = action
             this.keybinding = "";
+            this.actionId = null;
         };
     }
 }
@@ -115,6 +123,7 @@ export class SubMenuOption extends MenuItem {
 }
 
 export const ctxMenu = writable<Menu>(new Menu());
+export const ctxMenuRecreated = writable({});
 
 export function getMenu(): HTMLDialogElement {
     return document.getElementById("ctx-menu") as HTMLDialogElement;
@@ -167,6 +176,7 @@ async function setContextMenuPosition(target: HTMLElement, x: number, y: number)
 
 export function showContextMenu(e: MouseEvent | HTMLElement | EventTarget, menu: Menu) {
     const isEvent = e instanceof MouseEvent;
+    ctxMenuRecreated.set({});
 
     // Get the menu
     const ctx: HTMLDialogElement = getMenu();

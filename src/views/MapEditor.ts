@@ -172,6 +172,7 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
         else
             super.redo();
     }
+    public get layoutLocked() { return this.map.isLayoutLocked; }
 }
 
 ActionsModule.redefineBindings();

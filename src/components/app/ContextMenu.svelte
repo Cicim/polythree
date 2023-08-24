@@ -1,6 +1,10 @@
 <script lang="ts">
     import ContextMenuItem from "./ContextMenuItem.svelte";
-    import { closeContextMenu, ctxMenu } from "src/systems/context_menu";
+    import {
+        closeContextMenu,
+        ctxMenu,
+        ctxMenuRecreated,
+    } from "src/systems/context_menu";
 
     function onClickOutside(event: MouseEvent) {
         // Get the dialog element's bounding rectangle
@@ -28,11 +32,13 @@
 />
 
 <dialog id="ctx-menu" class="ctx-menu">
-    <div id="ctx-list">
-        {#each $ctxMenu.items as item}
-            <ContextMenuItem {item} />
-        {/each}
-    </div>
+    {#key $ctxMenuRecreated}
+        <div id="ctx-list">
+            {#each $ctxMenu.items as item}
+                <ContextMenuItem {item} />
+            {/each}
+        </div>
+    {/key}
 </dialog>
 
 <style lang="scss">

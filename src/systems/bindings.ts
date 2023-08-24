@@ -1,9 +1,9 @@
 // import {
 //     bCloseAllTabs, bCloseSavedTabs, bNextTab, bPrevTab, bReopenLastTab
 // } from "src/components/app/TabBar.svelte";
-import { get } from "svelte/store";
+import { derived, get, writable, type Writable } from "svelte/store";
 import { EditorContext, TabbedEditorContext, type ViewContext } from "./contexts";
-import { activeView } from "./views";
+import { activeView, type AnyContext } from "./views";
 
 // type KeyBinding = [name: string, shortcut: string, callback: (view: ViewContext | EditorContext) => void, condition: string];
 enum ConditionType {
@@ -28,7 +28,8 @@ enum ConditionType {
      */
     InModal,
 };
-type Condition = [ConditionType, string?, string?];
+type Condition = [ConditionType, string?, string?] |
+[ConditionType.EqualProperty | ConditionType.NotEqualProperty, string, (string | number | boolean)[]];
 type Conditions = Condition[];
 type BindingFunction = (view: ViewContext | EditorContext | TabbedEditorContext<any>) => void | undefined;
 
@@ -36,13 +37,13 @@ class KeyBinding {
     public name: string;
     public shortcutCode: string;
     public binding: BindingFunction;
-    public condition: Conditions;
+    public conditions: Conditions;
 
     constructor(name: string, shortcut: string, callback: BindingFunction, condition: string) {
         this.name = name;
         this.shortcutCode = shortcut;
         this.binding = callback;
-        this.condition = KeyBinding.parseConditions(condition);
+        this.conditions = KeyBinding.parseConditions(condition);
     }
 
     public get shortcutPretty(): string {
@@ -86,12 +87,12 @@ class KeyBinding {
                     conditions.push([ConditionType.TrueProperty, property]);
                 else {
                     const [property, operator, ...values] = other;
-                    const value = this.parseValue(values.join(" "));
+                    const parsedValues = this.parseValues(values.join(" "));
 
                     if (operator === "===")
-                        conditions.push([ConditionType.EqualProperty, property, value]);
+                        conditions.push([ConditionType.EqualProperty, property, parsedValues]);
                     else if (operator === "!==")
-                        conditions.push([ConditionType.NotEqualProperty, property, value]);
+                        conditions.push([ConditionType.NotEqualProperty, property, parsedValues]);
                     else throw new Error(`Invalid operator ${operator}`);
                 }
             }
@@ -101,14 +102,26 @@ class KeyBinding {
     }
 
     /** Parses a value */
-    private static parseValue(value: string): string | number | boolean {
-        if (value.startsWith("'"))
-            return value.slice(1, -1);
-        else if (value === "false" || value === "true")
-            return Boolean(value);
-        else if (!isNaN(parseFloat(value)))
-            return parseFloat(value);
-        throw new Error("Only literal values are supported in keybinding conditions");
+    private static parseValues(value: string): string | number | boolean | (string | number | boolean)[] {
+        // Split the value by "|"
+        const strings = value.split("|");
+        const values = [];
+
+        for (const string of strings) {
+            const value = string.trim();
+            if (value.startsWith("'"))
+                values.push(value.slice(1, -1));
+            else if (value === "false" || value === "true")
+                values.push(Boolean(value === "true"));
+            else if (!isNaN(parseFloat(value)))
+                values.push(parseFloat(value));
+            else if (value === "null")
+                values.push(null);
+            else
+                throw new Error("Only literal values are supported in keybinding conditions");
+        }
+
+        return values;
     }
 
     static isModalOpen() {
@@ -116,16 +129,15 @@ class KeyBinding {
     }
 
     /** Checks if this keybinding's condition is true at the moment of execution */
-    public checkCondition(view: ViewContext) {
+    public checkCondition(view: AnyContext) {
         // Check if the condition wants to be in a modal
         // Assuming it's the first condition
-        if (this.condition[0][0] === ConditionType.InModal && !KeyBinding.isModalOpen()) {
+        if (this.conditions[0][0] === ConditionType.InModal && !KeyBinding.isModalOpen()) {
             return false;
         }
         else if (KeyBinding.isModalOpen()) return false;
 
-
-        for (const condition of this.condition) {
+        for (const condition of this.conditions) {
             switch (condition[0]) {
                 case ConditionType.InModal:
                 case ConditionType.AlwaysTrue:
@@ -137,18 +149,24 @@ class KeyBinding {
                     if (!(view instanceof EditorContext)) return false;
                     break;
                 case ConditionType.TrueProperty:
-                    if (!view[condition[1]]) return false;
+                    if (!getPropValue(view, condition[1])) return false;
                     break;
                 case ConditionType.FalseProperty:
-                    if (view[condition[1]]) return false;
+                    if (getPropValue(view, condition[1])) return false;
                     break;
-                case ConditionType.EqualProperty:
-                    // console.log(`view["${condition[1]}"] === "${condition[2]}" => ${view[condition[1]] === condition[2]}`);
-                    if (view[condition[1]] !== condition[2]) return false;
+                case ConditionType.EqualProperty: {
+                    // If any of the given property is true
+                    const propValue = getPropValue(view, condition[1]);
+                    for (const value of condition[2])
+                        if (propValue === value) return true;
+                    return false;
+                }
+                case ConditionType.NotEqualProperty: {
+                    const propValue = getPropValue(view, condition[1]);
+                    for (const value of condition[2])
+                        if (propValue === value) return false;
                     break;
-                case ConditionType.NotEqualProperty:
-                    if (view[condition[1]] === condition[2]) return false;
-                    break;
+                }
                 default:
                     break;
             }
@@ -187,7 +205,7 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/zoom_out": new KeyBinding("Zoom Out", "Ctrl+-", undefined, "active.name === 'Map Editor' && active.tab === 'layout'"),
     "map_editor/undo_tileset_permissions_changes": new KeyBinding("Undo Tileset Permissions Changes", "Ctrl+Shift+Z", undefined, "active.name === 'Map Editor' && active.tab === 'permissions'"),
     "map_editor/redo_tileset_permissions_changes": new KeyBinding("Redo Tileset Permissions Changes", "Ctrl+Shift+Y", undefined, "active.name === 'Map Editor' && active.tab === 'permissions'"),
-    "map_editor/palette_move_up": new KeyBinding("Move Up on the Palette", "W", undefined, "active.name === 'Map Editor'"),
+    "map_editor/palette_move_up": new KeyBinding("Move Up on the Palette", "W", undefined, "active.name === 'Map Editor' && active.tab === 'layout' | 'permissions'"),
     "map_editor/palette_select_up": new KeyBinding("Move Up on the Palette while Selecting", "Shift+W", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_move_down": new KeyBinding("Move down on the Palette", "S", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_select_down": new KeyBinding("Move down on the Palette while Selecting", "Shift+S", undefined, "active.name === 'Map Editor'"),
@@ -195,17 +213,17 @@ const keybindings: Record<string, KeyBinding> = {
     "map_editor/palette_select_left": new KeyBinding("Move left on the Palette while Selecting", "Shift+A", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_move_right": new KeyBinding("Move right on the Palette", "D", undefined, "active.name === 'Map Editor'"),
     "map_editor/palette_select_right": new KeyBinding("Move right on the Palette while Selecting", "Shift+D", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_pencil": new KeyBinding("Select Pencil Tool", "1", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_rectangle": new KeyBinding("Select Rectangle Tool", "2", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_fill": new KeyBinding("Select Bucket Tool", "3", undefined, "active.name === 'Map Editor'"),
-    "map_editor/select_replace": new KeyBinding("Select Replace Tool", "4", undefined, "active.name === 'Map Editor'"),
+    "map_editor/select_pencil": new KeyBinding("Select Pencil Tool", "1", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions'"),
+    "map_editor/select_rectangle": new KeyBinding("Select Rectangle Tool", "2", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions'"),
+    "map_editor/select_fill": new KeyBinding("Select Bucket Tool", "3", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions'"),
+    "map_editor/select_replace": new KeyBinding("Select Replace Tool", "4", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions'"),
     "map_editor/import_map": new KeyBinding("Import the Map from File", "Ctrl+I", undefined, "active.name === 'Map Editor'"),
     "map_editor/export_map": new KeyBinding("Export the Map to File", "Ctrl+E", undefined, "active.name === 'Map Editor'"),
-    "map_editor/toggle_animations": new KeyBinding("Play/Stop the Animations", "F7", undefined, "active.name === 'Map Editor'"),
-    "map_editor/resize_main_map": new KeyBinding("Resize the Layout Canvas", "Ctrl+R", undefined, "active.name === 'Map Editor'"),
-    "map_editor/resize_borders_map": new KeyBinding("Resize the Borders Canvas", "Ctrl+Shift+R", undefined, "active.name === 'Map Editor'"),
-    "map_editor/change_layout": new KeyBinding("Change the Map's Layout", "Ctrl+L", undefined, "active.name === 'Map Editor'"),
-    "map_editor/change_tilesets": new KeyBinding("Change the Layouts's Tilesets", "Ctrl+T", undefined, "active.name === 'Map Editor'"),
+    "map_editor/toggle_animations": new KeyBinding("Play/Stop the Animations", "F7", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions'"),
+    "map_editor/resize_main_map": new KeyBinding("Resize the Layout Canvas", "Ctrl+R", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions' && active.layoutLocked !== true"),
+    "map_editor/resize_borders_map": new KeyBinding("Resize the Borders Canvas", "Ctrl+Shift+R", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions' && active.layoutLocked !== true"),
+    "map_editor/change_layout": new KeyBinding("Change the Map's Layout", "Ctrl+L", undefined, "active.name === 'Map Editor' && active.selectedTab === 'header' | 'layout' | 'permissions'"),
+    "map_editor/change_tilesets": new KeyBinding("Change the Layouts's Tilesets", "Ctrl+T", undefined, "active.name === 'Map Editor' && active.selectedTab === 'layout' | 'permissions' && active.layoutLocked !== true"),
 };
 
 /** The object containing all the existing shortcuts */
@@ -238,10 +256,90 @@ export function redefineBinding(id: string, callback: BindingFunction) {
 }
 
 /** Given an id, returns the keybinding's shortcut (good for printing) and whether the action is active or not */
-export function getActionsShortcut(id: string): [binding: BindingFunction, shortcut: string, active: boolean] {
+export function getActionsShortcut(id: string): [binding: BindingFunction, shortcut: string] {
     const keybinding = keybindings[id];
     if (!keybinding) throw Error(`Invalid keybinding ${id}`);
-    return [keybinding.binding, keybinding.shortcutPretty, keybinding.checkCondition(get(activeView))];
+    return [keybinding.binding, keybinding.shortcutPretty];
+}
+
+function isSubscribable(value: any) {
+    return value && value.subscribe;
+}
+
+function getPropValue(view: AnyContext, property: string) {
+    if (view?.[property] === undefined) return undefined;
+    if (isSubscribable(view[property])) return get(view[property]);
+    return view[property];
+}
+
+/** Calculates and returns a store that is updates every time the actions goes from being enabled to being disabled */
+export function getActionEnabledStore(id: string, context: AnyContext) {
+    const keybinding = keybindings[id];
+    if (!keybinding) throw Error(`Invalid keybinding ${id}`);
+
+    const callbacks: ((_: any) => boolean)[] = [];
+    const derivedFrom: Set<Writable<any>> = new Set();
+    const addIfDerived = (value: any) => {
+        if (isSubscribable(value)) derivedFrom.add(value);
+    }
+
+    // Add a parse to check if the active view is the context
+    derivedFrom.add(activeView);
+
+    for (const c of keybinding.conditions) {
+        if (c[0] === ConditionType.AlwaysTrue) return writable(true);
+        // Modal condition might as well be ignored, since you can't press buttons
+        // while in a modal anyway
+        if (c[0][0] === ConditionType.InModal) return writable(true);
+
+        // Check all other conditions
+        switch (c[0]) {
+            case ConditionType.ActiveNotNull:
+                callbacks.push((active: AnyContext) => active !== null);
+                derivedFrom.add(activeView);
+                break;
+            case ConditionType.ActiveEditorContext:
+                callbacks.push((view: AnyContext) => view instanceof EditorContext);
+                derivedFrom.add(activeView);
+                break;
+            case ConditionType.TrueProperty:
+                callbacks.push((view: AnyContext) => getPropValue(view, c[1]));
+                addIfDerived(context[c[1]]);
+                break;
+            case ConditionType.FalseProperty:
+                callbacks.push((view: AnyContext) => !getPropValue(view, c[1]));
+                addIfDerived(context[c[1]]);
+                break;
+            case ConditionType.EqualProperty:
+                callbacks.push((view: AnyContext) => {
+                    for (const value of c[2]) {
+                        if (getPropValue(view, c[1]) === value) return true;
+                    }
+                    return false;
+                });
+                addIfDerived(context[c[1]]);
+                break;
+            case ConditionType.NotEqualProperty:
+                callbacks.push((view: AnyContext) => {
+                    for (const value of c[2])
+                        if (getPropValue(view, c[1]) === value) return false;
+                    return true;
+                });
+                addIfDerived(context[c[1]]);
+                break;
+        }
+    }
+
+
+    // Compose the derived
+    const store = derived(Array.from(derivedFrom), (value) => {
+        // If the active view is not the original context, don't update
+        for (const callback of callbacks) {
+            if (!callback(context)) return false;
+        }
+        return true;
+    });
+    return store;
 }
 
 

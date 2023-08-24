@@ -22,7 +22,7 @@ export class ActionsModule {
     public get selectedTool() { return this.context.selectedTool; }
     public get material() { return this.context.material; }
     public get $data() { return get(this.context.data); }
-    public get layoutLocked() { return get(this.context.layoutLocked); }
+    public get layoutLocked() { return get(this.context.map.isLayoutLocked); }
 
     // ANCHOR Methods
     public selectLayoutEditor() {
@@ -54,7 +54,7 @@ export class ActionsModule {
     }
 
     public async resizeMap() {
-        if (this.tab !== "permissions" && this.tab !== "layout" || this.layoutLocked) return
+        if (this.layoutLocked) return
         // Ask the user for confirmation
         await spawnDialog(ResizeMapDialog, {
             layoutName: "Map",
@@ -77,7 +77,6 @@ export class ActionsModule {
         });
     }
     public async updateLayout() {
-        if (this.tab !== "header" && this.tab !== "permissions" && this.tab !== "layout") return;
         // Ask the user for confirmation
         const newIdResult: number = await spawnDialog(LayoutPickerDialog, {
             reason: "Choose a new layout to use for this map.",
@@ -97,7 +96,6 @@ export class ActionsModule {
         else this.context.changes.pushNoApply(change);
     }
     public async updateTilesets() {
-        if (this.tab !== "permissions" && this.tab !== "layout" || this.layoutLocked) return;
         // Ask the user for confirmation
         const dialogResult: [number, number] | null = await spawnDialog(TilesetPickerDialog, {
             reason: "Choose a new tileset to use for this map.",
@@ -176,20 +174,16 @@ export class ActionsModule {
                 view.palette.move(1, 0, true);
             },
             "map_editor/select_pencil": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "permissions")
-                    view.selectedTool.set(EditorTool.Pencil);
+                view.selectedTool.set(EditorTool.Pencil);
             },
             "map_editor/select_rectangle": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "permissions")
-                    view.selectedTool.set(EditorTool.Rectangle);
+                view.selectedTool.set(EditorTool.Rectangle);
             },
             "map_editor/select_fill": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "permissions")
-                    view.selectedTool.set(EditorTool.Fill);
+                view.selectedTool.set(EditorTool.Fill);
             },
             "map_editor/select_replace": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "permissions")
-                    view.selectedTool.set(EditorTool.Replace);
+                view.selectedTool.set(EditorTool.Replace);
             },
             "map_editor/export_map": (view: MapEditorContext) => {
                 console.log("Export Map");
@@ -198,8 +192,7 @@ export class ActionsModule {
                 console.log("Import Map");
             },
             "map_editor/toggle_animations": (view: MapEditorContext) => {
-                if (view.tab === "layout" || view.tab === "permissions")
-                    view.animations.togglePlaying();
+                view.animations.togglePlaying();
             },
             "map_editor/resize_main_map": (view: MapEditorContext) => {
                 view.actions.resizeMap();

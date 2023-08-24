@@ -103,6 +103,9 @@
     --ctx-outline-hover: #696969;
     --ctx-bg-hover: var(--main-bg);
     --ctx-fg-hover: var(--accent-fg);
+    --ctx-bg-disabled: #696969;
+    --ctx-fg-disabled: var(--weak-fg);
+    --ctx-outline-disabled: var(--main-bg);
 
     /* Inputs */
     --input-bg: #1f1f22;

@@ -1,8 +1,12 @@
 <script lang="ts">
-    import { getActionsShortcut } from "src/systems/bindings";
+    import {
+        getActionEnabledStore,
+        getActionsShortcut,
+    } from "src/systems/bindings";
     import { tooltip } from "src/systems/tooltip";
     import { createEventDispatcher, getContext } from "svelte";
     import type { EditorContext } from "src/systems/views";
+    import { readable } from "svelte/store";
 
     const dispatch = createEventDispatcher();
 
@@ -25,6 +29,7 @@
     export let shortcut: string = null;
 
     let actionCB: (context: EditorContext) => void = null;
+    let enabled = readable(true);
 
     if (action) {
         const actionData = getActionsShortcut(action);
@@ -32,6 +37,7 @@
         else {
             [actionCB, shortcut] = actionData;
         }
+        enabled = getActionEnabledStore(action, context);
     }
 
     function onClick(event: MouseEvent) {
@@ -50,7 +56,7 @@
     class:selected={(group !== null && group === value) || active === true}
     class:active
     class:rotating={active && rotateOnActive}
-    {disabled}
+    disabled={disabled || !$enabled}
 >
     <iconify-icon inline {icon} />
 </button>

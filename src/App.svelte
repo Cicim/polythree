@@ -10,7 +10,9 @@
     import Tooltip from "./components/app/Tooltip.svelte";
 
     onMount(() => {
-        new HomePageContext().create().select();
+        setTimeout(() => {
+            new HomePageContext().create().select();
+        }, 100);
     });
 </script>
 
