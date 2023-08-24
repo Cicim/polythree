@@ -347,17 +347,17 @@
             <Button on:click={() => close(null)}>Close</Button>
         {:else if !(state === State.Done)}
             <Button
-                color="secondary"
+                theme="secondary"
                 disabled={state === State.Deleting}
                 on:click={() => close(null)}>Cancel</Button
             >
             <Button
-                color="warning"
+                theme="warning"
                 disabled={anyInvalid || state === State.Deleting}
                 on:click={deleteMaps}>Delete</Button
             >
         {:else}
-            <Button color="secondary" on:click={() => close(null)}>Close</Button
+            <Button theme="secondary" on:click={() => close(null)}>Close</Button
             >
         {/if}
     </div>

@@ -12,7 +12,7 @@
     </div>
     <div class="content">{message}</div>
     <div class="buttons">
-        <Button color="secondary" on:click={() => close(null)}>Ok</Button>
+        <Button theme="secondary" on:click={() => close(null)}>Ok</Button>
     </div>
 </div>
 

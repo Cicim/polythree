@@ -113,7 +113,7 @@
     <div class="buttons">
         <Button on:click={() => close(null)}>Cancel</Button>
         <Button
-            color="secondary"
+            theme="secondary"
             on:click={addResizeChange}
             disabled={maxAreaExceeded || resizing}
         >

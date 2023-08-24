@@ -1,6 +1,6 @@
 import MapEditor from "./MapEditor.svelte";
 import { TabbedEditorContext, type TabbedEditorTabs } from "../systems/contexts";
-import { activeView, ViewContext } from "src/systems/views";
+import { activeView } from "src/systems/views";
 import { get, writable, type Writable } from "svelte/store";
 import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";

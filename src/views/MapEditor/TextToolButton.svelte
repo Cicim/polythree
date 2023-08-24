@@ -34,14 +34,7 @@
     }
 </script>
 
-<div
-    class="toolbutton"
-    class:small-chevron={smallChevron}
-    class:primary={theme === "primary"}
-    class:secondary={theme === "secondary"}
-    class:transparent={theme === "transparent"}
-    class:warning={theme === "warning"}
->
+<div class="large tool-button {theme}" class:small-chevron={smallChevron}>
     <button
         class="text"
         use:tooltip
@@ -71,59 +64,7 @@
 </div>
 
 <style lang="scss">
-    .toolbutton {
-        &.primary {
-            --bg: var(--btn-primary-bg);
-            --border: var(--btn-primary-border);
-            --fg: var(--btn-primary-fg);
-            --bg-hover: var(--btn-primary-bg-hover);
-            --border-hover: var(--btn-primary-border-hover);
-            --fg-hover: var(--btn-primary-fg-hover);
-            --fg-active: var(--fg-hover);
-            --fg-selected: var(--accent-fg);
-            --bg-disabled: var(--btn-primary-bg-disabled);
-            --border-disabled: var(--btn-primary-border-disabled);
-            --fg-disabled: var(--btn-primary-fg-disabled);
-        }
-        &.secondary {
-            --bg: var(--btn-secondary-bg);
-            --border: var(--btn-secondary-border);
-            --fg: var(--btn-secondary-fg);
-            --bg-hover: var(--btn-secondary-bg-hover);
-            --border-hover: var(--btn-secondary-border-hover);
-            --fg-hover: var(--btn-secondary-fg-hover);
-            --fg-active: var(--fg-hover);
-            --fg-selected: var(--btn-primary-bg);
-            --bg-disabled: var(--btn-secondary-bg-disabled);
-            --border-disabled: var(--btn-secondary-border-disabled);
-            --fg-disabled: var(--btn-secondary-fg-disabled);
-        }
-        &.transparent {
-            --bg: transparent;
-            --border: transparent;
-            --fg: var(--weak-fg);
-            --bg-hover: transparent;
-            --border-hover: transparent;
-            --fg-hover: var(--main-fg);
-            --fg-active: var(--accent-fg);
-            --bg-disabled: transparent;
-            --border-disabled: transparent;
-            --fg-disabled: var(--light-shadow);
-        }
-        &.warning {
-            --bg: var(--btn-warning-bg);
-            --border: var(--btn-warning-border);
-            --fg: var(--btn-warning-fg);
-            --bg-hover: var(--btn-warning-bg-hover);
-            --border-hover: var(--btn-warning-border-hover);
-            --fg-hover: var(--btn-warning-fg-hover);
-            --fg-active: var(--fg-hover);
-            --fg-selected: var(--accent-fg);
-            --bg-disabled: var(--btn-warning-bg-disabled);
-            --border-disabled: var(--btn-warning-border-disabled);
-            --fg-disabled: var(--btn-warning-fg-disabled);
-        }
-
+    .large.tool-button {
         min-width: max-content;
         height: 32px;
         background: var(--bg);

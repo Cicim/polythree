@@ -76,7 +76,7 @@
     <div class="actions">
         {#if selectedMap}
             <Button
-                color="secondary"
+                theme="secondary"
                 on:click={() => {
                     new MapEditorContext(selectedMap).create().select();
                 }}

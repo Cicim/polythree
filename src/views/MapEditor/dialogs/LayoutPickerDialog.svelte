@@ -55,7 +55,7 @@
         <Button on:click={() => close(null)}>Cancel</Button>
         <Button
             disabled={layout === null}
-            color="secondary"
+            theme="secondary"
             on:click={() => close(layout === initialLayout ? null : layout)}
         >
             Choose

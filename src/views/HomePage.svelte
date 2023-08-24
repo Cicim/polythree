@@ -14,7 +14,7 @@
     <div class="rom-selection">
         <div class="rom-button">
             {#if $rom === null}
-                <Button on:click={openRom} color="secondary">Open Rom</Button>
+                <Button on:click={openRom} theme="secondary">Open Rom</Button>
             {:else}
                 <Button on:click={closeRom}>Close Rom</Button>
             {/if}

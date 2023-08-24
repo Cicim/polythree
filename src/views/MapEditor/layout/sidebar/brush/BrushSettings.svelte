@@ -236,7 +236,7 @@
     </div>
     <div class="buttons">
         <Button on:click={() => close(null)}>Don't Apply</Button>
-        <Button color="secondary" on:click={apply} disabled={isDisabled}>
+        <Button theme="secondary" on:click={apply} disabled={isDisabled}>
             {#if $editingBrush.type !== brushType}
                 Change Type
             {:else}

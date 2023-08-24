@@ -69,7 +69,7 @@
         {#if !closing}
             <Button on:click={() => close(null)}>Ignore</Button>
         {/if}
-        <Button color="secondary" disabled={closing} on:click={closeAll}>
+        <Button theme="secondary" disabled={closing} on:click={closeAll}>
             Close All
         </Button>
     </div>

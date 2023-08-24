@@ -12,7 +12,8 @@
     export let title: string = "";
 
     export let disabled: boolean = false;
-    export let theme: "primary" | "secondary" | "transparent" = "primary";
+    export let theme: "primary" | "secondary" | "transparent" | "warning" =
+        "primary";
 
     export let value: string = null;
     export let group: string = null;
@@ -45,12 +46,9 @@
     tooltip="{title}{shortcut
         ? `<span class=binding> (${shortcut})</span>`
         : ''}"
-    class="toolbar-button"
+    class="small tool-button {theme}"
     class:selected={(group !== null && group === value) || active === true}
     class:active
-    class:primary={theme === "primary"}
-    class:secondary={theme === "secondary"}
-    class:transparent={theme === "transparent"}
     class:rotating={active && rotateOnActive}
     {disabled}
 >
@@ -58,52 +56,13 @@
 </button>
 
 <style lang="scss">
-    .toolbar-button {
+    .tool-button.small {
         width: 32px;
         height: 32px;
 
         cursor: pointer;
 
         transition: 50ms ease-out;
-
-        &.primary {
-            --bg: var(--btn-primary-bg);
-            --border: var(--btn-primary-border);
-            --fg: var(--btn-primary-fg);
-            --bg-hover: var(--btn-primary-bg-hover);
-            --border-hover: var(--btn-primary-border-hover);
-            --fg-hover: var(--btn-primary-fg-hover);
-            --fg-active: var(--fg-hover);
-            --fg-selected: var(--accent-fg);
-            --bg-disabled: var(--btn-primary-bg-disabled);
-            --border-disabled: var(--btn-primary-border-disabled);
-            --fg-disabled: var(--btn-primary-fg-disabled);
-        }
-        &.secondary {
-            --bg: var(--btn-secondary-bg);
-            --border: var(--btn-secondary-border);
-            --fg: var(--btn-secondary-fg);
-            --bg-hover: var(--btn-secondary-bg-hover);
-            --border-hover: var(--btn-secondary-border-hover);
-            --fg-hover: var(--btn-secondary-fg-hover);
-            --fg-active: var(--fg-hover);
-            --fg-selected: var(--btn-primary-bg);
-            --bg-disabled: var(--btn-secondary-bg-disabled);
-            --border-disabled: var(--btn-secondary-border-disabled);
-            --fg-disabled: var(--btn-secondary-fg-disabled);
-        }
-        &.transparent {
-            --bg: transparent;
-            --border: transparent;
-            --fg: var(--weak-fg);
-            --bg-hover: transparent;
-            --border-hover: transparent;
-            --fg-hover: var(--main-fg);
-            --fg-active: var(--accent-fg);
-            --bg-disabled: transparent;
-            --border-disabled: transparent;
-            --fg-disabled: var(--light-shadow);
-        }
 
         background: var(--bg);
         border: 1px solid var(--border);
@@ -146,8 +105,6 @@
 
         &:focus {
             outline: none;
-            // outline: 1px solid var(--accent-fg);
-            // outline-offset: -1px;
         }
         &:not(.selected) {
             &:hover {

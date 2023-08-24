@@ -14,7 +14,7 @@
     class:hidden={permissionMode || state !== SidebarState.Palette}
     class="topbar-view"
 >
-    <Button color="secondary" on:click={() => (state = SidebarState.Borders)}>
+    <Button theme="secondary" on:click={() => (state = SidebarState.Borders)}>
         <iconify-icon icon="mdi:border-all" width="1.5em" />
         {#if $layoutLocked}
             View Borders
@@ -24,14 +24,14 @@
     </Button>
     {#if !$layoutLocked}
         <Button
-            color="secondary"
+            theme="secondary"
             on:click={() => (state = SidebarState.BrushList)}
         >
             <iconify-icon icon="mdi:format-list-bulleted" width="1.5em" />
             Brush List
         </Button>
     {/if}
-    <Button color="secondary">
+    <Button theme="secondary">
         <iconify-icon icon="mdi:puzzle" width="1.5em" />
         Edit Tilesets
     </Button>

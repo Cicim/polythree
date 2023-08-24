@@ -94,7 +94,7 @@
         <Button on:click={() => close(null)}>Cancel</Button>
         <Button
             disabled={tileset1 === null || tileset2 === null}
-            color="secondary"
+            theme="secondary"
             on:click={() =>
                 close(
                     tileset1 === primaryTileset && tileset2 === secondaryTileset

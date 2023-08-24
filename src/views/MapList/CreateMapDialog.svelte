@@ -337,7 +337,7 @@
                 on:click={() => close(null)}
                 disabled={state === State.Creating}>Cancel</Button
             >
-            <Button color="secondary" on:click={createMap} disabled={notAllGood}
+            <Button theme="secondary" on:click={createMap} disabled={notAllGood}
                 >Create Map</Button
             >
         {/if}

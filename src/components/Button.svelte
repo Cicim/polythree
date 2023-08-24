@@ -1,9 +1,9 @@
 <script lang="ts">
     import { tooltip } from "src/systems/tooltip";
 
-    type ButtonColor = "primary" | "secondary" | "warning";
+    type ButtonTheme = "primary" | "secondary" | "warning";
 
-    export let color: ButtonColor = "primary";
+    export let theme: ButtonTheme = "primary";
     export let disabled: boolean = false;
     export let pressed: boolean = false;
     export let title: string = "";
@@ -15,49 +15,13 @@
     {disabled}
     on:click
     class:pressed
-    class="button {color}"
+    class="button {theme}"
     {...$$restProps}
 >
     <slot />
 </button>
 
 <style lang="scss">
-    .button.warning {
-        --btn-bg: var(--btn-warning-bg);
-        --btn-bg-hover: var(--btn-warning-bg-hover);
-        --btn-border: var(--btn-warning-border);
-        --btn-border-hover: var(--btn-warning-border-hover);
-        --btn-fg: var(--btn-warning-fg);
-        --btn-fg-hover: var(--btn-warning-fg-hover);
-        --btn-bg-disabled: var(--btn-warning-bg-disabled);
-        --btn-fg-disabled: var(--btn-warning-fg-disabled);
-        --btn-border-disabled: var(--btn-warning-border-disabled);
-    }
-
-    .button.secondary {
-        --btn-bg: var(--btn-secondary-bg);
-        --btn-bg-hover: var(--btn-secondary-bg-hover);
-        --btn-border: var(--btn-secondary-border);
-        --btn-border-hover: var(--btn-secondary-border-hover);
-        --btn-fg: var(--btn-secondary-fg);
-        --btn-fg-hover: var(--btn-secondary-fg-hover);
-        --btn-bg-disabled: var(--btn-secondary-bg-disabled);
-        --btn-fg-disabled: var(--btn-secondary-fg-disabled);
-        --btn-border-disabled: var(--btn-secondary-border-disabled);
-    }
-
-    .button.primary {
-        --btn-bg: var(--btn-primary-bg);
-        --btn-bg-hover: var(--btn-primary-bg-hover);
-        --btn-border: var(--btn-primary-border);
-        --btn-border-hover: var(--btn-primary-border-hover);
-        --btn-fg: var(--btn-primary-fg);
-        --btn-fg-hover: var(--btn-primary-fg-hover);
-        --btn-bg-disabled: var(--btn-primary-bg-disabled);
-        --btn-fg-disabled: var(--btn-primary-fg-disabled);
-        --btn-border-disabled: var(--btn-primary-border-disabled);
-    }
-
     .button {
         background: var(--btn-bg);
         color: var(--btn-fg);
