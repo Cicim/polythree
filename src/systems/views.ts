@@ -41,7 +41,7 @@ export function reopenLastClosedView() {
  * If any view is not closed it returns false.
  * If all views are closed correctly, it returns true.
  */
-export async function safeCloseViews(views: ViewContext[]) {
+export async function safeCloseViews(views: AnyContext[]) {
     const promises = [];
     for (const tab of views) {
         if (!(tab instanceof EditorContext)) continue;

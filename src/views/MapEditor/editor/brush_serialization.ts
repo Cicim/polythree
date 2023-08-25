@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import { spawnErrorDialog } from "src/systems/dialogs";
+import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
 import { config } from "src/systems/global";
 import { get } from "svelte/store";
 import type { SerializedBlocksData } from "./blocks_data";

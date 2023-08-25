@@ -1,3 +1,21 @@
+<script lang="ts" context="module">
+    import { spawnDialog } from "./Dialog.svelte";
+    import AlertDialog from "./AlertDialog.svelte";
+
+    interface AlertDialogOptions {
+        title: string;
+        message: string;
+    }
+
+    type AlertDialogResult = null;
+
+    export async function spawnAlertDialog(
+        options: AlertDialogOptions
+    ): Promise<AlertDialogResult> {
+        return await spawnDialog(AlertDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import Button from "../Button.svelte";
 
@@ -15,6 +33,3 @@
         <Button theme="secondary" on:click={() => close(null)}>Ok</Button>
     </div>
 </div>
-
-<style lang="scss">
-</style>

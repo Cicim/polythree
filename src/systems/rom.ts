@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api";
 import { get } from "svelte/store";
 import { open } from "@tauri-apps/api/dialog";
-import { spawnDialog, spawnErrorDialog } from "./dialogs";
-import CloseViewsDialog from "src/components/dialog/CloseViewsDialog.svelte";
+import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+import { spawnCloseViewsDialog } from "src/components/dialog/CloseViewsDialog.svelte";
 import { HomePageContext } from "src/views/HomePage";
 import { openViews } from "./views";
 import { config, rom, type Config } from "./global";
@@ -65,7 +65,7 @@ export async function closeRom() {
 
     if (romTabs.length !== 0) {
         // Ask the user if they want to close the tabs
-        const res = await spawnDialog(CloseViewsDialog, {
+        const res = await spawnCloseViewsDialog({
             title: "Close ROM",
             message: "Closing the ROM will close all tabs that require it. Are you sure you want to close the ROM?",
             views: romTabs,

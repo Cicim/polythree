@@ -1,3 +1,22 @@
+<script lang="ts" context="module">
+    import {
+        spawnDialog,
+        type DialogOptions,
+    } from "src/components/dialog/Dialog.svelte";
+    import LayoutPickerDialog from "./LayoutPickerDialog.svelte";
+    export interface LayoutPickerDialogOptions extends DialogOptions {
+        reason: string;
+        isReasonError?: boolean;
+        initialLayout?: number;
+    }
+
+    export async function spawnLayoutPickerDialog(
+        options: LayoutPickerDialogOptions
+    ): Promise<null | number> {
+        return await spawnDialog(LayoutPickerDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import { invoke } from "@tauri-apps/api";
     import Button from "src/components/Button.svelte";

@@ -8,6 +8,11 @@
     import { Change } from "src/systems/changes";
     import type { Writable } from "svelte/store";
     import type MapCanvas from "src/views/MapEditor/editor/MapCanvas.svelte";
+    import {
+        spawnDialog,
+        type DialogOptions,
+    } from "src/components/dialog/Dialog.svelte";
+    import BrushSettings from "./BrushSettings.svelte";
 
     export class BrushSettingsChange extends Change {
         constructor(
@@ -32,6 +37,19 @@
             this.brushCanvas.buildAllChunks(false);
             this.brushCanvas.resizeChangeApplied.set(new BlocksData(1, 1));
         }
+    }
+
+    export interface BrushSettingsOptions extends DialogOptions {
+        context: MapEditorContext;
+    }
+
+    export async function spawnBrushSettings(
+        options: BrushSettingsOptions
+    ): Promise<null> {
+        return await spawnDialog(BrushSettings, {
+            animation: "slide-left",
+            ...options,
+        });
     }
 </script>
 

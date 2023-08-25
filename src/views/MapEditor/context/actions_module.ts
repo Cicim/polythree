@@ -1,11 +1,10 @@
 import { redefineBindings } from "src/systems/bindings";
-import { spawnDialog } from "src/systems/dialogs";
 import { getPtrOffset } from "src/systems/rom";
 import type { MapEditorContext } from "src/views/MapEditor";
 import { get } from "svelte/store";
-import LayoutPickerDialog from "../dialogs/LayoutPickerDialog.svelte";
-import ResizeMapDialog from "../dialogs/ResizeMapDialog.svelte";
-import TilesetPickerDialog from "../dialogs/TilesetPickerDialog.svelte";
+import { spawnLayoutPickerDialog } from "../dialogs/LayoutPickerDialog.svelte";
+import { spawnResizeMapDialog } from "../dialogs/ResizeMapDialog.svelte";
+import { spawnTilesetPickerDialog } from "../dialogs/TilesetPickerDialog.svelte";
 import { EditorTool } from "../editor/tools";
 import { UpdateLayoutChange, UpdateTilesetsChange } from "./map_module";
 import type { PaletteModule } from "./palette_module";
@@ -56,7 +55,7 @@ export class ActionsModule {
     public async resizeMap() {
         if (this.layoutLocked) return
         // Ask the user for confirmation
-        await spawnDialog(ResizeMapDialog, {
+        await spawnResizeMapDialog({
             layoutName: "Map",
             context: this.context,
             canvas: this.map.mainCanvas,
@@ -66,7 +65,7 @@ export class ActionsModule {
     public async resizeBorders() {
         if (this.tab !== "permissions" && this.tab !== "layout" || this.layoutLocked) return
         // Ask the user for confirmation
-        await spawnDialog(ResizeMapDialog, {
+        await spawnResizeMapDialog({
             layoutName: "Borders",
             context: this.context,
             canvas: this.map.bordersCanvas,
@@ -78,7 +77,7 @@ export class ActionsModule {
     }
     public async updateLayout() {
         // Ask the user for confirmation
-        const newIdResult: number = await spawnDialog(LayoutPickerDialog, {
+        const newIdResult = await spawnLayoutPickerDialog({
             reason: "Choose a new layout to use for this map.",
             isReasonError: false,
             initialLayout: this.$data.header.header.map_layout_id,
@@ -97,7 +96,7 @@ export class ActionsModule {
     }
     public async updateTilesets() {
         // Ask the user for confirmation
-        const dialogResult: [number, number] | null = await spawnDialog(TilesetPickerDialog, {
+        const dialogResult = await spawnTilesetPickerDialog({
             reason: "Choose a new tileset to use for this map.",
             isReasonError: false,
             primaryTileset: getPtrOffset(this.$data.layout.header.primary_tileset),

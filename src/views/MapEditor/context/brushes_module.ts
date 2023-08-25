@@ -8,7 +8,7 @@ import {
     loadBrushesForSecondaryTileset,
     saveBrushesForTilesets
 } from "../editor/brush_serialization";
-import { spawnErrorDialog } from "src/systems/dialogs";
+import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
 import type MapCanvas from "../editor/MapCanvas.svelte";
 
 export class BrushesModule {

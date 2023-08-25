@@ -11,7 +11,6 @@
         type MapSelectionEvent,
     } from "./MapList";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
-    import Input from "src/components/Input.svelte";
     import Button from "src/components/Button.svelte";
     import MapsContainer from "./MapList/MapsContainer.svelte";
     import {
@@ -23,12 +22,11 @@
     } from "src/systems/context_menu";
     import MapInfo from "./MapList/MapInfo.svelte";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
-    import { spawnDialog } from "src/systems/dialogs";
-    import DeleteMapDialog from "./MapList/DeleteMapDialog.svelte";
     import { openViews } from "src/systems/views";
     import { MapEditorContext } from "./MapEditor";
-    import CloseViewsDialog from "../components/dialog/CloseViewsDialog.svelte";
-    import CreateMapDialog from "./MapList/CreateMapDialog.svelte";
+    import { spawnCloseViewsDialog } from "../components/dialog/CloseViewsDialog.svelte";
+    import { spawnCreateMapDialog } from "./MapList/CreateMapDialog.svelte";
+    import { spawnDeleteMapDialog } from "./MapList/DeleteMapDialog.svelte";
     import { resizeX } from "src/systems/resize";
     import SearchBar from "src/components/SearchBar.svelte";
 
@@ -172,22 +170,22 @@
         }
 
         if (viewsToClose.length > 0) {
-            const res = await spawnDialog(CloseViewsDialog, {
+            const res = await spawnCloseViewsDialog({
                 title: "Close open Map Editors",
                 views: viewsToClose,
             });
 
             if (!res) return;
         }
-        await spawnDialog(DeleteMapDialog, {
+        await spawnDeleteMapDialog({
             toDelete: cards,
             all: allCards,
             context,
         });
     }
-    export async function createMap(options: CreateMapOptions = {}) {
-        const res = await spawnDialog(CreateMapDialog, {
-            options,
+    export async function createMap(initialGroup?: number) {
+        await spawnCreateMapDialog({
+            initialGroup,
             all: allCards,
             context,
         });

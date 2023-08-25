@@ -2,14 +2,13 @@
     import type { MapEditorContext } from "src/views/MapEditor";
     import { resizeY } from "src/systems/resize";
     import { SidebarState } from "../../LayoutSidebar.svelte";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { tooltip } from "src/systems/tooltip";
     import { showPreviewWindow } from "src/components/app/PreviewWindow.svelte";
-    import { spawnDialog } from "src/systems/dialogs";
     import ToolButton from "../../../ToolButton.svelte";
     import MapCanvas from "../../../editor/MapCanvas.svelte";
     import BrushPreview from "./BrushPreview.svelte";
-    import BrushSettings from "./BrushSettings.svelte";
+    import { spawnBrushSettings } from "./BrushSettings.svelte";
     import { EditorChanges } from "src/systems/changes";
     import TextToolButton from "src/views/MapEditor/TextToolButton.svelte";
     import { IconOption, Menu } from "src/systems/context_menu";
@@ -192,7 +191,7 @@
                         theme="transparent"
                         title="Brush Settings"
                         on:click={() => {
-                            spawnDialog(BrushSettings, {
+                            spawnBrushSettings({
                                 context,
                             });
                         }}

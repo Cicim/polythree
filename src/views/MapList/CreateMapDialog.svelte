@@ -1,3 +1,22 @@
+<script lang="ts" context="module">
+    import {
+        spawnDialog,
+        type DialogOptions,
+    } from "src/components/dialog/Dialog.svelte";
+    import CreateMapDialog from "./CreateMapDialog.svelte";
+    export interface CreateMapDialogOptions extends DialogOptions {
+        initialGroup: number;
+        context: MapListContext;
+        all: MapCardProps[];
+    }
+
+    export async function spawnCreateMapDialog(
+        options: CreateMapDialogOptions
+    ): Promise<null | false | true> {
+        return await spawnDialog(CreateMapDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import Select from "src/components/Select.svelte";
     import {
@@ -36,7 +55,7 @@
     export let close: (value: any) => void;
 
     /** The input options when you create the map */
-    export let options: CreateMapOptions;
+    export let initialGroup: number;
     /** The map list context from which the dialog was opened */
     export let context: MapListContext;
     /** The list of all mapcard data */
@@ -114,12 +133,10 @@
     group = groupOptions[0][0];
     // Update it if the options specifies a group that is in the list of available ones
     if (
-        options?.group !== undefined &&
-        Object.keys(availableIndexesForGroups).includes(
-            options.group.toString()
-        )
+        initialGroup !== undefined &&
+        Object.keys(availableIndexesForGroups).includes(group.toString())
     ) {
-        group = options.group;
+        group = initialGroup;
     }
     // Initialize the indexes
     updateIndexes();

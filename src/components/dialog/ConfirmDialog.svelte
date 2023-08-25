@@ -1,3 +1,18 @@
+<script lang="ts" context="module">
+    import { spawnDialog, type DialogOptions } from "./Dialog.svelte";
+    import ConfirmDialog from "./ConfirmDialog.svelte";
+    export interface ConfirmDialogOptions extends DialogOptions {
+        /** The name of the editor you're trying to close */
+        editorName: string;
+    }
+
+    export async function spawnConfirmDialog(
+        options: ConfirmDialogOptions
+    ): Promise<null | false | true> {
+        return await spawnDialog(ConfirmDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import Button from "../Button.svelte";
 

@@ -1,3 +1,18 @@
+<script lang="ts" context="module">
+    import { spawnDialog, type DialogOptions } from "./Dialog.svelte";
+    import SaveDialog from "./SaveDialog.svelte";
+    export interface SaveDialogOptions extends DialogOptions {
+        /** The name of the editor you're trying to close */
+        editorName: string;
+    }
+
+    export async function spawnSaveDialog(
+        options: SaveDialogOptions
+    ): Promise<null | false | true> {
+        return await spawnDialog(SaveDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import Button from "../Button.svelte";
 

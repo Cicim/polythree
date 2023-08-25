@@ -1,10 +1,74 @@
+<script lang="ts" context="module">
+    import Dialog from "./Dialog.svelte";
+    import { spawnAlertDialog } from "./AlertDialog.svelte";
+
+    const dialogAnimationTypes = [
+        /** Dialog starts at center, .85 size, in .5 seconds goes reaches default */
+        "scale",
+        /** Dialog stars out of bounds down, slides in in .5 seconds until default*/
+        "slide-up",
+        "slide-left",
+        "slide-down",
+        "slide-right",
+    ] as const;
+
+    type DialogAnimationType = (typeof dialogAnimationTypes)[number];
+
+    export interface DialogOptions {
+        /** The animation of the dialog. Defaults to scale */
+        animation?: DialogAnimationType;
+    }
+
+    /** Spawns a dialog component with the specified content and returns
+     * the return value when the dialog closes. */
+    export async function spawnDialog(
+        contentComponent: typeof SvelteComponent,
+        options: Record<string, any>
+    ): Promise<any> {
+        console.log(options);
+        // The Dialog's parent element
+        const parent = document.body;
+
+        return new Promise(async (resolve) => {
+            // Create the dialog component
+            const component = new Dialog({
+                target: parent,
+                props: {
+                    dialogComponent: contentComponent,
+                    close: (value) => {
+                        // Destroy the component
+                        component.$destroy();
+                        // Return the value
+                        resolve(value);
+                    },
+                    ...options,
+                },
+            });
+
+            const dialog = component.getDialog();
+            dialog.showModal();
+        });
+    }
+
+    /** Spawns an Error Dialog */
+    export async function spawnErrorDialog(
+        message: string,
+        title: string = "An Error has occurred"
+    ) {
+        return spawnAlertDialog({ title, message });
+    }
+</script>
+
 <script lang="ts">
     import type { SvelteComponent } from "svelte";
+    import { fade } from "svelte/transition";
 
     /** The component of the dialog content */
     export let dialogComponent: typeof SvelteComponent;
     /** The close function that returns a value in the Promise */
     export let close: (value: unknown) => any;
+    /** The dialog's animation. Taken from the configs, defaults to scale */
+    export let animation: DialogAnimationType = "scale";
 
     /** The dialog element */
     let dialogElement: HTMLDialogElement;
@@ -52,7 +116,7 @@
 <svelte:window on:keydown={closeOnEscape} on:mousedown={closeOnClickOutside} />
 
 <!-- The dialog -->
-<dialog class="dialog modal" bind:this={dialogElement}>
+<dialog class="dialog modal anim-{animation}" bind:this={dialogElement} in:fade>
     <!-- The dialog content container -->
     <svelte:component
         this={dialogComponent}
@@ -63,6 +127,32 @@
 </dialog>
 
 <style lang="scss">
+    @keyframes scale {
+        0% {
+            transform: scale(0.85);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @mixin slide($animName, $x, $y) {
+        @keyframes #{"slide" + $animName} {
+            0% {
+                transform: translate($x, $y);
+            }
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+        animation: #{"slide" + $animName} 0.5s cubic-bezier(
+                0.165,
+                0.84,
+                0.44,
+                1
+            ) forwards;
+    }
+
     dialog {
         background: var(--dialog-bg);
         padding: 0.25em 0.5em;
@@ -70,6 +160,22 @@
         border-radius: 4px;
 
         box-shadow: 5px 5px 10px var(--dialog-shadow);
+
+        &.anim-scale {
+            animation: scale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        }
+        &.anim-slide-up {
+            @include slide("Up", 0, 100%);
+        }
+        &.anim-slide-left {
+            @include slide("Left", 100%, 0);
+        }
+        &.anim-slide-down {
+            @include slide("Down", 0, -100%);
+        }
+        &.anim-slide-right {
+            @include slide("Right", -100%, 0);
+        }
 
         &::backdrop {
             background: #0008;

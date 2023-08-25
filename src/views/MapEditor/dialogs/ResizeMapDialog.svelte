@@ -1,5 +1,28 @@
 <svelte:options accessors />
 
+<script lang="ts" context="module">
+    import {
+        spawnDialog,
+        type DialogOptions,
+    } from "src/components/dialog/Dialog.svelte";
+    import ResizeMapDialog from "./ResizeMapDialog.svelte";
+    export interface ResizeMapDialogOptions extends DialogOptions {
+        MAX_WIDTH?: number;
+        MAX_HEIGHT?: number;
+        MAX_MAP_AREA?: number;
+        layoutName: string;
+        canvas: MapCanvas;
+        blocks: BlocksData;
+        context: MapEditorContext;
+    }
+
+    export async function spawnResizeMapDialog(
+        options: ResizeMapDialogOptions
+    ): Promise<true | null> {
+        return await spawnDialog(ResizeMapDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import Button from "src/components/Button.svelte";
     import type { MapEditorContext } from "src/views/MapEditor";

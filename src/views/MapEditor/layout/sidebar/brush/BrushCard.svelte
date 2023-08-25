@@ -9,8 +9,7 @@
     import type { BrushMaterial } from "../../../editor/brushes";
     import { getContext, onMount, tick } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
-    import { spawnDialog } from "src/systems/dialogs";
-    import BrushSettings from "./BrushSettings.svelte";
+    import { spawnBrushSettings } from "./BrushSettings.svelte";
     import { tooltip } from "src/systems/tooltip";
     import type { Writable } from "svelte/store";
     import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
@@ -59,7 +58,7 @@
     async function openSettings() {
         editBrush();
         await tick();
-        spawnDialog(BrushSettings, {
+        spawnBrushSettings({
             context,
         });
     }

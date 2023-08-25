@@ -1,16 +1,34 @@
 <svelte:options accessors />
 
+<script lang="ts" context="module">
+    import { spawnDialog, type DialogOptions } from "./Dialog.svelte";
+    import CloseViewsDialog from "./CloseViewsDialog.svelte";
+    export interface CloseViewsDialogOptions extends DialogOptions {
+        /** The views to close */
+        views: AnyContext[];
+        thisView: AnyContext;
+        /** The title of the dialog */
+        title: string;
+        message: string;
+    }
+
+    export async function spawnCloseViewsDialog(
+        options: CloseViewsDialogOptions
+    ): Promise<null | false | true> {
+        return await spawnDialog(CloseViewsDialog, options);
+    }
+</script>
+
 <script lang="ts">
-    import { safeCloseViews } from "src/systems/views";
-    import type { ViewContext } from "src/systems/contexts";
+    import { safeCloseViews, type AnyContext } from "src/systems/views";
     import Button from "src/components/Button.svelte";
     import WarningDiv from "../WarningDiv.svelte";
 
     export let close: (value: any) => void;
     export let title: string;
     export let message: string = null;
-    export let views: ViewContext[];
-    export let thisView: ViewContext = null;
+    export let views: AnyContext[];
+    export let thisView: AnyContext = null;
     export let noEscapeClose = false;
     export let noOutsideClose = false;
     let closing = false;

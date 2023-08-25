@@ -1,13 +1,13 @@
 import { invoke } from "@tauri-apps/api";
 import { config } from "src/systems/global";
-import { spawnDialog, spawnErrorDialog } from "src/systems/dialogs";
+import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import type { MapEditorContext } from "src/views/MapEditor";
 import initWasmFunctions, { load_tileset, render_blocks_data } from "src/wasm/map-canvas/pkg/map_canvas";
 import { get, writable, type Writable } from "svelte/store";
 import { BlocksData, type ImportedBlocksData } from "../editor/blocks_data";
-import LayoutPickerDialog from "../dialogs/LayoutPickerDialog.svelte";
-import TilesetPickerDialog from "../dialogs/TilesetPickerDialog.svelte";
+import { spawnLayoutPickerDialog } from "../dialogs/LayoutPickerDialog.svelte";
+import { spawnTilesetPickerDialog } from "../dialogs/TilesetPickerDialog.svelte";
 import type MapCanvas from "../../MapEditor/editor/MapCanvas.svelte";
 import { Change } from "src/systems/changes";
 
@@ -665,7 +665,7 @@ export class MapModule {
             }
             catch (message) {
                 // Spawn a dialog asking the user to select a layout
-                const layoutId: number = await spawnDialog(LayoutPickerDialog, {
+                const layoutId = await spawnLayoutPickerDialog({
                     reason: `Could not load layout ${id}: ${message}`
                 });
 
@@ -709,8 +709,8 @@ export class MapModule {
             catch (message) {
                 const names = get(config).tileset_names;
 
-                const tilesets = await spawnDialog(TilesetPickerDialog, {
-                    reason: `Could not load tilesets (${names[tileset1]}, 
+                const tilesets = await spawnTilesetPickerDialog({
+                    reason: `Could not load tilesets (${names[tileset1]},
                         ${names[tileset2]}): ${message}`
                 });
 

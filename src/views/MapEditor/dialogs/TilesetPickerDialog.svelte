@@ -1,3 +1,23 @@
+<script lang="ts" context="module">
+    import {
+        spawnDialog,
+        type DialogOptions,
+    } from "src/components/dialog/Dialog.svelte";
+    import TilesetPickerDialog from "./TilesetPickerDialog.svelte";
+    export interface TilesetPickerDialogOptions extends DialogOptions {
+        reason: string;
+        isReasonError?: boolean;
+        primaryTileset?: number;
+        secondaryTileset?: number;
+    }
+
+    export async function spawnTilesetPickerDialog(
+        options: TilesetPickerDialogOptions
+    ): Promise<[number, number] | null> {
+        return await spawnDialog(TilesetPickerDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import { invoke } from "@tauri-apps/api";
     import Button from "src/components/Button.svelte";

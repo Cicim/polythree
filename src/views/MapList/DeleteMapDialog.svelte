@@ -1,5 +1,24 @@
 <svelte:options accessors />
 
+<script lang="ts" context="module">
+    import {
+        spawnDialog,
+        type DialogOptions,
+    } from "src/components/dialog/Dialog.svelte";
+    import DeleteMapDialog from "./DeleteMapDialog.svelte";
+    export interface DeleteMapDialogOptions extends DialogOptions {
+        toDelete: { group: number; index: number; layout?: number }[];
+        all: MapCardProps[];
+        context: MapListContext;
+    }
+
+    export async function spawnDeleteMapDialog(
+        options: DeleteMapDialogOptions
+    ): Promise<null | false | true> {
+        return await spawnDialog(DeleteMapDialog, options);
+    }
+</script>
+
 <script lang="ts">
     import type { MapCardProps, MapId, MapListContext } from "../MapList";
     import { invoke } from "@tauri-apps/api";
@@ -7,7 +26,6 @@
     import { tooltip } from "src/systems/tooltip";
     import { getAllViews } from "src/systems/views";
     import { MapEditorContext } from "../MapEditor";
-    import { spawnDialog } from "src/systems/dialogs";
     import Button from "src/components/Button.svelte";
     import WarningDiv from "src/components/WarningDiv.svelte";
     import ErrorDiv from "src/components/ErrorDiv.svelte";

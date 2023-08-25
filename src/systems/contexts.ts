@@ -1,8 +1,8 @@
 import type { SvelteComponent } from "svelte";
 import { get, writable, type Unsubscriber, type Writable } from "svelte/store";
 import { rom } from "./global";
-import { spawnDialog, spawnErrorDialog } from "./dialogs";
-import SaveDialog from "src/components/dialog/SaveDialog.svelte";
+import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+import { spawnSaveDialog } from "src/components/dialog/SaveDialog.svelte";
 import { EditorChanges } from "./changes";
 import { openViews, lastClosedViews, activeView } from "./views";
 
@@ -321,7 +321,7 @@ export abstract class EditorContext extends ViewContext {
         if (!this.needsSaveNow) return false;
         // Otherwise, open the dialog
         this.select();
-        return await spawnDialog(SaveDialog, { editorName: this.name });
+        return await spawnSaveDialog({ editorName: this.name });
     }
 
     /** Awaits for the editor to close */

@@ -1,5 +1,5 @@
 import { EditorChanges } from "src/systems/changes";
-import { spawnErrorDialog } from "src/systems/dialogs";
+import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
 import type { MapEditorContext } from "src/views/MapEditor";
 import { get, writable, type Writable } from "svelte/store";
 import { BlocksData, NULL } from "../editor/blocks_data";
