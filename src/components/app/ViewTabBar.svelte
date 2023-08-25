@@ -31,7 +31,7 @@
         "tabbar/reopen_last": () => reopenLastClosedView(),
         "tabbar/close_saved": () =>
             [...$openViews].reverse().forEach((view) => {
-                if (!(<EditorContext>view)?.needsSaveNow) view.close();
+                if (!(<EditorContext>view)?.hasUnsavedChanges) view.close();
             }),
         "tabbar/next": () => {
             const current = $openViews.find((view) => view === $activeView);

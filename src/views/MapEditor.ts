@@ -110,7 +110,8 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
         this.palette.tryToRebuildLevels();
     };
 
-    public async close(): Promise<boolean> {
+    /** Close all modules before closing the tab */
+    public async onBeforeClose() {
         // Try to save the map's configs before closing
         if (!this.isLoading) {
             // Save the tileset levels
@@ -118,9 +119,10 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
             // Save the brushes
             await this.brushes.save();
         }
+        // Unlocks acquired layouts
         this.map.onClose();
+        // Closes running timeouts
         this.animations.exit();
-        return super.close();
     }
 
     public async load() {

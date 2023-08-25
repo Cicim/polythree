@@ -6,6 +6,7 @@ import { spawnCloseViewsDialog } from "src/components/dialog/CloseViewsDialog.sv
 import { HomePageContext } from "src/views/HomePage";
 import { openViews } from "./views";
 import { config, rom, type Config } from "./global";
+import { lastClosedViews } from "./views";
 
 type RomOpenResponse = {
     rom_type: string,
@@ -84,6 +85,9 @@ export async function closeRom() {
 
     // Set the rom
     rom.set(null);
+
+    // Close all recently opened views
+    lastClosedViews.set([]);
 }
 
 

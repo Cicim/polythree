@@ -98,6 +98,7 @@ export abstract class ViewContext {
         return this;
     }
 
+    /** Destroy this view's component and container */
     public destroy() {
         this.component.$destroy();
         this.container.remove();
@@ -277,7 +278,7 @@ export abstract class EditorContext extends ViewContext {
 
     /** Signals the user the saving process has started */
     public startSaving() {
-        if (!this.needsSaveNow) return true;
+        if (!this.hasUnsavedChanges) return true;
         this.changes.saving.set(true);
         this.changes.locked++;
         return false;
@@ -297,11 +298,10 @@ export abstract class EditorContext extends ViewContext {
         super.select();
     }
 
-
-    public get needsSaveNow() {
+    public get hasUnsavedChanges() {
         return get(this.changes.unsaved);
     }
-    public get isSavingNow() {
+    public get isSaving() {
         return get(this.changes.saving);
     }
     public get isLoading() {
@@ -310,19 +310,25 @@ export abstract class EditorContext extends ViewContext {
 
     /** Asks the user for the needs save prompt and awaits for them to answer */
     public async promptClose() {
+        // TODO: Does not work now since Input elements override Ctrl+W functionality
+        // Blur the selected element to trigger an onchange event and add the last save
         (<HTMLInputElement>document.activeElement)?.blur();
+
         // If the editor is saving, just slate it to be closed later
-        if (this.isSavingNow) {
+        if (this.isSaving) {
             this.slatedForClose = true;
             // Don't close now, wait for it to be done saving
             return null;
         }
         // If it doesn't need saving, just close it
-        if (!this.needsSaveNow) return false;
-        // Otherwise, open the dialog
+        if (!this.hasUnsavedChanges) return false;
+        // Otherwise, select the tab and open the save dialog
         this.select();
         return await spawnSaveDialog({ editorName: this.name });
     }
+
+    /** An action that executes before the tab is closed */
+    protected async onBeforeClose(): Promise<void> { }
 
     /** Awaits for the editor to close */
     public async close() {
@@ -336,8 +342,9 @@ export abstract class EditorContext extends ViewContext {
         }
 
         // If it's already closed, just return
-        if (get(openViews).indexOf(this as ViewContext) === -1) return true;
+        if (get(openViews).indexOf(this) === -1) return true;
         // If the save was successful, close it
+        await this.onBeforeClose();
         await super.close();
         return true;
     }
@@ -352,9 +359,9 @@ export abstract class EditorContext extends ViewContext {
             this.savePromise.then(() => {
                 super.close()
             });
-            return true;
+        } else {
+            this.onBeforeClose().then(super.close);
         }
-        else super.close();
         return true;
     }
 

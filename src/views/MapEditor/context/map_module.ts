@@ -199,7 +199,7 @@ export class MapModule {
         return true;
     }
 
-    public async onClose() {
+    public onClose() {
         this.releaseLayoutLocks();
     }
 

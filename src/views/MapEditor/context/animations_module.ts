@@ -57,7 +57,7 @@ export class AnimationsModule {
         });
     }
     /** Closes all things regarding animations */
-    public async exit() {
+    public exit() {
         // Unsubscribe from activeView
         this.activeViewUnsubscriber();
         // Clear the animation timeout to prevent memory leaks

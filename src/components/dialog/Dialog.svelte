@@ -25,7 +25,6 @@
         contentComponent: typeof SvelteComponent,
         options: Record<string, any>
     ): Promise<any> {
-        console.log(options);
         // The Dialog's parent element
         const parent = document.body;
 
