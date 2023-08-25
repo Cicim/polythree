@@ -392,7 +392,7 @@
             display: grid;
             flex-direction: column;
             grid-template-columns: 1fr minmax(0, min-content);
-            font-size: 20px;
+            font-size: 18px;
         }
 
         > :global(.icons-container) {

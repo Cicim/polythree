@@ -192,6 +192,7 @@
         padding: 0 8px 0 12px;
         cursor: pointer;
         column-gap: 8px;
+        flex-shrink: 0;
 
         grid-template-columns: min-content 1fr min-content;
         grid-template-rows: 40px;

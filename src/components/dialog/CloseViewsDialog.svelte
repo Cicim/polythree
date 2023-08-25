@@ -6,10 +6,10 @@
     export interface CloseViewsDialogOptions extends DialogOptions {
         /** The views to close */
         views: AnyContext[];
-        thisView: AnyContext;
+        thisView?: AnyContext;
         /** The title of the dialog */
         title: string;
-        message: string;
+        message?: string;
     }
 
     export async function spawnCloseViewsDialog(

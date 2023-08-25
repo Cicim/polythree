@@ -167,15 +167,15 @@
 <style lang="scss">
     .tabs-view {
         height: 40px;
-        overflow-y: hidden;
+        overflow: hidden;
         scroll-behavior: auto;
         user-select: none;
     }
 
     .tabs-container {
-        width: calc(100% - 2px);
         padding-left: 2px;
         display: flex;
+        flex-flow: row nowrap;
         height: 40px;
         overflow-x: auto;
         overflow-y: hidden;

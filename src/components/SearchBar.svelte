@@ -44,6 +44,7 @@
         bind:value
         on:input={handleInput}
         on:keydown={handleKeyDown}
+        spellcheck="false"
     />
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div
