@@ -167,7 +167,7 @@
         }
         &.selected {
             color: black;
-            outline: 2px solid var(--accent-fg);
+            outline: 2px solid var(--outline);
             box-shadow: 0px 0px 30px var(--hard-shadow);
             z-index: 100;
             cursor: default;

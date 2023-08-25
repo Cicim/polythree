@@ -147,6 +147,7 @@
     --hard-shadow: #f2f2f0c0;
     --accent-shadow: #40d4f2c0;
     --accent-fg: #40d4f2;
+    --outline: #2cdcff;
 
     background-color: var(--main-bg);
     color: var(--main-fg);

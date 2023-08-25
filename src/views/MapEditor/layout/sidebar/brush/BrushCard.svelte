@@ -249,7 +249,7 @@
         }
 
         &.selected {
-            border-color: var(--accent-fg);
+            border-color: var(--outline);
             background: var(--card-selected-bg);
             color: var(--card-selected-fg);
         }
@@ -285,8 +285,8 @@
         }
 
         &.selected {
-            border-color: var(--accent-fg);
-            outline: 1px solid var(--accent-fg);
+            border-color: var(--outline);
+            outline: 1px solid var(--outline);
         }
 
         .name {

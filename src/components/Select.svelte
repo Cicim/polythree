@@ -478,11 +478,11 @@
         user-select: none;
 
         &:focus {
-            outline: 1px solid var(--accent-fg);
+            outline: 1px solid var(--outline);
             outline-offset: 1px;
         }
         &.open {
-            border-color: var(--accent-fg);
+            border-color: var(--outline);
 
             .icon-dropdown {
                 transform: rotate(180deg);

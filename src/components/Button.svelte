@@ -66,7 +66,7 @@
                 outline: none !important;
             }
             &:focus {
-                outline: 1px solid var(--accent-fg);
+                outline: 1px solid var(--outline);
                 outline-offset: 1px;
             }
             &:active,

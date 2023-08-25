@@ -1,11 +1,15 @@
 <script lang="ts">
-    import type { EditorSubTab } from "src/systems/contexts";
+    import type {
+        EditorSubTab,
+        TabbedEditorContext,
+    } from "src/systems/contexts";
     import { getContext } from "svelte";
-    import type { MapEditorContext } from "../MapEditor";
     import { tooltip } from "src/systems/tooltip";
 
-    export let tabs: Record<string, EditorSubTab> = {};
-    const context: MapEditorContext = getContext("context");
+    type TabId = any;
+
+    export let tabs: Record<TabId, EditorSubTab> = {};
+    const context: TabbedEditorContext<TabId> = getContext("context");
     let activeTab = context.selectedTab;
 </script>
 
