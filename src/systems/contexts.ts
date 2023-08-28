@@ -360,7 +360,7 @@ export abstract class EditorContext extends ViewContext {
                 super.close()
             });
         } else {
-            this.onBeforeClose().then(super.close);
+            this.onBeforeClose().then(() => super.close());
         }
         return true;
     }
