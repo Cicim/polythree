@@ -20,8 +20,6 @@
     let mapCanvas: MapCanvas;
 
     const context: MapEditorContext = getContext("context");
-    const data = context.data;
-    const tilesetData = $data.tilesets;
     const editingBrush = context.brushes.editing;
     const editingBrushClone = context.brushes.editingClone;
     const editingBrushChanges = context.brushes.editingChanges;

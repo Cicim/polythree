@@ -22,7 +22,7 @@ export class BrushesModule {
     /** The brush that's being currently edited */
     public editing: Writable<BrushMaterial> = writable(null);
     /** The changes that are applied to the editing brush */
-    public editingChanges: Writable<EditorChanges<null>> = writable(null);
+    public editingChanges: Writable<EditorChanges> = writable(null);
     /** A clone of the brush you've just started editing right
      * before you made any edits to it */
     public editingClone: Writable<BrushMaterial> = writable(null);

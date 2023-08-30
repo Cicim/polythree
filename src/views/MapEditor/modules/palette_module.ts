@@ -18,7 +18,7 @@ export class PaletteModule {
     /** The reference to the MapCanvas for the tilesetBlocks */
     public mapCanvas: Writable<MapCanvas> = writable(null);
     /** The changes that are applied to the tileset permission editor */
-    public changes: EditorChanges<null>;
+    public changes: EditorChanges;
     // Keybindings callbacks
     public moveCB: (dirX: number, dirY: number, select: boolean) => void = () => { };
     /** The number of blocks at the end that are not in the tileset */

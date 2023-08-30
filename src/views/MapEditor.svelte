@@ -13,8 +13,6 @@
 
     export let context: MapEditorContext;
     setContext("context", context);
-    const data = context.data;
-    setContext("data", data);
 
     const isLoading = context.loading;
     const layoutLocked = context.map.isLayoutLocked;

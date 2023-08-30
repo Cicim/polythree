@@ -4,6 +4,7 @@
     import r, { type NavigatePath } from "src/systems/navigate";
     import type { Unsubscriber, Writable } from "svelte/store";
     import type { EditorContext } from "src/systems/contexts";
+    import type { EditorChanges } from "src/systems/changes";
 
     type InputType = "text" | "number";
 
@@ -22,16 +23,15 @@
     export let min: number = Number.MIN_SAFE_INTEGER;
     export let max: number = Number.MAX_SAFE_INTEGER;
 
-    let data: Writable<any>, context: EditorContext, unsub: Unsubscriber;
+    let changes: EditorChanges, unsub: Unsubscriber;
 
     const dispatch = createEventDispatcher();
 
     // Initalize the data and context variables
     // for the data editing
     if (edits !== null) {
-        data = getContext("data");
-        context = getContext("context");
-        value = r.get($data, edits) as string | number;
+        changes = (<EditorContext>getContext("context")).changes;
+        value = r.getStore(store, edits) as string | number;
     }
 
     function onChange(
@@ -48,13 +48,13 @@
             if (isNaN(number)) number = 0;
 
             if (edits !== null) {
-                context.changes.setValue(store, path, number);
+                changes.setValue(store, path, number);
             } else {
                 value = number;
             }
         } else {
             if (edits !== null) {
-                context.changes.setValue(store, path, newValue);
+                changes.setValue(store, path, newValue);
             } else {
                 value = newValue;
             }
@@ -86,7 +86,7 @@
     // If the data is being edited, update the value
     // when the data changes
     if (edits !== null) {
-        unsub = data.subscribe((newData) => {
+        unsub = store.subscribe((newData) => {
             value = r.get(newData, edits) as string | number;
         });
     }

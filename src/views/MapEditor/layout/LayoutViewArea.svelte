@@ -6,8 +6,8 @@
     export let editPermissions: boolean;
     let mapCanvas: MapCanvas;
     const context: MapEditorContext = getContext("context");
-    const data = context.data;
-    const blocks = $data.layout.map_data;
+    const layoutData = context.data.layout;
+    const blocks = $layoutData.map_data;
 
     onMount(() => {
         // Update the map canvas

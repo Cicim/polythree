@@ -20,8 +20,13 @@ export class ActionsModule {
     public get animations() { return this.context.animations; }
     public get selectedTool() { return this.context.selectedTool; }
     public get material() { return this.context.material; }
-    public get $data() { return get(this.context.data); }
     public get layoutLocked() { return get(this.context.map.isLayoutLocked); }
+    public get header() { return this.context.data.header; }
+    public get layout() { return this.context.data.layout; }
+    public get tilesets() { return this.context.data.tilesets; }
+    public get $header() { return get(this.header); }
+    public get $layout() { return get(this.layout); }
+    public get $tilesets() { return get(this.tilesets); }
 
     // ANCHOR Methods
     public selectLayoutEditor() {
@@ -59,7 +64,7 @@ export class ActionsModule {
             layoutName: "Map",
             context: this.context,
             canvas: this.map.mainCanvas,
-            blocks: this.map.$data.layout.map_data,
+            blocks: this.map.$layout.map_data,
         });
     }
     public async resizeBorders() {
@@ -69,7 +74,7 @@ export class ActionsModule {
             layoutName: "Borders",
             context: this.context,
             canvas: this.map.bordersCanvas,
-            blocks: this.map.$data.layout.border_data,
+            blocks: this.map.$layout.border_data,
             MAX_WIDTH: 4,
             MAX_HEIGHT: 4,
             MAX_MAP_AREA: 4,
@@ -80,7 +85,7 @@ export class ActionsModule {
         const newIdResult = await spawnLayoutPickerDialog({
             reason: "Choose a new layout to use for this map.",
             isReasonError: false,
-            initialLayout: this.$data.header.header.map_layout_id,
+            initialLayout: this.$header.header.map_layout_id,
         });
         // If the user didn't choose a layout, cancel
         if (!newIdResult) return;
@@ -99,8 +104,8 @@ export class ActionsModule {
         const dialogResult = await spawnTilesetPickerDialog({
             reason: "Choose a new tileset to use for this map.",
             isReasonError: false,
-            primaryTileset: getPtrOffset(this.$data.layout.header.primary_tileset),
-            secondaryTileset: getPtrOffset(this.$data.layout.header.secondary_tileset),
+            primaryTileset: getPtrOffset(this.$layout.header.primary_tileset),
+            secondaryTileset: getPtrOffset(this.$layout.header.secondary_tileset),
         });
         // If the user didn't choose a tileset, cancel
         if (!dialogResult) return;

@@ -61,8 +61,8 @@ export class UpdateLayoutChange extends Change {
 
     constructor(private context: MapEditorContext, private newLayoutId: number) {
         super();
-        this.oldLayoutId = context.map.$data.header.header.map_layout_id;
-        this.oldLayoutData = context.map.cloneLayoutData(context.map.$data.layout);
+        this.oldLayoutId = context.map.$header.header.map_layout_id;
+        this.oldLayoutData = context.map.cloneLayoutData(context.map.$layout);
     }
 
     public updatePrev(): boolean {
@@ -154,9 +154,13 @@ export class MapModule {
 
     // ANCHOR Getters & Setters
     public get identifier() { return this.context.identifier }
-    public get data() { return this.context.data }
+    public get header() { return this.context.data.header }
+    public get $header() { return get(this.header) }
+    public get layout() { return this.context.data.layout }
+    public get $layout() { return get(this.layout) }
+    public get tilesets() { return this.context.data.tilesets }
+    public get $tilesets() { return get(this.tilesets) }
     public get loading() { return this.context.loading }
-    public get $data() { return get(this.data) }
 
     public get tileset1Offset() { return this.context.tileset1Offset }
     public set tileset1Offset(value: number) { this.context.tileset1Offset = value }
@@ -166,7 +170,7 @@ export class MapModule {
     public set tileset1Length(value: number) { this.context.tileset1Length = value }
     public get tileset2Length() { return this.context.tileset2Length }
     public set tileset2Length(value: number) { this.context.tileset2Length = value }
-    public get tilesetLengths() { return this.$data.tilesets.metatiles.length / 8 }
+    public get tilesetLengths() { return this.$tilesets.metatiles.length / 8 }
     public get layoutId() { return this.context.layoutId }
     public set layoutId(value: number) { this.context.layoutId = value }
     public get layoutOffset() { return this.context.layoutOffset }
@@ -195,7 +199,9 @@ export class MapModule {
         this.updateLayoutLock();
 
         // Everything was loaded successfully
-        this.data.set({ header, layout, tilesets });
+        this.header.set(header);
+        this.layout.set(layout);
+        this.tilesets.set(tilesets);
         return true;
     }
 
@@ -225,7 +231,7 @@ export class MapModule {
         const isData = !headerData;
         // If no layout was passed, use the context data
         if (isData)
-            headerData = this.$data.header;
+            headerData = this.$header;
 
         // Save the old layout data
         const oldLayoutId = headerData.header.map_layout_id;
@@ -254,7 +260,7 @@ export class MapModule {
             this.layoutOffset = layoutOffset;
             // Update the data
             if (isData)
-                this.data.update(data => { return { ...data, header: headerData } });
+                this.header.set(headerData);
         }
         // Failed to update the map header
         catch (e) {
@@ -270,7 +276,7 @@ export class MapModule {
     }
 
     /** Loads the tilesets data and renders the blocks */
-    public async loadTilesets(layoutData: MapLayoutData = this.$data.layout): Promise<TilesetsData> {
+    public async loadTilesets(layoutData: MapLayoutData = this.$layout): Promise<TilesetsData> {
         const tilesetResults = await this.queryTilesetsUntilValid(
             getPtrOffset(layoutData.header.primary_tileset),
             getPtrOffset(layoutData.header.secondary_tileset)
@@ -345,14 +351,12 @@ export class MapModule {
         // Update the data
         this.layoutId = layoutId;
         this.layoutOffset = layoutOffset;
-        this.data.update(data => {
-            data.header.header.map_layout_id = layoutId;
-
-            return {
-                ...data,
-                layout: this.updateLayoutData(data.layout, layoutData)
-            }
+        this.header.update(header => {
+            header.header.map_layout_id = layoutId;
+            header.header.map_layout = { offset: layoutOffset };
+            return header;
         });
+        this.layout.set(this.updateLayoutData(this.$layout, layoutData));
         return true;
     }
 
@@ -375,13 +379,12 @@ export class MapModule {
             // Update the data
             this.layoutId = index;
             this.layoutOffset = offset;
-            this.data.update(data => {
-                data.header.header.map_layout_id = index;
-                return {
-                    ...data,
-                    layout: this.updateLayoutData(data.layout, layoutData)
-                }
+            this.header.update(header => {
+                header.header.map_layout_id = index;
+                header.header.map_layout = { offset };
+                return header;
             });
+            this.layout.set(this.updateLayoutData(this.$layout, layoutData));
             return true;
         }
         catch (error) {
@@ -445,12 +448,12 @@ export class MapModule {
         }
 
         // Update the data
-        this.data.update(data => {
-            data.layout.header.primary_tileset = { offset: this.tileset1Offset };
-            data.layout.header.secondary_tileset = { offset: this.tileset2Offset };
-            data.tilesets = tilesetsData;
-            return data;
-        });
+        this.layout.update(layout => {
+            layout.header.primary_tileset = { offset: this.tileset1Offset };
+            layout.header.secondary_tileset = { offset: this.tileset2Offset };
+            return layout;
+        })
+        this.tilesets.set(tilesetsData);
 
         await this.context.brushes.load();
         await this.context.palette.load(this.tilesetLengths);

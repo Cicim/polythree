@@ -11,8 +11,8 @@
     let mapCanvas: MapCanvas;
 
     const context: MapEditorContext = getContext("context");
-    const data = context.data;
-    const borders = $data.layout.border_data;
+    const layoutData = context.data.layout;
+    const borders = $layoutData.border_data;
 
     onMount(() => {
         context.map.bordersCanvas = mapCanvas;

@@ -17,9 +17,9 @@ export interface MapEditorProperties {
 }
 
 export interface MapEditorData {
-    header: MapHeaderData,
-    layout?: MapLayoutData,
-    tilesets?: TilesetsData,
+    header: Writable<MapHeaderData>,
+    layout?: Writable<MapLayoutData>,
+    tilesets?: Writable<TilesetsData>,
 }
 
 type MapEditorTabsIds = "layout" | "permissions" | "events" | "connections" | "encounters" | "header";
@@ -39,7 +39,11 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
     public singularTab = true;
     declare public identifier: MapEditorProperties;
     declare public component: MapEditor;
-    declare public data: Writable<MapEditorData>;
+    public data: MapEditorData = {
+        header: writable(null),
+        layout: writable(null),
+        tilesets: writable(null),
+    };
 
     constructor(id: MapEditorProperties) {
         // Create the editor element

@@ -15,7 +15,7 @@
 
     const context: MapEditorContext = getContext("context");
 
-    const data = context.data;
+    const headerData = context.data.header;
 
     const weatherOptions: [number, string][] = Object.values(
         weatherIconMap
@@ -48,13 +48,14 @@
                 text="Music"
             >
                 <Input
-                    edits="header.header.music"
+                    store={headerData}
+                    edits="header.music"
                     type="number"
                     max={65536}
                     min={0}
                 />
                 <!-- <Select
-                    edits="header.header.music"
+                    edits="header.music"
                     valueTag="number"
                     options={[
                         [0, "Hello"],
@@ -71,7 +72,10 @@
                 title="The map's section id.<br> Also determines the map's<br> display name"
                 text="Location"
             >
-                <MapNameSelect edits="header.header.region_map_section_id" />
+                <MapNameSelect
+                    store={headerData}
+                    edits="header.region_map_section_id"
+                />
                 <ToolButton
                     icon="mdi:edit"
                     title="Change the mapsec's string"
@@ -84,7 +88,8 @@
                     title="Floor number that appears<br> after the map name. <br>(e.g. Silph Co)"
                 >
                     <Input
-                        edits="header.header.floor_num"
+                        store={headerData}
+                        edits="header.floor_num"
                         type="number"
                         min={-128}
                         max={127}
@@ -96,8 +101,8 @@
                         style="width: 4rem;"
                     >
                         <span>
-                            {#if $data.header.header.floor_num !== 0}
-                                {$data.header.header.floor_num}F
+                            {#if $headerData.header.floor_num !== 0}
+                                {$headerData.header.floor_num}F
                             {:else}
                                 &nbsp;
                             {/if}
@@ -112,15 +117,14 @@
             >
                 <Select
                     valueTag="number"
-                    edits="header.header.weather"
+                    store={headerData}
+                    edits="header.weather"
                     options={weatherOptions}
                 />
                 <div class="weather-icon">
-                    {#key $data.header.header.weather}
+                    {#key $headerData.header.weather}
                         <iconify-icon
-                            icon={weatherIconMap[
-                                $data.header.header.weather
-                            ][1]}
+                            icon={weatherIconMap[$headerData.header.weather][1]}
                         />
                     {/key}
                 </div>
@@ -132,7 +136,8 @@
             >
                 <Select
                     valueTag="number"
-                    edits="header.header.map_type"
+                    store={headerData}
+                    edits="header.map_type"
                     options={mapTypeOptions}
                 />
             </LongRow>
@@ -143,7 +148,8 @@
             >
                 <Select
                     valueTag="number"
-                    edits="header.header.battle_type"
+                    store={headerData}
+                    edits="header.battle_type"
                     options={[
                         [0, "Hello"],
                         [1, "World"],
@@ -154,31 +160,36 @@
             <CheckBoxRow
                 title="If a box containing the <br>Map name should appear <br>when entering the map"
                 text="Show Name"
-                edits="header.header.show_map_name"
+                store={headerData}
+                edits="header.show_map_name"
             />
             <!-- ANCHOR Flash -->
             <CheckBoxRow
                 title="Limited visibility,<br> needs Flash to see better"
                 text="Needs Flash"
-                edits="header.header.cave"
+                store={headerData}
+                edits="header.cave"
             />
             <!-- ANCHOR Running -->
             <CheckBoxRow
                 title="Allows the use<br> of Running Shoes<br> in this map"
                 text="Allow Running"
-                edits="header.header.allow_running"
+                store={headerData}
+                edits="header.allow_running"
             />
             <!-- ANCHOR Biking -->
             <CheckBoxRow
                 title="Allows the use<br> of a bike in this map"
                 text="Allow Biking"
-                edits="header.header.biking_allowed"
+                store={headerData}
+                edits="header.biking_allowed"
             />
             <!-- ANCHOR Biking -->
             <CheckBoxRow
                 title="Allows the use of Dig<br> and Escape Ropes"
                 text="Allow Escaping"
-                edits="header.header.allow_escaping"
+                store={headerData}
+                edits="header.allow_escaping"
             />
         </div>
     </div>

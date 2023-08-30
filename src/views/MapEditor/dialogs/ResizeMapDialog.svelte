@@ -127,16 +127,12 @@
                     cannot exceed {MAX_MAP_AREA}</WarningDiv
                 >
             </div>
-        {:else if sizeSameAsInitial}
-            <div class="row subtitle dark">
-                Size is the same as the original,<br /> no changes will be applied
-            </div>
         {/if}
     </div>
     <div class="buttons">
         <Button on:click={() => close(null)}>Cancel</Button>
         <Button
-            theme="secondary"
+            theme={sizeSameAsInitial ? "primary" : "secondary"}
             on:click={addResizeChange}
             disabled={maxAreaExceeded || resizing}
         >

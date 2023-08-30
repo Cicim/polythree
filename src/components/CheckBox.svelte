@@ -22,13 +22,12 @@
     if (edits !== null) {
         // Get the navigate path
         const path = navigate.getPath(edits);
-        const data: Writable<any> = getContext("data");
         const changes = (<EditorContext>getContext("context")).changes;
         update = () => {
             if (path) changes.setValue(store, path, checked);
         };
         // Update the checked when the data changes
-        unsubscribeFromData = data.subscribe((data) => {
+        unsubscribeFromData = store.subscribe((data) => {
             checked = navigate.get(data, path);
         });
     }

@@ -28,7 +28,7 @@
         constructor(
             private resizeChangeApplied: Writable<BlocksData>,
             private blocks: BlocksData,
-            private data: Writable<MapEditorData>,
+            private layoutData: MapEditorData["layout"],
             newWidth: number,
             newHeight: number,
             newPermissions: number
@@ -53,7 +53,7 @@
             // Update the blocks
             this.blocks.update(blocks);
             // Update the data
-            this.data?.update?.((_) => _);
+            this.layoutData?.update?.((_) => _);
             // Redraw the mapCanvas
             this.resizeChangeApplied.set(blocks);
         }
@@ -199,14 +199,14 @@
     let ctx: CanvasRenderingContext2D;
 
     let context: MapEditorContext = getContext("context");
-    let data: Writable<MapEditorData> = getContext("data");
+    let layoutData = context.data.layout;
     let dispatch = createEventDispatcher();
 
     /** If this var is true, switching to Painting, Selecting or Resizing mode is prohibited */
     const editingLocked = context.layoutLocked;
 
     /** The object that will contain all the changes applied to this editor */
-    export let changes: EditorChanges<any> = context.changes;
+    export let changes: EditorChanges = context.changes;
 
     /** Width of the canvas in pixels */
     let canvasWidth: number = null;
@@ -299,7 +299,7 @@
     /** Canvases containing the chunks for rendering the permission data with colors only. */
     let colorPermissionMap: CanvasRenderingContext2D = null;
 
-    const unsubscribeFromData = data.subscribe((value) => {
+    const unsubscribeFromData = layoutData.subscribe((value) => {
         initialized = false;
         buildAllChunks(false);
         buildPermissionMinimap();
@@ -934,7 +934,7 @@
         const change = new MapResizeChange(
             resizeChangeApplied,
             blocks,
-            data,
+            layoutData,
             width,
             height,
             nullPermissions ? NULL_METATILE : 0

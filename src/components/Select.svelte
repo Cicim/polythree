@@ -72,7 +72,11 @@
     function getOptionName(key: SelectValueType): string {
         const index = getOptionIndex(key);
         invalid = index === undefined;
-        return options[getOptionIndex(key)]?.[1] ?? key.toString();
+        return (
+            options[getOptionIndex(key)]?.[1] ??
+            key?.toString() ??
+            (key === null ? "null" : "undefined")
+        );
     }
 
     // ANCHOR Select Functions
