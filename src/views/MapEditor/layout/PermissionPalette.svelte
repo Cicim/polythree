@@ -1,20 +1,25 @@
 <script lang="ts">
     import { getContext } from "svelte";
-    import { LEVEL_COLORS, LAYER_CHARS } from "../editor/consts";
+    import { PERMISSION_COLORS, LEVEL_CHARS } from "../editor/consts";
     import type { MapEditorContext } from "src/views/MapEditor";
     import { PaletteMaterial } from "../editor/materials";
     import { tooltip } from "src/systems/tooltip";
-    import { BlocksData, NULL } from "../editor/blocks_data";
+    import { BlocksData, NULL_PERMISSION } from "../editor/blocks_data";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;
 
     interface PermissionCard {
+        /** The card's text */
         text: string;
-        obstacle: boolean;
+        /** The card's color */
         color: string;
+        /** If it's an obstacle (0b0b---X & 1) */
+        obstacle: boolean;
+        /** The card's level (0bXXXX- << 1) */
+        level: number;
+        /** The card's value (0bXXXXX) */
         permission: number;
-        layer: number;
     }
 
     let permissions: PermissionCard[] = [];
@@ -22,14 +27,14 @@
     let selected: number = 0;
 
     for (let p = 0; p < permissionsCount; p++) {
-        const layer = p >> 1;
+        const level = p >> 1;
         const obstacle = !!(p & 1);
         permissions.push({
             permission: p,
-            layer,
-            text: obstacle ? LAYER_CHARS[layer] : layer.toString(),
+            level,
+            text: obstacle ? LEVEL_CHARS[level] : level.toString(),
             obstacle: p % 2 === 1,
-            color: LEVEL_COLORS[p],
+            color: PERMISSION_COLORS[p],
         });
     }
 
@@ -39,7 +44,8 @@
 
     function selectPermission(permission: number) {
         selected = permission;
-        if (permission !== NULL) lastXOffset = permission % ROW_WIDTH;
+        if (permission !== NULL_PERMISSION)
+            lastXOffset = permission % ROW_WIDTH;
         buildMaterial();
     }
 
@@ -50,9 +56,10 @@
     $: $material,
         (() => {
             if ($material instanceof PaletteMaterial && $material.isSingular) {
-                const permission = $material.blocks.levels[0];
+                const permission = $material.blocks.permissions[0];
                 selected = permission;
-                if (permission !== NULL) lastXOffset = permission % ROW_WIDTH;
+                if (permission !== NULL_PERMISSION)
+                    lastXOffset = permission % ROW_WIDTH;
             }
         })();
 
@@ -66,7 +73,7 @@
         const GO_RIGHT = dirX > 0;
         const GO_LEFT = dirX < 0;
 
-        if (selected === NULL) {
+        if (selected === NULL_PERMISSION) {
             if (GO_DOWN) selectPermission(lastXOffset);
             else if (GO_UP)
                 selectPermission(LAST_ROW * ROW_WIDTH + lastXOffset);
@@ -75,23 +82,24 @@
         } else {
             if (GO_UP) {
                 // If you're on the first row select NULL
-                if (selected < ROW_WIDTH) selectPermission(NULL);
+                if (selected < ROW_WIDTH) selectPermission(NULL_PERMISSION);
                 // Else, go up a row
                 else selectPermission(selected - ROW_WIDTH);
             } else if (GO_DOWN) {
                 // If you're on the last row select NULL
-                if (selected >= ROW_WIDTH * LAST_ROW) selectPermission(NULL);
+                if (selected >= ROW_WIDTH * LAST_ROW)
+                    selectPermission(NULL_PERMISSION);
                 // Else, go down a row
                 else selectPermission(selected + ROW_WIDTH);
             } else if (GO_LEFT) {
                 // If you're on first tile select NULL
-                if (selected === 0) selectPermission(NULL);
+                if (selected === 0) selectPermission(NULL_PERMISSION);
                 // Else, go left with wrapping
                 else selectPermission(selected - 1);
             } else if (GO_RIGHT) {
                 // If you're on the last tile select NULL
                 if (selected === (LAST_ROW + 1) * ROW_WIDTH - 1)
-                    selectPermission(NULL);
+                    selectPermission(NULL_PERMISSION);
                 // Else, go right with wrapping
                 else selectPermission(selected + 1);
             }
@@ -104,14 +112,14 @@
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
             class="none-card any-perm-card"
-            class:selected={selected === NULL}
-            on:click={() => selectPermission(NULL)}
+            class:selected={selected === NULL_PERMISSION}
+            on:click={() => selectPermission(NULL_PERMISSION)}
             use:tooltip
             tooltip="Does not change the permission"
         >
             <iconify-icon inline icon="mdi:eraser" /> NONE
         </div>
-        {#each permissions as { text, layer, color, permission, obstacle } (permission)}
+        {#each permissions as { text, level: layer, color, permission, obstacle } (permission)}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div
                 class="perm-card any-perm-card"

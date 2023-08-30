@@ -21,9 +21,8 @@
         </div>
     </div>
     <div class="area">
-        View
-        <Input readonly value={$data.layout.map_data.width} />
-        <Input readonly value={$data.layout.map_data.height} />
+        <div class="readonly-info">Readonly</div>
+        <div class="editable-fields">Editable</div>
     </div>
 </div>
 
@@ -37,11 +36,11 @@
 
         overflow: hidden;
 
-        .toolbar {
-        }
-
         .area {
             grid-area: area;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 0.5em;
         }
     }
 </style>

@@ -3,9 +3,9 @@
     import type { SelectionMaterial } from "../editor/materials";
 
     export let selection: SelectionMaterial;
-    export let showLevels: boolean = false;
+    export let showPermissions: boolean = false;
 
-    $: showLevels, redraw();
+    $: showPermissions, redraw();
 
     let canvas: HTMLCanvasElement;
 
@@ -18,8 +18,14 @@
         const ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = false;
 
-        if (showLevels) {
-            ctx.drawImage(selection.levelCanvas, 0, 0, width * 2, height * 2);
+        if (showPermissions) {
+            ctx.drawImage(
+                selection.permissionCanvas,
+                0,
+                0,
+                width * 2,
+                height * 2
+            );
         } else {
             ctx.drawImage(
                 selection.metatileCanvas,
@@ -36,8 +42,8 @@
 
 <div class="selection-preview">
     <div class="title">
-        {#if showLevels}
-            Selected Levels
+        {#if showPermissions}
+            Selected Permissions
         {:else}
             Selected Blocks
         {/if}

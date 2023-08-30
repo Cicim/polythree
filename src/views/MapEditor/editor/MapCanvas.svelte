@@ -31,12 +31,12 @@
             private data: Writable<MapEditorData>,
             newWidth: number,
             newHeight: number,
-            newLevels: number
+            newPermissions: number
         ) {
             super();
 
             this.oldBlocks = blocks.clone();
-            this.newBlocks = blocks.resize(newWidth, newHeight, newLevels);
+            this.newBlocks = blocks.resize(newWidth, newHeight, newPermissions);
         }
 
         public updatePrev(): boolean {
@@ -78,25 +78,25 @@
         PaintChange,
     } from "./painter_state";
     import type { Tool } from "./tools";
-    import { LEVEL_COLORS, LAYER_CHARS } from "./consts";
+    import { PERMISSION_COLORS, LEVEL_CHARS } from "./consts";
     import { Change, type EditorChanges } from "src/systems/changes";
-    import { BlocksData, NULL } from "./blocks_data";
+    import { BlocksData, NULL_METATILE, NULL_PERMISSION } from "./blocks_data";
 
     /** Blocks to edit */
     export let blocks: BlocksData;
     /** The size of the chunks in which to divide the map for caching */
     export let chunkSize: number = 16;
-    /** Whether or not to print the levels on top of the tiles */
-    export let editLevels: boolean = false;
-    $: editLevels, draw();
+    /** Whether or not to print the permission tiles on top of the tiles */
+    export let editPermissions: boolean = false;
+    $: editPermissions, draw();
 
     /** Whether this is the main map canvas */
     export let mainCanvas: boolean = false;
     /** Whether animations should be allowed on this canvas */
     export let allowAnimations: boolean = false;
 
-    /** Whether or not this map allows having null levels */
-    export let nullLevels: boolean = false;
+    /** Whether or not this map allows having null permissions */
+    export let nullPermissions: boolean = false;
     /** Allows inserting null tiles in place of BlockData to draw empty slots */
     export let nullBlocks: boolean = false;
 
@@ -134,11 +134,11 @@
      *
      * Consider memory limitations if updating this constant.
      */
-    const LEVEL_CACHE_ZOOM = 8;
+    const PERM_CACHE_ZOOM = 8;
     /** Zoom level before which only colors are rendered for layers */
-    const LEVEL_ZOOM_WITH_TEXT = 2;
+    const PERM_ZOOM_WITH_TEXT = 2;
     /** Transparency level for the level background */
-    const LEVEL_BACKGROUND_ALPHA = 0.33;
+    const PERM_BACKGROUND_ALPHA = 0.33;
 
     // ANCHOR Helpers
     type ChunkData = CanvasRenderingContext2D;
@@ -265,7 +265,7 @@
             initialized = false;
             // Update the chunks
             buildAllChunks(true);
-            buildLevelMinimap();
+            buildPermissionMinimap();
             // Updates the cursor
             resizeDirection = getResizeDirection();
             cursorStyle = getCursor();
@@ -294,15 +294,15 @@
     let botMetatileChunks: ChunkData[][] = null;
     /** Chunks for the top metatile layer */
     let topMetatileChunks: ChunkData[][] = null;
-    /** Canvases containing the chunks for rendering the level data with colors and text. */
-    let textLevelChunks: ChunkData[][] = null;
-    /** Canvases containing the chunks for rendering the level data with colors only. */
-    let colorLevelMap: CanvasRenderingContext2D = null;
+    /** Canvases containing the chunks for rendering the permission data with colors and text. */
+    let textPermissionChunks: ChunkData[][] = null;
+    /** Canvases containing the chunks for rendering the permission data with colors only. */
+    let colorPermissionMap: CanvasRenderingContext2D = null;
 
     const unsubscribeFromData = data.subscribe((value) => {
         initialized = false;
         buildAllChunks(false);
-        buildLevelMinimap();
+        buildPermissionMinimap();
         initialized = true;
         draw();
     });
@@ -336,7 +336,7 @@
 
         drawMetatiles(botMetatileChunks, startChunk, endChunk);
         drawMetatiles(topMetatileChunks, startChunk, endChunk);
-        if (editLevels) drawLevels(startChunk, endChunk);
+        if (editPermissions) drawPermissions(startChunk, endChunk);
 
         drawResizeBorder();
 
@@ -387,15 +387,15 @@
         }
     }
 
-    /** Draws the level data on top of the canvas. */
-    function drawLevels(sc: Point, ec: Point) {
+    /** Draws the permission data on top of the canvas. */
+    function drawPermissions(sc: Point, ec: Point) {
         // Draw the chunks if the zoom requires it
-        if (zoom >= LEVEL_ZOOM_WITH_TEXT) {
+        if (zoom >= PERM_ZOOM_WITH_TEXT) {
             // Draw the chunks
             for (let x = sc.x; x < ec.x; x++) {
                 for (let y = sc.y; y < ec.y; y++) {
                     // Get the chunk data
-                    const chunk = textLevelChunks[y]?.[x];
+                    const chunk = textPermissionChunks[y]?.[x];
                     if (chunk === undefined) continue;
 
                     // Draw the chunk
@@ -415,10 +415,10 @@
             return;
         }
 
-        // Otherwise just draw the color level map
+        // Otherwise just draw the color permission map
         const pos = mapToCanvas(point(0, 0));
         ctx.drawImage(
-            colorLevelMap.canvas,
+            colorPermissionMap.canvas,
             pos.x,
             pos.y,
             blocks.width * zoom * 16,
@@ -459,18 +459,18 @@
         return [chunkStart, chunkEnd];
     }
 
-    /** Convert a level information to its color and text */
-    function levelToColorAndString(level: number): [string, string] {
-        if (level === NULL) return ["#888888", ""];
+    /** Convert a permission information to its color and text */
+    function permissionToColorAndString(perm: number): [string, string] {
+        if (perm === NULL_PERMISSION) return ["#888888", ""];
 
-        const color = LEVEL_COLORS[level] ?? "#FFFFFF";
-        const obstacle = level & 1;
-        const layer = level >> 1;
+        const color = PERMISSION_COLORS[perm] ?? "#FFFFFF";
+        const obstacle = perm & 1;
+        const layer = perm >> 1;
 
         if (obstacle === 0) return [color, layer.toString()];
 
         // Obtain the boxed variant of the layer number
-        return [color, LAYER_CHARS[layer]];
+        return [color, LEVEL_CHARS[layer]];
     }
 
     // ANCHOR Misc drawing function
@@ -567,7 +567,7 @@
     }
 
     // ANCHOR Chunking
-    /** Rebuilds both the metatile and level chunks for when the map is reloaded or resized. */
+    /** Rebuilds both the metatile and permission chunks for when the map is reloaded or resized. */
     export function buildAllChunks(keepOldMap: boolean) {
         // Compute the number of chunks in each direction
         const chunksWidth = Math.ceil(blocks.width / chunkSize);
@@ -575,11 +575,11 @@
 
         const oldBotTileChunks = botMetatileChunks;
         const oldTopTileChunks = topMetatileChunks;
-        const oldLevelChunks = textLevelChunks;
+        const oldPermissionChunks = textPermissionChunks;
 
         botMetatileChunks = new Array(chunksHeight);
         topMetatileChunks = new Array(chunksHeight);
-        textLevelChunks = new Array(chunksHeight);
+        textPermissionChunks = new Array(chunksHeight);
 
         let unchangedWidth = 0;
         let unchangedHeight = 0;
@@ -600,15 +600,16 @@
         for (let cy = 0; cy < chunksHeight; cy++) {
             botMetatileChunks[cy] = new Array(chunksWidth);
             topMetatileChunks[cy] = new Array(chunksWidth);
-            textLevelChunks[cy] = new Array(chunksWidth);
+            textPermissionChunks[cy] = new Array(chunksWidth);
 
             for (let cx = 0; cx < chunksWidth; cx++) {
                 const bot = oldBotTileChunks?.[cy]?.[cx];
                 botMetatileChunks[cy][cx] = bot ?? createMetatileChunkCanvas();
                 const top = oldTopTileChunks?.[cy]?.[cx];
                 topMetatileChunks[cy][cx] = top ?? createMetatileChunkCanvas();
-                const level = oldLevelChunks?.[cy]?.[cx];
-                textLevelChunks[cy][cx] = level ?? createLevelChunkCanvas();
+                const permission = oldPermissionChunks?.[cy]?.[cx];
+                textPermissionChunks[cy][cx] =
+                    permission ?? createPermissionChunkCanvas();
             }
         }
 
@@ -618,24 +619,25 @@
         for (let cy = 0; cy < unchangedHeight; cy++)
             for (let cx = unchangedWidth; cx < chunksWidth; cx++) {
                 drawMetatileChunk(cx, cy, botData, topData);
-                redrawLevelChunk(cx, cy);
+                redrawPermissionChunk(cx, cy);
             }
         for (let cy = unchangedHeight; cy < chunksHeight; cy++)
             for (let cx = 0; cx < chunksWidth; cx++) {
                 drawMetatileChunk(cx, cy, botData, topData);
-                redrawLevelChunk(cx, cy);
+                redrawPermissionChunk(cx, cy);
             }
     }
 
     /** Rebuilds and draws the levels when the blocks are updated */
-    export function rebuildLevels() {
+    export function rebuildPermissions() {
         const chunksWidth = Math.ceil(blocks.width / chunkSize);
         const chunksHeight = Math.ceil(blocks.height / chunkSize);
 
         for (let cy = 0; cy < chunksHeight; cy++)
-            for (let cx = 0; cx < chunksWidth; cx++) redrawLevelChunk(cx, cy);
+            for (let cx = 0; cx < chunksWidth; cx++)
+                redrawPermissionChunk(cx, cy);
 
-        buildLevelMinimap();
+        buildPermissionMinimap();
         draw();
     }
 
@@ -691,92 +693,92 @@
                 drawMetatileChunk(cx, cy, botData, topData);
     }
 
-    /** Returns a new context for a level chunk*/
-    function createLevelChunkCanvas(): CanvasRenderingContext2D {
+    /** Returns a new context for a permission chunk*/
+    function createPermissionChunkCanvas(): CanvasRenderingContext2D {
         const canvas = document.createElement("canvas");
-        canvas.width = chunkSize * 16 * LEVEL_CACHE_ZOOM;
-        canvas.height = chunkSize * 16 * LEVEL_CACHE_ZOOM;
+        canvas.width = chunkSize * 16 * PERM_CACHE_ZOOM;
+        canvas.height = chunkSize * 16 * PERM_CACHE_ZOOM;
         const ctx = canvas.getContext("2d");
-        ctx.font = `${12 * LEVEL_CACHE_ZOOM}px Rubik`;
+        ctx.font = `${12 * PERM_CACHE_ZOOM}px Rubik`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
         return ctx;
     }
-    /** Renders the chunk at the given coordinates containing the render levels */
-    function redrawLevelChunk(cx: number, cy: number): ChunkData {
-        const ctx = textLevelChunks[cy][cx];
+    /** Renders the chunk at the given coordinates containing the render permissions */
+    function redrawPermissionChunk(cx: number, cy: number): ChunkData {
+        const ctx = textPermissionChunks[cy][cx];
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        // Draw the levels in this chunk
+        // Draw the permissions in this chunk
         for (let j = 0; j < chunkSize; j++) {
             for (let i = 0; i < chunkSize; i++) {
-                // Get the level
-                const level = blocks.getLevelInBounds(
+                // Get the permission
+                const permission = blocks.getPermissionInBounds(
                     cx * chunkSize + i,
                     cy * chunkSize + j
                 );
-                if (level === undefined) continue;
+                if (permission === undefined) continue;
 
-                // Draw the level with text
-                drawLevelSquare(ctx, level, i, j);
+                // Draw the permission with text
+                drawPermissionSquare(ctx, permission, i, j);
             }
         }
 
         return ctx;
     }
-    /** Draws the given level data (background and text) to a canvas context with the given offset */
-    function drawLevelSquare(
+    /** Draws the given permission data (background and text) to a canvas context with the given offset */
+    function drawPermissionSquare(
         ctx: CanvasRenderingContext2D,
-        level: number,
+        permission: number,
         ox: number,
         oy: number
     ) {
         // Get the coordinates in the chunk
-        const x = ox * 16 * LEVEL_CACHE_ZOOM;
-        const y = oy * 16 * LEVEL_CACHE_ZOOM;
+        const x = ox * 16 * PERM_CACHE_ZOOM;
+        const y = oy * 16 * PERM_CACHE_ZOOM;
 
         // Get the color and text
-        const [color, text] = levelToColorAndString(level);
+        const [color, text] = permissionToColorAndString(permission);
 
         // Draw a rectangle
-        ctx.globalAlpha = LEVEL_BACKGROUND_ALPHA;
+        ctx.globalAlpha = PERM_BACKGROUND_ALPHA;
         ctx.fillStyle = color;
-        ctx.fillRect(x, y, 16 * LEVEL_CACHE_ZOOM, 16 * LEVEL_CACHE_ZOOM);
+        ctx.fillRect(x, y, 16 * PERM_CACHE_ZOOM, 16 * PERM_CACHE_ZOOM);
 
         // Draw the text
         ctx.globalAlpha = 1;
         ctx.fillStyle = "white";
-        ctx.font = `200 ${12 * LEVEL_CACHE_ZOOM}px Rubik`;
-        ctx.fillText(text, x + 8 * LEVEL_CACHE_ZOOM, y + 8 * LEVEL_CACHE_ZOOM);
+        ctx.font = `200 ${12 * PERM_CACHE_ZOOM}px Rubik`;
+        ctx.fillText(text, x + 8 * PERM_CACHE_ZOOM, y + 8 * PERM_CACHE_ZOOM);
     }
 
-    /** Builds the level minimap for when text is not needed. */
-    function buildLevelMinimap() {
-        // Build the color level map
+    /** Builds the permission minimap for when text is not needed. */
+    function buildPermissionMinimap() {
+        // Build the color permission map
         const canvas = document.createElement("canvas");
         canvas.width = blocks.width;
         canvas.height = blocks.height;
-        colorLevelMap = canvas.getContext("2d");
-        colorLevelMap.globalAlpha = LEVEL_BACKGROUND_ALPHA;
+        colorPermissionMap = canvas.getContext("2d");
+        colorPermissionMap.globalAlpha = PERM_BACKGROUND_ALPHA;
 
         for (let j = 0; j < blocks.height; j++)
-            for (let i = 0; i < blocks.width; i++) updateLevelPixel(i, j);
+            for (let i = 0; i < blocks.width; i++) updatePermissionPixel(i, j);
     }
 
-    /** Prints a pixel to the colorLevelMap corresponding to the level at the given offset */
-    function updateLevelPixel(x: number, y: number) {
-        // Get the level
-        const level = blocks.getLevelInBounds(x, y);
-        if (level === undefined) return;
+    /** Prints a pixel to the colorPermissionMap corresponding to the permission at the given offset */
+    function updatePermissionPixel(x: number, y: number) {
+        // Get the permission
+        const permission = blocks.getPermissionInBounds(x, y);
+        if (permission === undefined) return;
 
         // Get the color
-        const [color, _] = levelToColorAndString(level);
+        const [color, _] = permissionToColorAndString(permission);
 
         // Draw a rectangle
-        colorLevelMap.fillStyle = color;
-        colorLevelMap.clearRect(x, y, 1, 1);
-        colorLevelMap.fillRect(x, y, 1, 1);
+        colorPermissionMap.fillStyle = color;
+        colorPermissionMap.clearRect(x, y, 1, 1);
+        colorPermissionMap.fillRect(x, y, 1, 1);
     }
 
     // ANCHOR Panning and zoom
@@ -912,12 +914,11 @@
         if (newSize.height > resizeOptions.maxHeight)
             newSize.height = resizeOptions.maxHeight;
         // Max area
-        if (newSize.width * newSize.height > resizeOptions.maxArea) {
-            // If the width is too big, set it to the max
-            if (newSize.width > resizeOptions.maxWidth)
-                newSize.width = resizeOptions.maxWidth;
-            // Then set the height to the max
-            newSize.height = Math.floor(resizeOptions.maxArea / newSize.width);
+        if (
+            (newSize.width + 15) * (newSize.height + 14) >
+            resizeOptions.maxArea
+        ) {
+            return;
         }
 
         if (newSize.width !== prevWidth || newSize.height !== prevHeight) {
@@ -936,7 +937,7 @@
             data,
             width,
             height,
-            nullLevels ? NULL : 0
+            nullPermissions ? NULL_METATILE : 0
         );
         changes.push(change);
     }
@@ -1006,25 +1007,26 @@
         const ox = selection.x % chunkSize;
         const oy = selection.y % chunkSize;
 
-        // Build the levels canvas
+        // Build the permissions canvas
         const lvCanvas = document.createElement("canvas");
         lvCanvas.width = selection.width * 32;
         lvCanvas.height = selection.height * 32;
         const lvCtx = lvCanvas.getContext("2d");
 
-        // Build the levels canvas
+        // Build the permissions canvas
         for (let cy = 0; cy <= cey - csy; cy++) {
             for (let cx = 0; cx <= cex - csx; cx++) {
                 // Get the chunk
-                const levelChunk = textLevelChunks[csy + cy]?.[csx + cx];
-                if (levelChunk === undefined) continue;
+                const permissionChunk =
+                    textPermissionChunks[csy + cy]?.[csx + cx];
+                if (permissionChunk === undefined) continue;
 
                 // Draw the chunk (subtracting the offset)
                 const rx = cx * chunkSize * 16 - ox * 16;
                 const ry = cy * chunkSize * 16 - oy * 16;
 
                 lvCtx.drawImage(
-                    levelChunk.canvas,
+                    permissionChunk.canvas,
                     rx * 2,
                     ry * 2,
                     chunkSize * 32,
@@ -1063,7 +1065,7 @@
                     x,
                     y,
                     blocks.getMetatile(selection.x + x, selection.y + y),
-                    blocks.getLevel(selection.x + x, selection.y + y)
+                    blocks.getPermission(selection.x + x, selection.y + y)
                 );
             }
         }
@@ -1087,22 +1089,28 @@
 
     // ANCHOR Painting with brushes
     const PAINTER_METHODS: PainterMethods = {
-        nullLevels,
+        nullPermissions,
         update: () => draw(),
         canPaint: (x, y) => canPaintOnTile(x, y),
-        canUpdateMetatiles: () => !editLevels,
+        canUpdateMetatiles: () => !editPermissions,
         getMetatile: (x: number, y: number) =>
             blocks.metatiles[y * blocks.width + x],
-        getLevel: (x: number, y: number) => blocks.levels[y * blocks.width + x],
+        getPermission: (x: number, y: number) =>
+            blocks.permissions[y * blocks.width + x],
         forEach(callback) {
             for (let y = 0; y < blocks.height; y++)
                 for (let x = 0; x < blocks.width; x++)
-                    callback(x, y, this.getMetatile(x, y), this.getLevel(x, y));
+                    callback(
+                        x,
+                        y,
+                        this.getMetatile(x, y),
+                        this.getPermission(x, y)
+                    );
         },
-        set(x: number, y: number, metatile: number, level: number) {
+        set(x: number, y: number, metatile: number, permission: number) {
             // Get the old value and for maximum efficiency, draw only what changes
             const oldMetatile = blocks.getMetatile(x, y);
-            const oldLevel = blocks.getLevel(x, y);
+            const oldPermission = blocks.getPermission(x, y);
 
             // If the tile changed and it can be updated
             if (oldMetatile !== metatile) {
@@ -1112,27 +1120,27 @@
                 blocks.setMetatile(x, y, metatile);
             }
 
-            if (oldLevel !== level) {
+            if (oldPermission !== permission) {
                 // Get the correct chunk to update
                 const cx = Math.floor(x / chunkSize);
                 const cy = Math.floor(y / chunkSize);
                 const ox = x % chunkSize;
                 const oy = y % chunkSize;
 
-                // Update the level
-                blocks.setLevel(x, y, level);
-                // Get the level chunks
-                const levelChunk = textLevelChunks[cy][cx];
-                levelChunk.clearRect(
-                    ox * 16 * LEVEL_CACHE_ZOOM,
-                    oy * 16 * LEVEL_CACHE_ZOOM,
-                    16 * LEVEL_CACHE_ZOOM,
-                    16 * LEVEL_CACHE_ZOOM
+                // Update the permission
+                blocks.setPermission(x, y, permission);
+                // Get the permission chunks
+                const permissionChunk = textPermissionChunks[cy][cx];
+                permissionChunk.clearRect(
+                    ox * 16 * PERM_CACHE_ZOOM,
+                    oy * 16 * PERM_CACHE_ZOOM,
+                    16 * PERM_CACHE_ZOOM,
+                    16 * PERM_CACHE_ZOOM
                 );
                 // Draw the layer on the canvas with text
-                drawLevelSquare(levelChunk, level, ox, oy);
+                drawPermissionSquare(permissionChunk, permission, ox, oy);
                 // Update the canvas without text
-                updateLevelPixel(x, y);
+                updatePermissionPixel(x, y);
             }
         },
     };
@@ -1214,7 +1222,7 @@
                 tool = new context.toolClass(paintingState, $material, {
                     shiftKey: event.shiftKey,
                     ctrlKey: event.ctrlKey,
-                    editingLevels: editLevels,
+                    editingPermissions: editPermissions,
                 });
                 changes.locked++;
                 tool.startStroke(x, y);
@@ -1453,12 +1461,12 @@
         for (const row of topMetatileChunks)
             for (const ctx of row) ctx.canvas.remove();
         topMetatileChunks = null;
-        for (const row of textLevelChunks)
+        for (const row of textPermissionChunks)
             for (const ctx of row) ctx.canvas.remove();
-        textLevelChunks = null;
+        textPermissionChunks = null;
 
-        colorLevelMap.canvas.remove();
-        colorLevelMap = null;
+        colorPermissionMap.canvas.remove();
+        colorPermissionMap = null;
         canvas.remove();
         canvas = null;
         ctx = null;

@@ -49,7 +49,11 @@
                 ),
                 new Separator("Config Imports"),
                 new IconOption("Import Brushes", "mdi:brush", () => {}),
-                new IconOption("Import Tileset Levels", "mdi:map", () => {}),
+                new IconOption(
+                    "Import Tileset Permissions",
+                    "mdi:map",
+                    () => {}
+                ),
             ])}
         />
         <TextToolButton
@@ -83,7 +87,11 @@
                 ),
                 new Separator("Config Exports"),
                 new IconOption("Export Brushes", "mdi:brush", () => {}),
-                new IconOption("Export Tileset Levels", "mdi:map", () => {}),
+                new IconOption(
+                    "Export Tileset Permissions",
+                    "mdi:map",
+                    () => {}
+                ),
             ])}
         />
         {#key $changed}

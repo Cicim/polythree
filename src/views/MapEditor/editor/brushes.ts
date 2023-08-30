@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { BlocksData, NULL } from "./blocks_data";
+import { BlocksData, NULL_METATILE } from "./blocks_data";
 import type { SerializedBrush, SerializedNinePatchBrush, SerializedSimpleBrush } from "./brush_serialization";
 import type { MapCanvasImage } from "./MapCanvas.svelte";
 import { PaintingMaterial } from "./materials";
@@ -132,7 +132,7 @@ export abstract class BrushMaterial extends PaintingMaterial {
 
     /** Returns if this brush's blocks are all inside of the primary tileset given */
     public onlyUsesPrimaryTiles(tileset1Length: number): boolean {
-        return !this.blocks.metatiles.some(mtid => mtid !== NULL && mtid >= tileset1Length);
+        return !this.blocks.metatiles.some(mtid => mtid !== NULL_METATILE && mtid >= tileset1Length);
     }
     /** Serializes a brush into a storable object */
     public serialize(serializeBlocks: boolean = true): SerializedBrush {
@@ -181,7 +181,7 @@ export class SimpleBrush extends BrushMaterial {
 
         for (let dy = 0; dy < height; dy++)
             for (let dx = 0; dx < width; dx++)
-                state.set(x + dx, y + dy, blocks.getMetatile(dx, dy), blocks.getLevel(dx, dy));
+                state.set(x + dx, y + dy, blocks.getMetatile(dx, dy), blocks.getPermission(dx, dy));
     }
 
     public clone(): SimpleBrush {
@@ -248,7 +248,7 @@ function getBorderMask(state: PainterState, x: number, y: number,
 
         const metatile = state.getMetatile(x + i, y + j);
         // Compute the predicate only if the metatile is not null
-        const bit = (metatile !== NULL) ? predicate(metatile) : fallback;
+        const bit = (metatile !== NULL_METATILE) ? predicate(metatile) : fallback;
 
         // Set the bit and proceed
         mask |= (bit ? 1 : 0) << index;
@@ -269,15 +269,15 @@ function maskMatches(mask: number, ones: number, zeros: number): boolean {
 const NINEPATCH_DEFAULT_BLOCKS = new BlocksData(12, 9, 0, null);
 const ____ = 0;
 NINEPATCH_DEFAULT_BLOCKS.updateMetatiles([
-    ____, ____, ____, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    ____, ____, ____, NULL, ____, ____, NULL, ____, ____, NULL, NULL, ____,
-    ____, ____, ____, NULL, ____, ____, NULL, ____, ____, NULL, ____, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, ____, NULL, NULL, NULL, ____, ____, NULL, ____, ____, NULL, ____,
-    ____, ____, ____, ____, NULL, ____, ____, NULL, ____, ____, NULL, ____,
-    NULL, ____, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ____,
-    NULL, ____, NULL, ____, NULL, ____, ____, NULL, ____, ____, NULL, ____,
-    NULL, NULL, NULL, NULL, NULL, ____, ____, NULL, ____, ____, NULL, NULL
+    ____, ____, ____, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE,
+    ____, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, NULL_METATILE, ____,
+    ____, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____, NULL_METATILE,
+    NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE,
+    NULL_METATILE, ____, NULL_METATILE, NULL_METATILE, NULL_METATILE, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____,
+    ____, ____, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____,
+    NULL_METATILE, ____, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, ____,
+    NULL_METATILE, ____, NULL_METATILE, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, ____,
+    NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, NULL_METATILE, ____, ____, NULL_METATILE, ____, ____, NULL_METATILE, NULL_METATILE
 ]);
 
 const ninePatchBackgroundImage = new Image();
@@ -325,11 +325,11 @@ export class NinePatchBrush extends BrushMaterial {
         const mask = getBorderMask(state, x, y, (metatile) => this.canReplace(metatile));
 
         // Get the block to put here based on the mask
-        const [metatile, level] = this.getReplacement(mask);
+        const [metatile, perm] = this.getReplacement(mask);
         if (metatile === 0)
             state.set(x, y, ...this.CENTER());
         else
-            state.set(x, y, metatile, level);
+            state.set(x, y, metatile, perm);
     }
 
     /** Applies the rules (heavily documented inside) to produce a new block based on the mask */
@@ -410,13 +410,13 @@ export class NinePatchBrush extends BrushMaterial {
     public serialize(): SerializedNinePatchBrush {
         const serialized = super.serialize(false) as SerializedNinePatchBrush;
         serialized.metatiles = [];
-        serialized.levels = [];
+        serialized.permissions = [];
 
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 11; x++) {
-                if (this.blocks.getMetatile(x, y) === NULL) continue;
+                if (this.blocks.getMetatile(x, y) === NULL_METATILE) continue;
                 serialized.metatiles.push(this.blocks.getMetatile(x, y));
-                serialized.levels.push(this.blocks.getLevel(x, y));
+                serialized.permissions.push(this.blocks.getPermission(x, y));
             }
         }
         return serialized;
@@ -426,12 +426,12 @@ export class NinePatchBrush extends BrushMaterial {
         const brush = new NinePatchBrush(serialized.primary, serialized.secondary);
 
         const metatiles = serialized.metatiles.reverse();
-        const levels = serialized.levels.reverse();
+        const permissions = serialized.permissions.reverse();
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 11; x++) {
-                if (brush.blocks.getMetatile(x, y) === NULL) continue;
+                if (brush.blocks.getMetatile(x, y) === NULL_METATILE) continue;
                 brush.blocks.setMetatile(x, y, metatiles.pop())
-                brush.blocks.setLevel(x, y, levels.pop())
+                brush.blocks.setPermission(x, y, permissions.pop())
             }
         }
 

@@ -31,7 +31,7 @@ export interface SerializedNinePatchBrush extends SerializedBrush {
     /** The serialized metatiles */
     metatiles: number[];
     /** The serialized levels */
-    levels: number[];
+    permissions: number[];
 }
 
 function getPrimaryTilesetBrushes(tileset1: number): SerializedBrush[] {

@@ -2,7 +2,7 @@ import { EditorChanges } from "src/systems/changes";
 import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
 import type { MapEditorContext } from "src/views/MapEditor";
 import { get, writable, type Writable } from "svelte/store";
-import { BlocksData, NULL } from "../editor/blocks_data";
+import { BlocksData, NULL_METATILE, NULL_PERMISSION } from "../editor/blocks_data";
 import type MapCanvas from "../editor/MapCanvas.svelte";
 import { config } from "src/systems/global";
 import { invoke } from "@tauri-apps/api";
@@ -13,11 +13,11 @@ export class PaletteModule {
 
     /** Length of the two tilesets (might not be a multiple of 8) */
     public fullLength: number;
-    /** The block data for the tileset level editor */
+    /** The block data for the tileset permission editor */
     public blocks: Writable<BlocksData> = writable(null);
     /** The reference to the MapCanvas for the tilesetBlocks */
     public mapCanvas: Writable<MapCanvas> = writable(null);
-    /** The changes that are applied to the tileset level editor */
+    /** The changes that are applied to the tileset permission editor */
     public changes: EditorChanges<null>;
     // Keybindings callbacks
     public moveCB: (dirX: number, dirY: number, select: boolean) => void = () => { };
@@ -34,16 +34,16 @@ export class PaletteModule {
 
     public async load(metatilesLength: number) {
         this.loading.set(true);
-        // Get the levels for these tilesets from config
-        const importedTilesetLevels = await this.importLevels();
-        // Compose the block data for the tileset level editor
+        // Get the permissions for these tilesets from config
+        const importedTilesetPermissions = await this.importPermissions();
+        // Compose the block data for the tileset permission editor
         this.fullLength = metatilesLength;
         const tilesetBlocks = new BlocksData(8, Math.ceil(this.fullLength / 8))
         // Set the blockData for the tilesets to be the ascending number of tiles 
         // with the permissions you've read from the configs
         for (let y = 0; y < tilesetBlocks.height; y++) {
             for (let x = 0; x < 8; x++)
-                tilesetBlocks.set(x, y, y * 8 + x, importedTilesetLevels[y * 8 + x]);
+                tilesetBlocks.set(x, y, y * 8 + x, importedTilesetPermissions[y * 8 + x]);
         }
 
         // Set the removed tiles number
@@ -51,7 +51,7 @@ export class PaletteModule {
         // Set the tiles after the last block in the last row to null
         if (this.lastRowLength !== 0)
             for (let x = this.lastRowLength; x < 8; x++)
-                tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL, NULL);
+                tilesetBlocks.set(x, tilesetBlocks.height - 1, NULL_METATILE, NULL_PERMISSION);
 
         // Update the blocks
         this.blocks.set(tilesetBlocks);
@@ -63,10 +63,10 @@ export class PaletteModule {
     public async save() {
         if (get(this.changes.unsaved)) {
             try {
-                await this.exportLevels();
+                await this.exportPermissions();
             }
             catch (e) {
-                await spawnErrorDialog(e, "Error while saving Tileset Levels");
+                await spawnErrorDialog(e, "Error while saving the Tilesets' Permissions");
             }
         }
 
@@ -76,8 +76,8 @@ export class PaletteModule {
     public getMetatileZeroBrush(): PaletteMaterial {
         return new PaletteMaterial(new BlocksData(1, 1, ...this.$blocks.get(0, 0)));
     }
-    public tryToRebuildLevels() {
-        this.$mapCanvas?.rebuildLevels();
+    public tryToRebuildPermissions() {
+        this.$mapCanvas?.rebuildPermissions();
     }
     public undoChanges() {
         this.changes.undo();
@@ -110,23 +110,23 @@ export class PaletteModule {
                 viewsSharingSecondaryTileset.push(view);
         }
 
-        // Update each mapEditor with the correct portion of the levels
+        // Update each mapEditor with the correct portion of the permissions
         for (const view of viewsSharingBothTilesets) {
             view.palette.blocks.update((blocksData: BlocksData) => {
-                blocksData.updateLevels(blocks.levels);
+                blocksData.updatePermissions(blocks.permissions);
                 return blocksData;
             });
         }
         for (const view of viewsSharingPrimaryTileset) {
             view.palette.blocks.update((blocksData: BlocksData) => {
-                blocksData.updateLevels(blocks.levels, 0, view.tileset1Length);
+                blocksData.updatePermissions(blocks.permissions, 0, view.tileset1Length);
                 return blocksData;
             });
         }
         for (const view of viewsSharingSecondaryTileset) {
             view.palette.blocks.update((blocksData: BlocksData) => {
-                blocksData.updateLevels(
-                    blocks.levels,
+                blocksData.updatePermissions(
+                    blocks.permissions,
                     view.tileset1Length,
                     view.tileset2Length
                 );
@@ -144,59 +144,54 @@ export class PaletteModule {
     private get $mapCanvas() { return get(this.mapCanvas) }
 
     // ANCHOR Private Methods
-    /** Imports the tilesetLevels from the configs */
-    private async importLevels(): Promise<number[]> {
-        // Get the tileset levels
-        const t1Levels = await this._getLevels(this.tileset1Offset, this.tileset1Length);
-        const t2Levels = await this._getLevels(this.tileset2Offset, this.tileset2Length);
+    /** Imports the tilesetPermissions from the configs */
+    private async importPermissions(): Promise<number[]> {
+        // Get the tileset permissions
+        const t1Permissions = await this._getPermissions(this.tileset1Offset, this.tileset1Length);
+        const t2Permission = await this._getPermissions(this.tileset2Offset, this.tileset2Length);
 
-        return [...t1Levels, ...t2Levels];
+        return [...t1Permissions, ...t2Permission];
     }
 
-    /** Saves the tileset levels to json and updates the configs */
-    private async exportLevels(): Promise<void> {
-        // Get the tileset levels from the editor
-        const tilesetLevels = this.$blocks.levels;
+    /** Saves the tileset permissions to json and updates the configs */
+    private async exportPermissions(): Promise<void> {
+        // Get the tileset permissions from the editor
+        const tilesetPermissions = this.$blocks.permissions;
         // Divide the two tilsets based on the lengths
-        const t1Levels = tilesetLevels.slice(0, this.tileset1Length);
-        const t2Levels = tilesetLevels.slice(this.tileset1Length, this.tileset1Length + this.tileset2Length);
-        // Convert the levels to a string
-        const t1LevelChars = this._encodeLevels(t1Levels);
-        const t2LevelChars = this._encodeLevels(t2Levels);
-        // Update the configs with the new tileset levels
+        const t1Permissions = tilesetPermissions.slice(0, this.tileset1Length);
+        const t2Permission = tilesetPermissions.slice(this.tileset1Length, this.tileset1Length + this.tileset2Length);
+        // Convert the permissions to a string
+        const t1PermissionChars = this._encodePermissions(t1Permissions);
+        const t2PermissionChars = this._encodePermissions(t2Permission);
+        // Update the configs with the new tileset permissions
         config.update(config => {
-            config.tileset_levels[this.tileset1Offset] = t1LevelChars;
-            config.tileset_levels[this.tileset2Offset] = t2LevelChars;
+            config.tileset_levels[this.tileset1Offset] = t1PermissionChars;
+            config.tileset_levels[this.tileset2Offset] = t2PermissionChars;
             return config;
         });
         // Update the tileset the configs jsons too
-        await invoke("update_tileset_level", { tileset: this.tileset1Offset, levels: t1LevelChars });
-        await invoke("update_tileset_level", { tileset: this.tileset2Offset, levels: t2LevelChars });
+        await invoke("update_tileset_level", { tileset: this.tileset1Offset, levels: t1PermissionChars });
+        await invoke("update_tileset_level", { tileset: this.tileset2Offset, levels: t2PermissionChars });
     }
 
-    /** Returns the tileset levels for the specified tileset. 
+    /** Returns the tileset permissions for the specified tileset. 
      * Uses the length to create a new one in case it doesn't exist yet */
-    private async _getLevels(tilesetOffset: number, tilesetLength: number): Promise<Uint16Array> {
-        const levelChars = get(config).tileset_levels[tilesetOffset];
+    private async _getPermissions(tilesetOffset: number, tilesetLength: number): Promise<Uint8Array> {
+        const permissionEncodedString = get(config).tileset_levels[tilesetOffset];
 
         // If you can't find the levelChars, return a list of null as long as the tileset
-        if (levelChars === undefined) {
-            // Update the configs with the new tileset levels
-            config.update(config => {
-                config.tileset_levels[tilesetOffset] = "";
-                return config;
-            });
-            return new Uint16Array(tilesetLength).fill(NULL);
+        if (permissionEncodedString === undefined) {
+            return new Uint8Array(tilesetLength).fill(NULL_PERMISSION);
         }
         // Otherwise, read the data from the levelChars
         else {
-            const data = new Uint16Array(tilesetLength).fill(NULL);
+            const data = new Uint8Array(tilesetLength).fill(NULL_PERMISSION);
 
-            for (let i = 0; i < levelChars.length; i++) {
-                const char = levelChars[i];
-                if (char === "=") data[i] = NULL;
+            for (let i = 0; i < permissionEncodedString.length; i++) {
+                const char = permissionEncodedString[i];
+                if (char === "=") data[i] = NULL_PERMISSION;
                 else {
-                    data[i] = levelChars.charCodeAt(i) - 63;
+                    data[i] = permissionEncodedString.charCodeAt(i) - 63;
                 }
             }
 
@@ -204,16 +199,16 @@ export class PaletteModule {
         }
     }
 
-    /** Encodes the levels array into a more space-efficient string */
-    private _encodeLevels(levels: Uint16Array): string {
+    /** Encodes the permissions array into a more space-efficient string */
+    private _encodePermissions(permissions: Uint8Array): string {
         let encodedString = "";
         /** Number of NULL permissions you've encountered.
          * If the tileset ends with NULLs, they last NULLs are not encoded
          */
         let nullsEncountered = 0;
 
-        for (const level of levels) {
-            if (level === NULL) {
+        for (const perm of permissions) {
+            if (perm === NULL_PERMISSION) {
                 nullsEncountered++;
                 continue;
             }
@@ -222,7 +217,7 @@ export class PaletteModule {
                 encodedString += "=".repeat(nullsEncountered);
                 nullsEncountered = 0;
 
-                encodedString += String.fromCharCode(level + 63);
+                encodedString += String.fromCharCode(perm + 63);
             }
         }
 

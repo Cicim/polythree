@@ -13,8 +13,8 @@ interface ToolOptions {
     shiftKey: boolean;
     /** Whether the ctrl key was pressed when the painting action started */
     ctrlKey: boolean;
-    /** Whether you are editing levels. */
-    editingLevels: boolean;
+    /** Whether you are editing permissions. */
+    editingPermissions: boolean;
 }
 
 export class Tool {
@@ -102,33 +102,33 @@ export class SquareTool extends Tool {
 
 enum FillPredicate {
     SameMetatile = 1,
-    SameLevel = 2,
-    SameMetatileAndLevel = 3,
+    SamePermission = 2,
+    SameMetatileAndPermission = 3,
 }
 function computeFillPredicate(options: ToolOptions): FillPredicate {
     if (options.shiftKey)
-        return FillPredicate.SameMetatileAndLevel;
+        return FillPredicate.SameMetatileAndPermission;
     else {
-        if (options.editingLevels)
-            return FillPredicate.SameLevel;
+        if (options.editingPermissions)
+            return FillPredicate.SamePermission;
         else return FillPredicate.SameMetatile;
     }
 }
-function canReplace(self: FillTool | ReplaceTool, metatile: number, level: number) {
+function canReplace(self: FillTool | ReplaceTool, metatile: number, permission: number) {
     switch (self.fillPredicate) {
         case FillPredicate.SameMetatile:
             return metatile === self.replaceMetatile;
-        case FillPredicate.SameLevel:
-            return level === self.replaceLevel;
-        case FillPredicate.SameMetatileAndLevel:
-            return metatile === self.replaceMetatile && level === self.replaceLevel;
+        case FillPredicate.SamePermission:
+            return permission === self.replacePermission;
+        case FillPredicate.SameMetatileAndPermission:
+            return metatile === self.replaceMetatile && permission === self.replacePermission;
     }
 }
 
 export class FillTool extends Tool {
     public fillPredicate: FillPredicate;
     public replaceMetatile: number;
-    public replaceLevel: number;
+    public replacePermission: number;
 
     constructor(
         state: PainterState,
@@ -142,9 +142,9 @@ export class FillTool extends Tool {
     public startStroke(x: number, y: number) {
         if (!this.fillPredicate) return;
 
-        // Save the metatile and level we're replacing
+        // Save the metatile and permission we're replacing
         this.replaceMetatile = this.state.getMetatile(x, y);
-        this.replaceLevel = this.state.getLevel(x, y);
+        this.replacePermission = this.state.getPermission(x, y);
         // Initialize the set of visited blocks
         const visited = new Set<CoordinatesHash>();
         const toFill: [x: number, y: number][] = [];
@@ -165,8 +165,8 @@ export class FillTool extends Tool {
             if (!this.state.methods.canPaint(cx, cy)) continue;
 
             const metatile = this.state.getMetatile(cx, cy);
-            const level = this.state.getLevel(cx, cy);
-            if (canReplace(this, metatile, level)) {
+            const permission = this.state.getPermission(cx, cy);
+            if (canReplace(this, metatile, permission)) {
                 // Fill this tile
                 toFill.push([cx, cy]);
 
@@ -188,7 +188,7 @@ export class FillTool extends Tool {
 export class ReplaceTool extends Tool {
     public fillPredicate: FillPredicate;
     public replaceMetatile: number;
-    public replaceLevel: number;
+    public replacePermission: number;
 
     constructor(
         state: PainterState,
@@ -202,15 +202,15 @@ export class ReplaceTool extends Tool {
     public startStroke(x: number, y: number) {
         if (!this.fillPredicate) return;
 
-        // Save the metatile and level we're replacing
+        // Save the metatile and permission we're replacing
         this.replaceMetatile = this.state.getMetatile(x, y);
-        this.replaceLevel = this.state.getLevel(x, y);
+        this.replacePermission = this.state.getPermission(x, y);
 
         const toReplace: [x: number, y: number][] = [];
 
         // Loop each tile on the map
-        this.state.forEach((x, y, metatile, level) => {
-            if (canReplace(this, metatile, level))
+        this.state.forEach((x, y, metatile, perm) => {
+            if (canReplace(this, metatile, perm))
                 toReplace.push([x, y]);
         });
 

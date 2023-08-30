@@ -4,7 +4,7 @@
     import { getContext } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import BrushCard from "./BrushCard.svelte";
-    import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
+    import { BrushesModule } from "src/views/MapEditor/modules/brushes_module";
 
     export let state: SidebarState;
     export let permissionMode: boolean;

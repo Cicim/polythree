@@ -13,7 +13,7 @@
         Menu,
         showContextMenu,
     } from "src/systems/context_menu";
-    import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
+    import { BrushesModule } from "src/views/MapEditor/modules/brushes_module";
     import SearchBar from "src/components/SearchBar.svelte";
 
     export let state: SidebarState;

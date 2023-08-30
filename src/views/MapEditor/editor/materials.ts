@@ -24,7 +24,7 @@ export class PaletteMaterial extends PaintingMaterial {
             for (let i = 0; i < this.blocks.width; i++) {
                 state.set(x + i, y + j,
                     this.blocks.metatiles[j * this.blocks.width + i],
-                    this.blocks.levels[j * this.blocks.width + i
+                    this.blocks.permissions[j * this.blocks.width + i
                     ]);
             }
         }
@@ -42,7 +42,7 @@ export class SelectionMaterial extends PaletteMaterial {
     constructor(
         blocks: BlocksData,
         public metatileCanvas: HTMLCanvasElement,
-        public levelCanvas: HTMLCanvasElement
+        public permissionCanvas: HTMLCanvasElement
     ) {
         super(blocks);
     }

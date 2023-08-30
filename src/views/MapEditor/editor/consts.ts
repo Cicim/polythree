@@ -1,10 +1,11 @@
 /**
- * The RGB color for each level. Since there are patches to change the bitsize
- * of a level, we split it in layer (8 bits) and obstacle (1 bit).
+ * The RGB color for each permission. Since there are patches to change the bitsize
+ * of a permission, we split it in layer (4 bits) and obstacle (1 bit).
  *
- * The format is [0x0OLL]: "#RRGGBB"
+ * The format is 
+ * ## `[0bLLLLO]: "#RRGGBB"`
  */
-export const LEVEL_COLORS: string[] = [
+export const PERMISSION_COLORS: string[] = [
     "#2076DF",
     "#DF2020",
     "#20DFBE",
@@ -38,4 +39,4 @@ export const LEVEL_COLORS: string[] = [
     "#20DFDF",
     "#E920E9",
 ];
-export const LAYER_CHARS = "⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮";
+export const LEVEL_CHARS = "⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮";

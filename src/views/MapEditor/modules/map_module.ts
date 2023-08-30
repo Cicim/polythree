@@ -8,7 +8,7 @@ import { get, writable, type Writable } from "svelte/store";
 import { BlocksData, type ImportedBlocksData } from "../editor/blocks_data";
 import { spawnLayoutPickerDialog } from "../dialogs/LayoutPickerDialog.svelte";
 import { spawnTilesetPickerDialog } from "../dialogs/TilesetPickerDialog.svelte";
-import type MapCanvas from "../../MapEditor/editor/MapCanvas.svelte";
+import type MapCanvas from "../editor/MapCanvas.svelte";
 import { Change } from "src/systems/changes";
 
 export interface MapHeaderData {

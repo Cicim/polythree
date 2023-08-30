@@ -17,7 +17,7 @@
     }
 
     onMount(() => {
-        // Update the mapCanvas for the tilesetLevels
+        // Update the mapCanvas for the tilesetPermissions
         context.palette.mapCanvas.set(component);
     });
 </script>
@@ -27,8 +27,8 @@
         <MapCanvas
             blocks={$blocksStore}
             changes={context.palette.changes}
-            editLevels={true}
-            nullLevels={true}
+            editPermissions={true}
+            nullPermissions={true}
             chunkSize={8}
             allowPan={false}
             allowZoom={false}

@@ -3,7 +3,7 @@
     import type { MapEditorContext } from "src/views/MapEditor";
     import MapCanvas from "../editor/MapCanvas.svelte";
 
-    export let editLevels: boolean;
+    export let editPermissions: boolean;
     let mapCanvas: MapCanvas;
     const context: MapEditorContext = getContext("context");
     const data = context.data;
@@ -19,7 +19,7 @@
     <MapCanvas
         bind:this={mapCanvas}
         allowAnimations={true}
-        {editLevels}
+        {editPermissions}
         {blocks}
         mainCanvas={true}
         resizeOptions={{

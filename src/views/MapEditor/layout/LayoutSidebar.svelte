@@ -4,7 +4,7 @@
         BrushList,
         Borders,
         Brush,
-        BrushLevel,
+        BrushPermissions,
     }
 </script>
 
@@ -18,16 +18,16 @@
     import BrushEditor from "./sidebar/brush/BrushEditor.svelte";
     import PermissionPaletteContainer from "./sidebar/PermissionPaletteContainer.svelte";
     import TilePaletteContainer from "./sidebar/TilePaletteContainer.svelte";
-    import TilesetLevelEditorContainer from "./sidebar/TilesetLevelEditorContainer.svelte";
+    import TilesetPermissionEditorContainer from "./sidebar/TilesetPermissionEditorContainer.svelte";
     import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
     import { SelectionMaterial } from "../editor/materials";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
 
-    /** Set this to true if you are editing the levels */
+    /** Set this to true if you are editing the permissions */
     export let permissionMode: boolean;
     export let hidden: boolean;
 
-    let levelPalette: PermissionPaletteContainer;
+    let permPalette: PermissionPaletteContainer;
     let tilePalette: TilePaletteContainer;
 
     const context: MapEditorContext = getContext("context");
@@ -37,8 +37,8 @@
     // Update the moveOnPalette callback
     context.palette.setMoveCallback(
         (dirX: number, dirY: number, select: boolean) => {
-            if (permissionMode || state === SidebarState.BrushLevel)
-                levelPalette.moveOnPalette(dirX, dirY, select);
+            if (permissionMode || state === SidebarState.BrushPermissions)
+                permPalette.moveOnPalette(dirX, dirY, select);
             else tilePalette.moveOnPalette(dirX, dirY, select);
         }
     );
@@ -84,12 +84,12 @@
     <PermissionPaletteContainer
         {permissionMode}
         bind:state
-        bind:this={levelPalette}
+        bind:this={permPalette}
     />
     <!-- Tile palette view -->
     <TilePaletteContainer {permissionMode} bind:state bind:this={tilePalette} />
     <!-- Palette Permissions Editing -->
-    <TilesetLevelEditorContainer {permissionMode} />
+    <TilesetPermissionEditorContainer {permissionMode} />
     <!-- Mutliselect preview -->
     <SelectionPreviewContainer {permissionMode} bind:state />
 </div>

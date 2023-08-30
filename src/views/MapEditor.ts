@@ -5,11 +5,11 @@ import { get, writable, type Writable } from "svelte/store";
 import { PaintingMaterial, PaletteMaterial } from "./MapEditor/editor/materials";
 import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { BlocksData } from "./MapEditor/editor/blocks_data";
-import { BrushesModule } from "./MapEditor/context/brushes_module";
-import { PaletteModule } from "./MapEditor/context/palette_module";
-import { MapModule, type MapHeaderData, type MapLayoutData, type TilesetsData } from "./MapEditor/context/map_module";
-import { AnimationsModule } from "./MapEditor/context/animations_module";
-import { ActionsModule } from "./MapEditor/context/actions_module";
+import { BrushesModule } from "./MapEditor/modules/brushes_module";
+import { PaletteModule } from "./MapEditor/modules/palette_module";
+import { MapModule, type MapHeaderData, type MapLayoutData, type TilesetsData } from "./MapEditor/modules/map_module";
+import { AnimationsModule } from "./MapEditor/modules/animations_module";
+import { ActionsModule } from "./MapEditor/modules/actions_module";
 
 export interface MapEditorProperties {
     group: number;
@@ -107,7 +107,7 @@ export class MapEditorContext extends TabbedEditorContext<MapEditorTabsIds> {
     }
 
     public onSelect = () => {
-        this.palette.tryToRebuildLevels();
+        this.palette.tryToRebuildPermissions();
     };
 
     /** Close all modules before closing the tab */

@@ -31,7 +31,7 @@
 >
     {#key selection}
         {#if selection !== null}
-            <SelectionPreview {selection} showLevels={permissionMode} />
+            <SelectionPreview {selection} showPermissions={permissionMode} />
         {/if}
     {/key}
 </div>

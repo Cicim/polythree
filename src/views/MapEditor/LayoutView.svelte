@@ -158,7 +158,7 @@
         </div>
     </div>
     <div class="area">
-        <LayoutViewArea editLevels={$activeTab === "permissions"} />
+        <LayoutViewArea editPermissions={$activeTab === "permissions"} />
     </div>
     <div
         class="sidebar"

@@ -12,7 +12,7 @@
     import { spawnBrushSettings } from "./BrushSettings.svelte";
     import { tooltip } from "src/systems/tooltip";
     import type { Writable } from "svelte/store";
-    import { BrushesModule } from "src/views/MapEditor/context/brushes_module";
+    import { BrushesModule } from "src/views/MapEditor/modules/brushes_module";
 
     const context: MapEditorContext = getContext("context");
     const material = context.material;

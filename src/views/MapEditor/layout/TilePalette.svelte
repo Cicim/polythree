@@ -3,7 +3,11 @@
     import { getContext, onMount } from "svelte";
     import { watchResize } from "svelte-watch-resize";
     import { PaletteMaterial, SelectionMaterial } from "../editor/materials";
-    import { BlocksData, NULL } from "../editor/blocks_data";
+    import {
+        BlocksData,
+        NULL_METATILE,
+        NULL_PERMISSION,
+    } from "../editor/blocks_data";
 
     export let hoveringTile: number = null;
     export let selectedTile: number | [number, number, number] = null;
@@ -56,7 +60,7 @@
             } else if (
                 $material instanceof PaletteMaterial &&
                 $material.isSingular &&
-                $material.blocks.metatiles[0] === NULL
+                $material.blocks.metatiles[0] === NULL_METATILE
             ) {
                 // Update the selection
                 hideSelection();
@@ -182,13 +186,13 @@
                 const tileIndex = blocks.index(x + i, y + j);
 
                 if (tileIndex >= context.palette.fullLength) {
-                    blocks.set(i, j, NULL, NULL);
+                    blocks.set(i, j, NULL_METATILE, NULL_PERMISSION);
                 } else {
                     blocks.set(
                         i,
                         j,
                         tilesetBlocks.getMetatile(x + i, y + j),
-                        tilesetBlocks.getLevel(x + i, y + j)
+                        tilesetBlocks.getPermission(x + i, y + j)
                     );
                 }
             }

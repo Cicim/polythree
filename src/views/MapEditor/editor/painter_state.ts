@@ -1,21 +1,21 @@
 import { Change } from "src/systems/changes";
-import { NULL } from "src/views/MapEditor/editor/blocks_data";
+import { NULL_METATILE, NULL_PERMISSION } from "src/views/MapEditor/editor/blocks_data";
 
 /** Methods offered by the MapEditor for painting */
 export interface PainterMethods {
-    /** Whether null levels are allowed */
-    nullLevels: boolean;
+    /** Whether null permission are allowed */
+    nullPermissions: boolean;
 
     /** Loop over all blocks in the map */
-    forEach(callback: (x: number, y: number, metatile: number, level: number) => void): void;
+    forEach(callback: (x: number, y: number, metatile: number, permission: number) => void): void;
     /** Returns whether you can paint on the given block */
     canPaint(x: number, y: number): boolean;
-    /** Set a metatile and level at the given coordinates */
-    set(x: number, y: number, metatile: number, level: number): void;
+    /** Set a metatile and permission at the given coordinates */
+    set(x: number, y: number, metatile: number, permission: number): void;
     /** Get a metatile at the given coordinates */
     getMetatile(x: number, y: number): number;
-    /** Get a level at the given coordinates */
-    getLevel(x: number, y: number): number;
+    /** Get a permission at the given coordinates */
+    getPermission(x: number, y: number): number;
     /** Update the screen */
     update(): void;
     /** Returns whether you can write on the metatiles part of the blocks */
@@ -33,44 +33,44 @@ export class PainterState {
     public constructor(public methods: PainterMethods) { }
 
     /** Sets the given block and updates the chunk */
-    public set(x: number, y: number, metatile: number, level: number) {
+    public set(x: number, y: number, metatile: number, permission: number) {
         if (!this.methods.canPaint(x, y)) return;
 
         // If editing metatiles is not allowed, set the input to NULL
         // so that it won't overwrite the current metatile
         if (!this.methods.canUpdateMetatiles())
-            metatile = NULL;
+            metatile = NULL_METATILE;
 
         const oldMetatile = this.getMetatile(x, y);
-        const oldLevel = this.getLevel(x, y);
-        let updatedMetatile = metatile, updatedLevel = level;
+        const oldPermission = this.getPermission(x, y);
+        let updatedMetatile = metatile, updatedPermission = permission;
 
-        // If null levels are not allowed, change the level value to
+        // If null permissions are not allowed, change the permission value to
         // the one in the old block
-        if (!this.methods.nullLevels && level === NULL) {
-            updatedLevel = oldLevel;
+        if (!this.methods.nullPermissions && permission === NULL_PERMISSION) {
+            updatedPermission = oldPermission;
         }
 
         // Storing null tiles is never supported, therefore if a
         // brush wants to set a null tile, it will be set to
         // the one in the old block
-        if (metatile === NULL) {
+        if (metatile === NULL_METATILE) {
             updatedMetatile = oldMetatile;
         }
 
         // If after all this, the new block is the same, don't do anything
-        if (oldMetatile === updatedMetatile && oldLevel == updatedLevel) return;
+        if (oldMetatile === updatedMetatile && oldPermission == updatedPermission) return;
 
         // Calculate an hash
         const hash: CoordinatesHash = `${x},${y}`;
 
         // Never overwrite the old block if present
         if (this.oldBlocks[hash] === undefined)
-            this.oldBlocks[hash] = [oldMetatile, oldLevel];
+            this.oldBlocks[hash] = [oldMetatile, oldPermission];
         // Save the latest new block
-        this.newBlocks[hash] = [updatedMetatile, updatedLevel];
+        this.newBlocks[hash] = [updatedMetatile, updatedPermission];
         // Update the map editor
-        this.methods.set(x, y, updatedMetatile, updatedLevel);
+        this.methods.set(x, y, updatedMetatile, updatedPermission);
         // Something was drawn
         this.drawn = true;
     }
@@ -78,8 +78,8 @@ export class PainterState {
     public getMetatile(x: number, y: number): number {
         return this.methods.getMetatile(x, y);
     }
-    public getLevel(x: number, y: number): number {
-        return this.methods.getLevel(x, y);
+    public getPermission(x: number, y: number): number {
+        return this.methods.getPermission(x, y);
     }
 
     /**

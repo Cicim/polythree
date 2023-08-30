@@ -29,7 +29,7 @@
     <div
         class:hidden={permissionMode ||
             state === SidebarState.BrushList ||
-            state === SidebarState.BrushLevel}
+            state === SidebarState.BrushPermissions}
         class="tile-palette-view"
     >
         <div class="palette-container">
@@ -46,7 +46,7 @@
     <div
         class:hidden={permissionMode ||
             state === SidebarState.BrushList ||
-            state === SidebarState.BrushLevel}
+            state === SidebarState.BrushPermissions}
         class="footbar"
     >
         {#if hoveringTile != null}

@@ -134,7 +134,7 @@
     function startEditing() {
         if (
             !$editingBrush ||
-            state === SidebarState.BrushLevel ||
+            state === SidebarState.BrushPermissions ||
             state === SidebarState.Brush
         )
             return;
@@ -175,7 +175,8 @@
 <div
     class="brush-view"
     class:hidden={permissionMode ||
-        (state !== SidebarState.Brush && state !== SidebarState.BrushLevel)}
+        (state !== SidebarState.Brush &&
+            state !== SidebarState.BrushPermissions)}
     use:resizeY={{
         minHeight: () => Math.min(100, window.innerHeight * 0.2),
         maxHeight: () => window.innerHeight * 0.5,
@@ -227,14 +228,15 @@
                         <ToolButton
                             icon="gis:map-edit"
                             theme="transparent"
-                            title="Edit Levels"
-                            on:click={() => (state = SidebarState.BrushLevel)}
+                            title="Edit Permissions"
+                            on:click={() =>
+                                (state = SidebarState.BrushPermissions)}
                         />
-                    {:else if state === SidebarState.BrushLevel}
+                    {:else if state === SidebarState.BrushPermissions}
                         <ToolButton
                             icon="bxs:edit"
                             theme="transparent"
-                            title="Edit Tiles"
+                            title="Edit Blocks"
                             on:click={() => (state = SidebarState.Brush)}
                         />
                     {/if}
@@ -262,9 +264,9 @@
                     allowAnimations={true}
                     blocks={$editingBrush.blocks}
                     centerOnResize={true}
-                    editLevels={state === SidebarState.BrushLevel}
+                    editPermissions={state === SidebarState.BrushPermissions}
                     changes={$editingBrushChanges}
-                    nullLevels={true}
+                    nullPermissions={true}
                 />
             </div>
         {/if}
