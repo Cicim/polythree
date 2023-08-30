@@ -71,29 +71,46 @@ export class EditorChanges {
         this.updateChanges();
     }
 
+    /** Pops the last change */
+    public async pop(): Promise<void> {
+        // Remove the last change
+        this.stack.pop();
+        // Update the top
+        this.top--;
+        // Update the changes
+        this.updateChanges();
+    }
+
     /** Undoes the last applied change */
     public async undo() {
-        if (this.locked || this.top === 0) return;
+        if (this.locked !== 0 || this.top === 0) return;
 
         const change = this.stack[--this.top];
-        change.revert();
+
+        this.locked++;
+        await change.revert();
         // Go to the edit's tab
         if (this.currentTab)
             this.currentTab.set(change.tab);
+
+        this.locked--;
 
         this.updateChanges();
     }
 
     /** Redoes the last undone change */
     public async redo() {
-        if (this.locked || this.top === this.stack.length) return;
-
+        if (this.locked !== 0 || this.top === this.stack.length) return;
         const change = this.stack[this.top++];
-        change.apply();
+
+        this.locked++;
+        await change.apply();
 
         // Go to the edit's tab
         if (this.currentTab)
             this.currentTab.set(change.tab);
+
+        this.locked--;
 
         this.updateChanges();
     }
@@ -136,70 +153,80 @@ export class EditorChanges {
     }
 }
 
+/** Base class for a generic Change */
 export abstract class Change {
-    static uid = 0;
-    static getUID() {
-        return this.uid++;
-    }
-
+    /** The first free uid */
+    private static idCounter = 0;
+    /** Gets a new id for the Change */
+    static getID() { return Change.idCounter++; }
+    /** Name for these types of changes */
     static changeName: string = "??? Change";
+    /** The date in which the change was created */
     protected timestamp: number = Date.now();
-    protected uid: number = Change.getUID();
-    public tab: string;
+    /** An identificative number chosen at the moment of instantiation of the class. */
+    protected id: number = Change.getID();
+    /** The Tab the editor was in when the change was created. */
+    public tab: string = null;
 
     /** Returns a simple HTML description for the change */
-    public changeName(): string {
+    public getName(): string {
         // @ts-ignore
         return this.constructor.changeName ?? Change.changeName;
     };
 
-    /** Updates the before value of this change
-     * returns true if the change is invalid
-     * and should not be added to the stack
-     */
-    public abstract updatePrev(changes: EditorChanges): boolean;
+    /** A method that executes when pushing the change for the first time
+     * @returns Whether or not the change is **invalid**
+     * + By default it says to push the change without checking for anything. 
+     * Override the method to change this behavior */
+    public updatePrev(changes: EditorChanges): boolean { return true };
+    /** Revert the values to how they were before this change was applied */
     public abstract revert(): Promise<void>;
+    /** Applies the change, modifying */
     public abstract apply(): Promise<void>;
 }
 
-export class ValueChange extends Change {
+export class ValueChange<T> extends Change {
     static changeName = "Value Changed";
+    /** A path to the value to edit in the store */
     protected edits: string[];
-    public prevValue: any;
+    /** The previous value from the store */
+    public prevValue: T;
 
     public constructor(
         protected store: Data,
         edits: NavigatePath,
-        public nextValue: any,
+        public nextValue: T,
     ) {
         super();
+        // Transforms the edits into a path if it is a string
         this.edits = r.getPath(edits);
     }
 
     public updatePrev(changes: EditorChanges): boolean {
-        const lastChange = changes.current();
-
+        // Get the previous value
         this.prevValue = r.getStore(this.store, this.edits);
+        // Exit immediately if the prevValue is the same as the nextValue
+        if (this.prevValue === this.nextValue) return true;
 
         // Check to see if the last change was a value change
+        const lastChange = changes.current();
         if (lastChange instanceof ValueChange) {
             if (
                 // Check if the change edits the same field
                 lastChange.edits.join(".") === this.edits.join(".") &&
-                // Check if the last change was made with the last 5 seconds
+                // Check if the last change was made within the last 5 seconds
                 this.timestamp - lastChange.timestamp < 5000 &&
-                changes.stack.length > 1) {
+                changes.stack.length > 1
+            ) {
+                // Set the previous value to the last change's previous value
+                // (A => B, B => C) => (A => C)
                 this.prevValue = lastChange.prevValue;
-
                 // Remove the last change
-                changes.stack.pop();
-                changes.top--;
-                changes.updateChanges();
-                this.apply();
+                changes.pop();
             }
         }
 
-        return this.prevValue === this.nextValue;
+        return false;
     }
 
     public async revert() {

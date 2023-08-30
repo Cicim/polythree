@@ -81,7 +81,7 @@ export class UpdateLayoutChange extends Change {
         this.context.map.releaseLayoutLock(this.newLayoutId);
     }
     public async apply(): Promise<void> {
-        const res = this.update(this.newLayoutId);
+        const res = await this.update(this.newLayoutId);
         if (!res) {
             await spawnErrorDialog("Failed to update layout: the layout you've already changed to in the past is now invalid.");
         }

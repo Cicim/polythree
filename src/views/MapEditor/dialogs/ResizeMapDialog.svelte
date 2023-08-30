@@ -46,7 +46,7 @@
     export let canvas: MapCanvas;
     export let blocks: BlocksData;
     export let context: MapEditorContext;
-    let data = context.data;
+    const layoutData = context.data.layout;
 
     // The input's bound values
     let width: number;
@@ -70,7 +70,7 @@
         const change = new MapResizeChange(
             canvas.resizeChangeApplied,
             blocks,
-            data,
+            layoutData,
             width,
             height,
             0

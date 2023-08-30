@@ -96,7 +96,7 @@
         if (!optionEl) throw new Error("No options found");
         const optionRect = optionEl.getBoundingClientRect();
         // Add a small margin (better than having to scroll on less that OPTIONS_COUNT options)
-        const optionHeight = optionRect.height + 1;
+        const optionHeight = 29; // optionRect.height + 1;
 
         // -- Choose a width that is the max between the width
         // of the select and the width of the longest option
@@ -550,10 +550,14 @@
         &.top {
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
+            transform-origin: 0 100%;
+            animation: cubic-bezier(0.075, 0.82, 0.165, 1) 0.1s openUp;
         }
         &.bottom {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
+            transform-origin: 0 0;
+            animation: cubic-bezier(0.075, 0.82, 0.165, 1) 0.1s openDown;
         }
 
         &::backdrop {

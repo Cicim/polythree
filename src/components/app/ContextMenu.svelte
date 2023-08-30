@@ -60,6 +60,8 @@
         top: 0;
         left: 0;
 
+        animation: cubic-bezier(0.165, 0.84, 0.44, 1) 0.1s openDown;
+        transform-origin: 0 0;
         z-index: 1000000;
 
         &::backdrop {
