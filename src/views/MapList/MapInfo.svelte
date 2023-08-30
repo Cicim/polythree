@@ -1,6 +1,6 @@
 <script lang="ts">
     import MapPreview from "./MapPreview.svelte";
-    import type { MapCardProps, MapId, SelectedCards } from "../MapList";
+    import type { MapCardProps, MapId } from "../MapList";
     import { getContext } from "svelte";
     import type { Writable } from "svelte/store";
     import Button from "src/components/Button.svelte";
@@ -12,36 +12,11 @@
     import { config } from "src/systems/global";
     import { tooltip } from "src/systems/tooltip";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
+    import { weatherIconMap } from "src/systems/consts";
 
     export let selectedMaps: MapId[];
 
     const data: Writable<MapCardProps[]> = getContext("data");
-
-    const weatherIconMap: Record<number, [name: string, icon: string]> = {
-        // none
-        0: ["None", ""],
-        1: ["Sunny Clouds", "mdi:weather-partly-cloudy"],
-        2: ["Sunny", "mdi:weather-sunny"],
-        3: ["Rainy", "mdi:weather-rainy"],
-        4: ["Snowy", "mdi:weather-snowy"],
-        5: ["Thunderstorm", "mdi:weather-lightning"],
-        6: ["Foggy hor", "mdi:weather-fog"],
-        7: ["Volcanic Ash", "mdi:weather-fog"],
-        8: ["Sandstorm", "mdi:weather-fog"],
-        9: ["Foggy dia", "mdi:weather-fog"],
-        10: ["Underwater", "mdi:weather-fog"],
-        11: ["Overcast", "mdi:weather-cloudy"],
-        12: ["Drought", "mdi:weather-sunny-alert"],
-        13: ["Downpour", "mdi:weather-pouring"],
-        14: ["Underwater Bubbles", "ri:bubble-chart-line"],
-        15: ["Abnormal", "mdi:weather-cloudy-alert"],
-        16: ["???", ""],
-        17: ["???", ""],
-        18: ["???", ""],
-        19: ["???", ""],
-        20: ["???", ""],
-        21: ["???", ""],
-    };
 
     let selectedMap: MapId = null;
     $: selectedMap = selectedMaps.length === 1 ? selectedMaps[0] : null;

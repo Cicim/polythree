@@ -1,12 +1,32 @@
 <script lang="ts">
     import type { MapEditorContext } from "../MapEditor";
     import { getContext } from "svelte";
-    import Input from "src/components/Input.svelte";
     import TextToolButton from "./TextToolButton.svelte";
+    import Select from "src/components/Select.svelte";
+    import ToolButton from "./ToolButton.svelte";
+    import { mapTypeNames, weatherIconMap } from "src/systems/consts";
+    import CheckBoxRow from "./header/CheckBoxRow.svelte";
+    import LongRow from "./header/LongRow.svelte";
+    import LongNotchedRow from "./header/LongNotchedRow.svelte";
+    import Input from "src/components/Input.svelte";
+    import MapNameSelect from "./header/MapNameSelect.svelte";
+    import { tooltip } from "src/systems/tooltip";
+    import { rom } from "src/systems/global";
 
     const context: MapEditorContext = getContext("context");
 
     const data = context.data;
+
+    const weatherOptions: [number, string][] = Object.values(
+        weatherIconMap
+    ).map(([name], i) => [i, name]);
+
+    const mapTypeOptions: [number, string][] = mapTypeNames.map((name, i) => [
+        i,
+        name,
+    ]);
+
+    const frlg = $rom.type === "Fire Red" || $rom.type === "Leaf Green";
 </script>
 
 <div class="editor">
@@ -21,8 +41,146 @@
         </div>
     </div>
     <div class="area">
-        <div class="readonly-info">Readonly</div>
-        <div class="editable-fields">Editable</div>
+        <div class="editable form">
+            <!-- ANCHOR Music -->
+            <LongNotchedRow
+                title="The default music<br> for this map"
+                text="Music"
+            >
+                <Input
+                    edits="header.header.music"
+                    type="number"
+                    max={65536}
+                    min={0}
+                />
+                <!-- <Select
+                    edits="header.header.music"
+                    valueTag="number"
+                    options={[
+                        [0, "Hello"],
+                        [1, "World"],
+                    ]}
+                /> -->
+                <ToolButton
+                    icon="mdi:play"
+                    title="Pause/Play Background Music"
+                />
+            </LongNotchedRow>
+            <!-- ANCHOR Location -->
+            <LongNotchedRow
+                title="The map's section id.<br> Also determines the map's<br> display name"
+                text="Location"
+            >
+                <MapNameSelect edits="header.header.region_map_section_id" />
+                <ToolButton
+                    icon="mdi:edit"
+                    title="Change the mapsec's string"
+                />
+            </LongNotchedRow>
+            <!-- ANCHOR Floor Number -->
+            {#if frlg}
+                <LongNotchedRow
+                    text="Floor Number"
+                    title="Floor number that appears<br> after the map name. <br>(e.g. Silph Co)"
+                >
+                    <Input
+                        edits="header.header.floor_num"
+                        type="number"
+                        min={-128}
+                        max={127}
+                    />
+                    <div
+                        use:tooltip
+                        tooltip="In-game Appearance"
+                        class="row subtitle dark"
+                        style="width: 4rem;"
+                    >
+                        <span>
+                            {#if $data.header.header.floor_num !== 0}
+                                {$data.header.header.floor_num}F
+                            {:else}
+                                &nbsp;
+                            {/if}
+                        </span>
+                    </div>
+                </LongNotchedRow>
+            {/if}
+            <!-- ANCHOR Weather -->
+            <LongNotchedRow
+                title="The map's weather effect. <br>Affects battles too."
+                text="Weather"
+            >
+                <Select
+                    valueTag="number"
+                    edits="header.header.weather"
+                    options={weatherOptions}
+                />
+                <div class="weather-icon">
+                    {#key $data.header.header.weather}
+                        <iconify-icon
+                            icon={weatherIconMap[
+                                $data.header.header.weather
+                            ][1]}
+                        />
+                    {/key}
+                </div>
+            </LongNotchedRow>
+            <!-- ANCHOR Type -->
+            <LongRow
+                title="An attribute which<br> determines many things"
+                text="Type"
+            >
+                <Select
+                    valueTag="number"
+                    edits="header.header.map_type"
+                    options={mapTypeOptions}
+                />
+            </LongRow>
+            <!-- ANCHOR Battle Scene -->
+            <LongRow
+                title="Determines the<br> graphics of <br>the battle scene"
+                text="Battle Scene"
+            >
+                <Select
+                    valueTag="number"
+                    edits="header.header.battle_type"
+                    options={[
+                        [0, "Hello"],
+                        [1, "World"],
+                    ]}
+                />
+            </LongRow>
+            <!-- ANCHOR Show Name -->
+            <CheckBoxRow
+                title="If a box containing the <br>Map name should appear <br>when entering the map"
+                text="Show Name"
+                edits="header.header.show_map_name"
+            />
+            <!-- ANCHOR Flash -->
+            <CheckBoxRow
+                title="Limited visibility,<br> needs Flash to see better"
+                text="Needs Flash"
+                edits="header.header.cave"
+            />
+            <!-- ANCHOR Running -->
+            <CheckBoxRow
+                title="Allows the use<br> of Running Shoes<br> in this map"
+                text="Allow Running"
+                edits="header.header.allow_running"
+            />
+            <!-- ANCHOR Biking -->
+            <CheckBoxRow
+                title="Allows the use<br> of a bike in this map"
+                text="Allow Biking"
+                edits="header.header.biking_allowed"
+            />
+            <!-- ANCHOR Biking -->
+            <CheckBoxRow
+                title="Allows the use of Dig<br> and Escape Ropes"
+                text="Allow Escaping"
+                edits="header.header.allow_escaping"
+            />
+        </div>
     </div>
 </div>
 
@@ -39,8 +197,34 @@
         .area {
             grid-area: area;
             display: grid;
-            grid-template-columns: 1fr 1fr;
             padding: 0.5em;
+
+            justify-items: center;
+            overflow-y: scroll;
+
+            .editable {
+                margin: 0.5em;
+                padding: 0.5em;
+                border-radius: 0.5em;
+                width: 90%;
+
+                max-width: 600px;
+
+                &.form {
+                    gap: 8px;
+                }
+                :global(.select),
+                :global(.option) {
+                    font-size: inherit;
+                }
+                .weather-icon {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 1.5em;
+                    display: grid;
+                    place-content: center;
+                }
+            }
         }
     }
 </style>

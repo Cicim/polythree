@@ -249,6 +249,82 @@ body {
   }
 }
 
+// ANCHOR Quick flexible formatting
+.form {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 8px;
+
+  input,
+  .select,
+  .option {
+    font-size: 14px;
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .half-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .tq-row {
+    display: grid;
+    grid-template-columns: 150px 3fr;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .tqb-row {
+    display: grid;
+    grid-template-columns: 150px 3fr max-content;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .half-max-row {
+    display: grid;
+    grid-template-columns: 1fr max-content 1fr;
+    gap: 4px;
+  }
+
+  .hr {
+    width: 100%;
+    border-bottom: 1px solid var(--light-shadow);
+  }
+
+  .title {
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--weak-fg);
+  }
+
+  .dark {
+    background: var(--medium-bg);
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--weak-fg);
+  }
+
+  .padding {
+    color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
 // ANCHOR Common dialog styles
 .dialog {
   @media screen and (min-width: 450px) {
@@ -304,66 +380,6 @@ body {
       border-top: 1px solid var(--light-shadow);
       display: grid;
       overflow-y: scroll;
-
-      &.form {
-        display: flex;
-        flex-flow: column nowrap;
-        gap: 8px;
-
-        input,
-        .select,
-        .option {
-          font-size: 14px;
-        }
-
-        .row {
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          justify-content: center;
-          gap: 4px;
-        }
-
-        .half-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 4px;
-        }
-
-        .half-max-row {
-          display: grid;
-          grid-template-columns: 1fr max-content 1fr;
-          gap: 4px;
-        }
-
-        .hr {
-          width: 100%;
-          border-bottom: 1px solid var(--light-shadow);
-        }
-
-        .title {
-          text-transform: uppercase;
-          text-align: center;
-          color: var(--weak-fg);
-        }
-
-        .dark {
-          background: var(--medium-bg);
-          padding: 8px;
-          border-radius: 8px;
-        }
-
-        .subtitle {
-          text-align: center;
-          color: var(--weak-fg);
-        }
-
-        .padding {
-          color: transparent;
-          user-select: none;
-          -webkit-user-select: none;
-        }
-      }
     }
 
 

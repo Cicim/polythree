@@ -1,19 +1,57 @@
 <script lang="ts">
     import type { NavigatePath } from "src/systems/navigate";
     import type { Writable } from "svelte/store";
+    import navigate from "src/systems/navigate";
+    import { getContext, onDestroy } from "svelte";
+    import type { EditorContext } from "src/systems/views";
 
     type IconTypes = "tick" | "cross" | "line" | "plus";
 
     export let checked: boolean = false;
     export let disabled: boolean = false;
     export let icon: IconTypes = "tick";
-    // export let edits: NavigatePath | Writable<boolean | number> = null;
+    export let edits: NavigatePath = null;
+
+    let update = () => {};
+    let unsubscribeFromData = null;
+
+    // If you are editing the context's data
+    if (edits !== null) {
+        // Get the navigate path
+        const path = navigate.getPath(edits);
+        const data: Writable<any> = getContext("data");
+        const changes = (<EditorContext>getContext("context")).changes;
+        update = () => {
+            if (path) changes.setValue(path, checked);
+        };
+        // Update the checked when the data changes
+        unsubscribeFromData = data.subscribe((data) => {
+            checked = navigate.get(data, path);
+        });
+    }
+
+    // Undefined if no slot was defined
+    const SLOTS = $$props.$$slots;
+
+    onDestroy(() => {
+        unsubscribeFromData?.();
+    });
 </script>
 
 <label class={`component icon-${icon}`}>
-    <input {disabled} type="checkbox" bind:checked on:change />
+    <input
+        {disabled}
+        type="checkbox"
+        bind:checked
+        on:change
+        on:change={update}
+    />
     <span class={`checkmark ${disabled ? "disabled" : ""}`} />
-    <slot />
+    {#if SLOTS}
+        <slot />
+    {:else}
+        {@html "&nbsp"}
+    {/if}
 </label>
 
 <style lang="scss">

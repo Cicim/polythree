@@ -12,3 +12,10 @@ interface GbaGraphic {
     read_length: number,
     replace: boolean,
 }
+
+/** A string identifying a ROM Type */
+type RomType = "Fire Red"
+    | "Leaf Green"
+    | "Ruby"
+    | "Sapphire"
+    | "Emerald";

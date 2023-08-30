@@ -9,7 +9,7 @@ import { config, rom, type Config } from "./global";
 import { lastClosedViews } from "./views";
 
 type RomOpenResponse = {
-    rom_type: string,
+    rom_type: RomType,
     rom_size: number,
     rom_size_fmt: string,
 };

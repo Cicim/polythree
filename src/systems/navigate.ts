@@ -25,7 +25,7 @@ const exports = {
      * navigate.get(obj, "a.b"); // { c: 5 }
      * navigate.get(obj, "a.b.d"); // undefined
      */
-    get: function (object: Object, path: NavigatePath) {
+    get: function (object: Object, path: NavigatePath): any {
         const keys = getPath(path);
 
         let current = object;
@@ -136,10 +136,10 @@ const exports = {
      * @example
      * const store = writable({a: {b: {c: 5}}});
      * 
-     * navigate.getOnce(store, "a.b.c"); // 5
-     * navigate.getOnce(store, "a.b"); // { c: 5 }
-     * navigate.getOnce(store, "a.b.d"); // undefined
-     * navigate.getOnce(store, "a.b.c.d"); // undefined
+     * navigate.getStore(store, "a.b.c"); // 5
+     * navigate.getStore(store, "a.b"); // { c: 5 }
+     * navigate.getStore(store, "a.b.d"); // undefined
+     * navigate.getStore(store, "a.b.c.d"); // undefined
     */
     getStore: function (store: Writable<any>, path: NavigatePath) {
         let result: any;

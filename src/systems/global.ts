@@ -9,7 +9,7 @@ type BrushStore = Record<number, {
 
 export interface Rom {
     path: string;
-    type: string;
+    type: RomType;
     size: number;
     sizePretty: string;
 }
