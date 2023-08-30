@@ -248,9 +248,7 @@ export abstract class ViewContext {
  */
 export abstract class EditorContext extends ViewContext {
     /** The changes made to the editor */
-    public changes: EditorChanges<Writable<Record<string, any>>>;
-    /** This editor's data, used for displaying information */
-    public data: Writable<Record<string, any>>;
+    public changes: EditorChanges;
     /** Whether or not the editor is currently loading */
     public loading: Writable<boolean>;
     /** A promise that resolves once the editor is done saving */
@@ -264,9 +262,8 @@ export abstract class EditorContext extends ViewContext {
         id: Record<string, any>) {
         super(ComponentClass, { ...id });
 
-        this.data = writable({});
         this.changes = (this instanceof TabbedEditorContext) ? null :
-            new EditorChanges(this.data);
+            new EditorChanges();
 
         this.loading = writable(true);
     }
@@ -452,7 +449,7 @@ export abstract class TabbedEditorContext<T extends string> extends EditorContex
     constructor(ComponentClass: typeof SvelteComponent,
         id: Record<string, any>) {
         super(ComponentClass, { ...id });
-        this.changes = new EditorChanges(this.data, this.selectedTab);
+        this.changes = new EditorChanges(this.selectedTab);
     }
 
     /** Creates the view's component */

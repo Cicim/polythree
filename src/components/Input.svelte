@@ -1,7 +1,7 @@
 <!-- A library input element -->
 <script lang="ts">
     import { createEventDispatcher, getContext, onDestroy } from "svelte";
-    import r from "src/systems/navigate";
+    import r, { type NavigatePath } from "src/systems/navigate";
     import type { Unsubscriber, Writable } from "svelte/store";
     import type { EditorContext } from "src/systems/contexts";
 
@@ -10,8 +10,13 @@
     /** The type of the input, used for type inference */
     export let type: InputType = "text";
     export let spellcheck: boolean = false;
-    /** The path to the object this input updates or the writable store */
-    export let edits: string = null;
+    /** The store this input updates */
+    export let store: Writable<any> = null;
+    /** The path to the object this input updates */
+    export let edits: NavigatePath = null;
+    const path = r.getPath(edits);
+
+    /** The bindable value of the input */
     export let value: string | number = "";
 
     export let min: number = Number.MIN_SAFE_INTEGER;
@@ -43,13 +48,13 @@
             if (isNaN(number)) number = 0;
 
             if (edits !== null) {
-                context.changes.setValue(edits as string, number);
+                context.changes.setValue(store, path, number);
             } else {
                 value = number;
             }
         } else {
             if (edits !== null) {
-                context.changes.setValue(edits as string, newValue);
+                context.changes.setValue(store, path, newValue);
             } else {
                 value = newValue;
             }

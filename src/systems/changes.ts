@@ -3,9 +3,7 @@ import r, { type NavigatePath } from "./navigate";
 
 type Data = Writable<Record<string, any>>;
 
-export class EditorChanges<T> {
-    /** The data this class changes */
-    public data: T;
+export class EditorChanges {
     /** The current tab store */
     public currentTab?: Writable<string>;
     /** Whether or not the editor needs to be saved */
@@ -25,8 +23,7 @@ export class EditorChanges<T> {
 
     public queue: Change[] = [];
 
-    public constructor(data: T, tabStore?: Writable<string>) {
-        this.data = data;
+    public constructor(tabStore?: Writable<string>) {
         this.currentTab = tabStore ?? null;
         this.unsaved = writable(false);
         this.saving = writable(false);
@@ -56,7 +53,7 @@ export class EditorChanges<T> {
         // Edit the top index
         this.top = this.stack.length;
         // Execute the change
-        const applied = change.apply(this.data);
+        const applied = change.apply();
 
         this.updateChanges();
         return applied;
@@ -79,7 +76,7 @@ export class EditorChanges<T> {
         if (this.locked || this.top === 0) return;
 
         const change = this.stack[--this.top];
-        change.revert(this.data);
+        change.revert();
         // Go to the edit's tab
         if (this.currentTab)
             this.currentTab.set(change.tab);
@@ -92,7 +89,7 @@ export class EditorChanges<T> {
         if (this.locked || this.top === this.stack.length) return;
 
         const change = this.stack[this.top++];
-        change.apply(this.data);
+        change.apply();
 
         // Go to the edit's tab
         if (this.currentTab)
@@ -134,8 +131,8 @@ export class EditorChanges<T> {
 
     // ANCHOR Quick methods
     /** Creates a ValueChange */
-    public setValue(edits: NavigatePath, value: any) {
-        this.push(new ValueChange(edits, value));
+    public setValue(store: Data, edits: NavigatePath, value: any) {
+        this.push(new ValueChange(store, edits, value));
     }
 }
 
@@ -160,10 +157,9 @@ export abstract class Change {
      * returns true if the change is invalid
      * and should not be added to the stack
      */
-    public abstract updatePrev(changes: EditorChanges<any>): boolean;
-
-    public abstract revert(data: any): Promise<void>;
-    public abstract apply(data: any): Promise<void>;
+    public abstract updatePrev(changes: EditorChanges): boolean;
+    public abstract revert(): Promise<void>;
+    public abstract apply(): Promise<void>;
 }
 
 export class ValueChange extends Change {
@@ -172,6 +168,7 @@ export class ValueChange extends Change {
     public prevValue: any;
 
     public constructor(
+        protected store: Data,
         edits: NavigatePath,
         public nextValue: any,
     ) {
@@ -179,11 +176,10 @@ export class ValueChange extends Change {
         this.edits = r.getPath(edits);
     }
 
-    public updatePrev(changes: EditorChanges<Data>): boolean {
-        const data = changes.data;
+    public updatePrev(changes: EditorChanges): boolean {
         const lastChange = changes.current();
 
-        this.prevValue = r.getStore(data, this.edits);
+        this.prevValue = r.getStore(this.store, this.edits);
 
         // Check to see if the last change was a value change
         if (lastChange instanceof ValueChange) {
@@ -199,19 +195,19 @@ export class ValueChange extends Change {
                 changes.stack.pop();
                 changes.top--;
                 changes.updateChanges();
-                this.apply(data);
+                this.apply();
             }
         }
 
         return this.prevValue === this.nextValue;
     }
 
-    public async revert(data: Data) {
-        r.setStore(data, this.edits, this.prevValue);
+    public async revert() {
+        r.setStore(this.store, this.edits, this.prevValue);
     }
 
-    public async apply(data: Data) {
-        r.setStore(data, this.edits, this.nextValue);
+    public async apply() {
+        r.setStore(this.store, this.edits, this.nextValue);
     }
 
     public toString() {

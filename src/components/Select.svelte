@@ -36,8 +36,11 @@
     export let options: [key: SelectValueType, name: string][] = [];
     /** The current value of the select */
     export let value: SelectValueType = options[0][0];
-    /** The path to navigate to when an option is selected */
+    /** The store that contains the data to edit */
+    export let store: Writable<any> = null;
+    /** The path in the store to the data you're editing */
     export let edits: NavigatePath = null;
+    const path = r.getPath(edits);
     /** A style to put before the options */
     export let valueTag: "off" | "number" | "offset" = "off";
     /** The preferred vertical spawning position */
@@ -153,7 +156,7 @@
         dispatchOnChange(key);
         // If the changes aren't null, create a new change
         if (changes !== null) {
-            changes.setValue(edits, key);
+            changes.setValue(store, path, key);
         }
     }
 
@@ -375,17 +378,16 @@
     }
 
     // ANCHOR Edits
-    let changes: EditorChanges<any> = null;
+    let changes: EditorChanges = null;
     if (edits !== null) {
         /** The editor context */
         const context: EditorContext = getContext("context");
         changes = context.changes;
-        const data = context.data;
 
         /** Listen to the data, and update the select when it changes */
-        const unsubscribeFromData = data.subscribe(() => {
+        const unsubscribeFromData = store.subscribe((store) => {
             // Update the value with the new data
-            dispatchOnChange(r.getStore(data, edits));
+            dispatchOnChange(r.get(store, path));
         });
 
         onDestroy(() => {

@@ -10,6 +10,9 @@
     export let checked: boolean = false;
     export let disabled: boolean = false;
     export let icon: IconTypes = "tick";
+    /** Store that this change edits */
+    export let store: Writable<any> = null;
+    /** Path to the data in the store this change edits */
     export let edits: NavigatePath = null;
 
     let update = () => {};
@@ -22,7 +25,7 @@
         const data: Writable<any> = getContext("data");
         const changes = (<EditorContext>getContext("context")).changes;
         update = () => {
-            if (path) changes.setValue(path, checked);
+            if (path) changes.setValue(store, path, checked);
         };
         // Update the checked when the data changes
         unsubscribeFromData = data.subscribe((data) => {

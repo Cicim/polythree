@@ -3,6 +3,7 @@
     import Select from "src/components/Select.svelte";
     import type { NavigatePath } from "src/systems/navigate";
     import { onMount } from "svelte";
+    import type { Writable } from "svelte/store";
 
     interface GetMapNamesResponse {
         /** List of names. Starts at 0, 0 is actually start_index. Ends at none_index - start_index */
@@ -13,6 +14,7 @@
         start_index: number;
     }
 
+    export let store: Writable<any>;
     /** Edits for the Select */
     export let edits: NavigatePath;
 
@@ -31,5 +33,5 @@
 </script>
 
 {#key nameOptions}
-    <Select options={nameOptions} {edits} valueTag="number" />
+    <Select options={nameOptions} {store} {edits} valueTag="number" />
 {/key}

@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api";
 import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
 import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
-import type { Writable } from "svelte/store";
+import { writable, type Writable } from "svelte/store";
 import { mapNames } from "src/systems/global";
 import { redefineBindings } from "src/systems/bindings";
 
@@ -182,6 +182,7 @@ export class MapListContext extends EditorContext {
 
     constructor() {
         super(MapList, {});
+        this.data = writable(null);
     }
 }
 
