@@ -57,6 +57,8 @@
     let optionsListEl: HTMLDivElement;
     /** The selected key */
     let selectedValue: SelectValueType = value;
+    /** The last calculated options height */
+    let lastOptionsHeight: number;
 
     // ANCHOR Maps
     /** Map of key => key's index in options */
@@ -91,12 +93,8 @@
     function resizeAndPlaceOptions() {
         const selectRect = selectEl.getBoundingClientRect();
         const containerRect = optionsContainerEl.getBoundingClientRect();
-        // Get an option
-        const optionEl = optionsListEl.children[0] as HTMLButtonElement;
-        if (!optionEl) throw new Error("No options found");
-        const optionRect = optionEl.getBoundingClientRect();
-        // Add a small margin (better than having to scroll on less that OPTIONS_COUNT options)
-        const optionHeight = 29; // optionRect.height + 1;
+        // Get the select's height
+        const optionHeight = selectRect.height;
 
         // -- Choose a width that is the max between the width
         // of the select and the width of the longest option
@@ -131,16 +129,17 @@
         if (direction === "top") {
             const maxHeight = selectRect.top - MARGIN_V;
             // Get the size
-            height = Math.min(optionHeight * optionsViewed, maxHeight);
+            height = Math.min(optionHeight * optionsViewed + 4, maxHeight);
             top = selectRect.top - height;
         } else if (direction === "bottom") {
             const maxHeight = window.innerHeight - selectRect.bottom - MARGIN_V;
             // Get the size
-            height = Math.min(optionHeight * optionsViewed, maxHeight);
+            height = Math.min(optionHeight * optionsViewed + 4, maxHeight);
             top = selectRect.bottom;
         }
         // Apply the height and top to the container
         optionsContainerEl.style.height = `${height}px`;
+        lastOptionsHeight = height;
         optionsContainerEl.style.top = `${top}px`;
     }
     /** Shows the dialog */
@@ -221,9 +220,8 @@
         // Place the scrolling position so that the selected
         // option is in the middle of the options list
         optionsContainerEl.scrollTop =
-            selected.getBoundingClientRect().top -
-            optionsListEl.getBoundingClientRect().top -
-            optionsListEl.getBoundingClientRect().height / 2 +
+            selectEl.getBoundingClientRect().height * index -
+            lastOptionsHeight / 2 +
             selected.getBoundingClientRect().height / 2;
     }
 
@@ -312,6 +310,37 @@
     }
 
     // ANCHOR Component Listeners
+    function setIndex(index: number) {
+        if (!isOpen) {
+            updateValue(options[index][0]);
+        } else {
+            // Set the scrollingMode to Keyboard
+            scrollingMode.set(ScrollingMode.Keyboard);
+            // Select the previous option
+            selectOption(options[index][0]);
+            // Scroll to the option's position
+            scrollToIndex(index);
+        }
+    }
+
+    function scrollUp(event: KeyboardEvent, by: number) {
+        // Get the option's index
+        let index = getOptionIndex(selectedValue) - by;
+        // If the index is less than 0 cap it
+        if (index <= 0) index = 0;
+        event.preventDefault();
+        setIndex(index);
+    }
+
+    function scrollDown(event: KeyboardEvent, by: number) {
+        // Get the option's index
+        let index = getOptionIndex(selectedValue) + by;
+        // If the index overflows cap it
+        if (index >= options.length - 1) index = options.length - 1;
+        event.preventDefault();
+        setIndex(index);
+    }
+
     function onKeyDown(event: KeyboardEvent) {
         switch (event.code) {
             case "Escape":
@@ -337,44 +366,30 @@
                 } else if (isOpen) event.preventDefault();
                 closeAndUpdate(selectedValue);
                 break;
-            case "ArrowUp": {
-                // Get the option's index
-                const index = getOptionIndex(selectedValue);
-                // If the index is 0, return
-                if (index === 0) return;
-                event.preventDefault();
-
-                if (!isOpen) {
-                    updateValue(options[index - 1][0]);
-                } else {
-                    // Set the scrollingMode to Keyboard
-                    scrollingMode.set(ScrollingMode.Keyboard);
-                    // Select the previous option
-                    selectOption(options[index - 1][0]);
-                    // Scroll to the option's position
-                    scrollToIndex(index - 1);
-                }
+            case "ArrowUp":
+                scrollUp(event, 1);
                 break;
-            }
-            case "ArrowDown": {
-                // Get the option's index
-                const index = getOptionIndex(selectedValue);
-                // If the index is 0, return
-                if (index === options.length - 1) return;
-                event.preventDefault();
-
-                if (!isOpen) {
-                    updateValue(options[index + 1][0]);
-                } else {
-                    // Set the scrollingMode to Keyboard
-                    scrollingMode.set(ScrollingMode.Keyboard);
-                    // Select the previous option
-                    selectOption(options[index + 1][0]);
-                    // Scroll to the option's position
-                    scrollToIndex(index + 1);
-                }
+            case "ArrowDown":
+                scrollDown(event, 1);
                 break;
-            }
+            case "PageUp":
+                scrollUp(event, 10);
+                break;
+            case "PageDown":
+                scrollDown(event, 10);
+                break;
+            case "ArrowLeft":
+                scrollUp(event, 5);
+                break;
+            case "ArrowRight":
+                scrollDown(event, 5);
+                break;
+            case "Home":
+                setIndex(0);
+                break;
+            case "End":
+                setIndex(options.length - 1);
+                break;
             default:
                 // Try to handle the search
                 handleSearch(event.key);
@@ -435,35 +450,38 @@
         <!-- Dropdown chevron -->
         <iconify-icon class="icon-dropdown" icon="mdi:chevron-down" inline />
     {/if}
-</button>
 
-<dialog
-    class:top={direction === "top"}
-    class:bottom={direction === "bottom"}
-    class="options-container modal"
-    bind:this={optionsContainerEl}
-    on:mousedown|stopPropagation
-    on:keydown={onKeyDown}
-    on:click|stopPropagation={onClickOutside}
->
-    <div class="options-list" bind:this={optionsListEl}>
-        {#each options as [key, name], i (i)}
-            <Option
-                showValue={valueTag}
-                value={key}
-                selected={key === selectedValue}
-            >
-                {name}
-            </Option>
-        {/each}
-    </div>
-</dialog>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <dialog
+        class:top={direction === "top"}
+        class:bottom={direction === "bottom"}
+        class="options-container modal"
+        bind:this={optionsContainerEl}
+        on:mousedown|stopPropagation
+        on:click|stopPropagation={onClickOutside}
+    >
+        <div class="options-list" bind:this={optionsListEl}>
+            {#each options as [key, name], i (i)}
+                <Option
+                    showValue={valueTag}
+                    value={key}
+                    selected={key === selectedValue}
+                >
+                    {name}
+                </Option>
+            {/each}
+        </div>
+    </dialog>
+</button>
 
 <style lang="scss">
     .select {
         min-width: 30px;
         max-width: 100%;
-        max-height: calc(1em + 4px);
+
+        font-size: 13px;
+        max-height: 1em;
+
         overflow: hidden;
         border-radius: 4px;
         padding: 4px;
@@ -541,6 +559,7 @@
         margin: 0;
         border: 0;
         padding: 0;
+        cursor: default;
 
         background: var(--sel-bg);
         box-sizing: border-box;
@@ -550,7 +569,7 @@
         &.top {
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
-            transform-origin: 0 100%;
+            transform-origin: 0 50%;
             animation: cubic-bezier(0.075, 0.82, 0.165, 1) 0.1s openUp;
         }
         &.bottom {

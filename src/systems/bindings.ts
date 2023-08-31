@@ -3,6 +3,7 @@
 // } from "src/components/app/TabBar.svelte";
 import { derived, get, writable, type Writable } from "svelte/store";
 import { EditorContext, TabbedEditorContext, type ViewContext } from "./contexts";
+import { closeContextMenu } from "./context_menu";
 import { activeView, type AnyContext } from "./views";
 
 // type KeyBinding = [name: string, shortcut: string, callback: (view: ViewContext | EditorContext) => void, condition: string];
@@ -354,7 +355,6 @@ export function handleKeydown(event: KeyboardEvent) {
     // Exit if the keybindings were not defined
     if (keybindings === undefined) return;
 
-
     const active = get(activeView);
 
     // Loop through all the possible keybindings
@@ -364,6 +364,8 @@ export function handleKeydown(event: KeyboardEvent) {
         if (valid && keybinding.binding) {
             event.preventDefault();
             keybinding.binding(active);
+            // Close any open contextmenus
+            closeContextMenu();
         }
     }
 }

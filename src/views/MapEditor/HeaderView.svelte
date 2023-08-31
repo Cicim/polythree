@@ -224,9 +224,8 @@
                 &.form {
                     gap: 8px;
                 }
-                :global(.select),
-                :global(.option) {
-                    font-size: inherit;
+                :global(.select) {
+                    font-size: 1em;
                 }
                 .weather-icon {
                     width: 32px;

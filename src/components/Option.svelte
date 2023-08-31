@@ -50,12 +50,15 @@
     .option {
         padding: 4px;
         padding-left: 12px;
+        height: calc(1em + 2px);
+        box-sizing: content-box;
 
         display: grid;
         grid-template-columns: 1fr min-content;
 
         cursor: pointer;
 
+        font-size: inherit;
         background: var(--opt-bg);
         color: var(--opt-fg);
         border: none;

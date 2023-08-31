@@ -185,6 +185,7 @@
             <span class="value">
                 {#if weatherIconMap[selectedProps.weather]?.[1]}
                     <iconify-icon
+                        inline
                         icon={weatherIconMap[selectedProps.weather][1]}
                     />
                 {/if}
