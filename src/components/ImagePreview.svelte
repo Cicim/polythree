@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dialog } from "@tauri-apps/api";
     import { writeBinaryFile } from "@tauri-apps/api/fs";
-    import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+    import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
     import { onMount } from "svelte";
     import viewport from "src/systems/intersection";
     import {

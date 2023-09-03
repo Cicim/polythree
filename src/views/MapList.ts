@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
 import { writable, type Writable } from "svelte/store";

@@ -377,9 +377,10 @@ body {
     >.icon-title {
       display: grid;
       grid-template-columns: max-content 1fr;
-      grid-column-gap: 1em;
+      grid-column-gap: 0.5em;
       padding: 12px;
       padding-bottom: 6px;
+      align-items: center;
 
       >iconify-icon {
         place-self: center;

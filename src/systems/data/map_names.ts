@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 
 interface MapSectionDump {

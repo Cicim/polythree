@@ -1,7 +1,7 @@
 import type { SvelteComponent } from "svelte";
 import { get, writable, type Unsubscriber, type Writable } from "svelte/store";
 import { rom } from "./global";
-import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { spawnSaveDialog } from "src/components/dialog/SaveDialog.svelte";
 import { EditorChanges } from "./changes";
 import { openViews, lastClosedViews, activeView } from "./views";

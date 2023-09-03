@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import { config } from "src/systems/global";
-import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
 import type { MapEditorContext } from "src/views/MapEditor";
 import initWasmFunctions, { load_tileset, render_blocks_data } from "src/wasm/map-canvas/pkg/map_canvas";

@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api";
 import { get } from "svelte/store";
 import { open } from "@tauri-apps/api/dialog";
-import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
+import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { spawnCloseViewsDialog } from "src/components/dialog/CloseViewsDialog.svelte";
 import { HomePageContext } from "src/views/HomePage";
 import { openViews } from "./views";

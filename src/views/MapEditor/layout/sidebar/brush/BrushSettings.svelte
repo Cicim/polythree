@@ -81,7 +81,7 @@
 
     let isDisabled = true;
     $: {
-        if (!brushName.match(/^([\w|\d]+[\s]*\b)+$/) || brushName.length > 32)
+        if (!brushName.match(/^([\w\d]+[\s]*\b)+$/) || brushName.length > 32)
             isDisabled = true;
         else if (brushType === BrushType.Simple)
             isDisabled =

@@ -10,6 +10,8 @@
         "slide-left",
         "slide-down",
         "slide-right",
+        /** Dialog starts at center, .85 size, grows in .5 seconds while shaking horizontally */
+        "spook",
     ] as const;
 
     type DialogAnimationType = (typeof dialogAnimationTypes)[number];
@@ -47,14 +49,6 @@
             const dialog = component.getDialog();
             dialog.showModal();
         });
-    }
-
-    /** Spawns an Error Dialog */
-    export async function spawnErrorDialog(
-        message: string,
-        title: string = "An Error has occurred"
-    ) {
-        return spawnAlertDialog({ title, message });
     }
 </script>
 
@@ -154,6 +148,20 @@
             ) forwards;
     }
 
+    @keyframes spook {
+        $amount: 2px;
+
+        0% {
+            transform: scale(0.85);
+        }
+        25% {
+            transform: scale(1.25);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
     dialog {
         background: var(--dialog-bg);
         padding: 0.25em 0.5em;
@@ -176,6 +184,9 @@
         }
         &.anim-slide-right {
             @include slide("Right", -100%, 0);
+        }
+        &.anim-spook {
+            animation: spook 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
         }
 
         &::backdrop {
