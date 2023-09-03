@@ -27,10 +27,11 @@
     import { fade } from "svelte/transition";
     import { config } from "src/systems/global";
     import UnderLinedReason from "./UnderLinedReason.svelte";
+    import { mapNames } from "src/systems/data/map_names";
 
     export let group: number;
     export let index: number;
-    export let name: string = null;
+    export let mapsec: number = null;
     export let mapLayoutId: number = 0;
     export let selected = false;
     export let lastSelected = false;
@@ -115,7 +116,7 @@
                 props: {
                     group,
                     index,
-                    name,
+                    name: $mapNames[mapsec],
                 },
             },
         });
@@ -206,10 +207,13 @@
             </div>
         </div>
         <div class="right" {...$$restProps} in:fade={{ duration: 100 }}>
-            {#if name !== null}
+            {#if mapsec !== null}
                 <span class="title">Name: </span>
                 <span class="value">
-                    <UnderLinedReason string={name} reason={nameReason} />
+                    <UnderLinedReason
+                        string={$mapNames[mapsec]}
+                        reason={nameReason}
+                    />
                 </span>
             {/if}
             <span class="title">Layout: </span>

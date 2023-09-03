@@ -13,6 +13,7 @@
     import { tooltip } from "src/systems/tooltip";
     import ClickableIcons from "src/components/ClickableIcons.svelte";
     import { weatherIconMap } from "src/systems/consts";
+    import { mapNames } from "src/systems/data/map_names";
 
     export let selectedMaps: MapId[];
 
@@ -37,7 +38,7 @@
                     windowScroll={false}
                     group={selectedProps.group}
                     index={selectedProps.index}
-                    name={selectedProps.name}
+                    name={$mapNames[selectedProps.mapsec]}
                 />
             {/key}
         {:else}
@@ -74,7 +75,7 @@
             </span>
             <span class="title">name</span>
             <span class="value">
-                {selectedProps.name}
+                {$mapNames[selectedProps.mapsec]}
                 {#if selectedProps.floorNum}
                     {selectedProps.floorNum}F
                 {/if}

@@ -70,12 +70,12 @@
         return index;
     }
 
-    /** The name of the selected option */
-    function getOptionName(key: SelectValueType): string {
+    /** The name of the selected option. Pass options for reactivity */
+    function getOptionName(key: SelectValueType, _options = options): string {
         const index = getOptionIndex(key);
         invalid = index === undefined;
         return (
-            options[getOptionIndex(key)]?.[1] ??
+            _options[getOptionIndex(key)]?.[1] ??
             key?.toString() ??
             (key === null ? "null" : "undefined")
         );
@@ -437,7 +437,7 @@
         tooltip={invalid ? "Invalid value" : ""}
         use:tooltip
     >
-        {getOptionName(value)}
+        {getOptionName(value, options)}
     </div>
     {#if searchTimeout !== null}
         <span class="search-string"
@@ -479,7 +479,7 @@
         min-width: 30px;
         max-width: 100%;
 
-        font-size: 13px;
+        font-size: inherit;
         max-height: 1em;
 
         overflow: hidden;

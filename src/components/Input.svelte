@@ -61,6 +61,12 @@
         }
     }
 
+    /** Quick way of implementing bind:value without using bind:value */
+    function onInput(event: any) {
+        // Update the value
+        value = (event.srcElement as HTMLInputElement).value;
+    }
+
     function onKeyDown(event: KeyboardEvent) {
         // Is a Dot
         if (
@@ -106,6 +112,7 @@
     on:keydown
     on:change={onChange}
     on:keyup={onKeyUp}
+    on:input={onInput}
     {spellcheck}
     {...$$restProps}
     autocomplete="no"
@@ -113,4 +120,8 @@
 />
 
 <style lang="scss">
+    .input {
+        font-size: inherit;
+        padding-left: 8px;
+    }
 </style>

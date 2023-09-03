@@ -218,6 +218,7 @@
             font-size: 0.75em;
             color: var(--weak-fg);
             padding-bottom: 4px;
+            pointer-events: none;
         }
 
         .text {

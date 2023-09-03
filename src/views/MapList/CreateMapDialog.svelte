@@ -21,12 +21,11 @@
     import Select from "src/components/Select.svelte";
     import {
         mapDumpToCardProps,
-        type CreateMapOptions,
         type MapCardProps,
         type MapHeaderDump,
         type MapListContext,
     } from "../MapList";
-    import { config, mapNames } from "src/systems/global";
+    import { config } from "src/systems/global";
     import Input from "src/components/Input.svelte";
     import Button from "src/components/Button.svelte";
     import { onMount } from "svelte";
@@ -151,7 +150,9 @@
 
     /** Condition for the OK button to become disabled */
     $: notAllGood =
-        width * height > 0x2800 ||
+        width === 0 ||
+        height === 0 ||
+        (width + 15) * (height + 14) > 0x2800 ||
         state === State.Creating ||
         (state === State.New && !layoutName.match(/^([\w|\d]+[\s]*\b)+$/));
 
@@ -188,7 +189,7 @@
                 });
 
             // Get the map card's data
-            let cardProps = mapDumpToCardProps(res, $mapNames);
+            let cardProps = mapDumpToCardProps(res);
             // Update the list
             context.component.addCreated(cardProps);
             // Close
@@ -333,8 +334,18 @@
                         <div class="half-row">
                             <div class="subtitle">Width</div>
                             <div class="subtitle">Height</div>
-                            <Input type="number" bind:value={width} />
-                            <Input type="number" bind:value={height} />
+                            <Input
+                                type="number"
+                                min={1}
+                                max={1000}
+                                bind:value={width}
+                            />
+                            <Input
+                                type="number"
+                                min={1}
+                                max={1000}
+                                bind:value={height}
+                            />
                         </div>
                     {/if}
                 </div>

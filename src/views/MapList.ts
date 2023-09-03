@@ -3,8 +3,8 @@ import { spawnErrorDialog } from "src/components/dialog/Dialog.svelte";
 import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
 import { writable, type Writable } from "svelte/store";
-import { mapNames } from "src/systems/global";
 import { redefineBindings } from "src/systems/bindings";
+import { getMapNames, getMapNamesStore } from "src/systems/data/map_names";
 
 export interface MapCardProps {
     group: number;
@@ -13,7 +13,6 @@ export interface MapCardProps {
     tileset1?: number;
     tileset2?: number;
     mapsec: number;
-    name?: string;
     layout: number;
 
     music: number;
@@ -74,7 +73,7 @@ export const groupCriteriaTable: Record<GroupCriteria, GroupCriteriaMethods> = {
     },
     [GroupCriteria.Name]: {
         name: "Name",
-        predicate: (card: MapCardProps) => card.name ?? "",
+        predicate: (card: MapCardProps) => card.mapsec.toString() ?? "",
     },
     [GroupCriteria.Tilesets]: {
         name: "Tilesets",
@@ -88,12 +87,6 @@ export const groupCriteriaTable: Record<GroupCriteria, GroupCriteriaMethods> = {
     },
 }
 
-interface MapSectionDump {
-    start_index: number,
-    none_index: number,
-    names: (string | null)[],
-}
-
 export interface MapHeaderDump {
     group: number,
     index: number,
@@ -104,7 +97,7 @@ export interface MapHeaderDump {
 }
 
 
-export function mapDumpToCardProps(map: MapHeaderDump, names: string[]): MapCardProps {
+export function mapDumpToCardProps(map: MapHeaderDump): MapCardProps {
     return {
         group: map.group,
         index: map.index,
@@ -113,7 +106,6 @@ export function mapDumpToCardProps(map: MapHeaderDump, names: string[]): MapCard
         tileset2: map.tileset2,
         layout: map.header.map_layout_id,
         mapsec: map.header.region_map_section_id,
-        name: names[map.header.region_map_section_id],
 
         music: map.header.music,
         mapLayoutId: map.header.map_layout_id,
@@ -144,20 +136,8 @@ export class MapListContext extends EditorContext {
     public async load(): Promise<void> {
         this.loading.set(true);
 
-        // Fill the names array with 256 nulls
-        let names: string[] = Array(256).fill(null);
-
-        try {
-            const mapsecDump: MapSectionDump = await invoke("get_map_names");
-            // Copy each name from the dump into the names array
-            for (let i = 0; i < mapsecDump.names.length; i++)
-                names[i + mapsecDump.start_index] = mapsecDump.names[i];
-
-            // Set the name writable
-            mapNames.set(names);
-        } catch (err) {
-            await spawnErrorDialog(err + "\nThey will not be shown", "Could not retrieve map names")
-        }
+        // Preload the names
+        await getMapNamesStore();
 
         // Load the map list from the backend
         try {
@@ -165,7 +145,7 @@ export class MapListContext extends EditorContext {
 
             let mapCards: MapCardProps[] = [];
             for (const map of res) {
-                mapCards.push(mapDumpToCardProps(map, names));
+                mapCards.push(mapDumpToCardProps(map));
             }
 
             this.data.set(mapCards);

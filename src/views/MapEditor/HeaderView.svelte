@@ -12,6 +12,8 @@
     import MapNameSelect from "./header/MapNameSelect.svelte";
     import { tooltip } from "src/systems/tooltip";
     import { rom } from "src/systems/global";
+    import { spawnRenameMapSectionDialog } from "./dialogs/RenameMapSectionDialog.svelte";
+    import { getMapNames } from "src/systems/data/map_names";
 
     const context: MapEditorContext = getContext("context");
 
@@ -25,6 +27,15 @@
         i,
         name,
     ]);
+
+    /** Opens a dialog to select a new name for the mapsec */
+    async function renameMapSection() {
+        const names = await getMapNames();
+        spawnRenameMapSectionDialog({
+            mapsec: $headerData.header.region_map_section_id,
+            originalName: names[$headerData.header.region_map_section_id],
+        });
+    }
 
     const frlg = $rom.type === "Fire Red" || $rom.type === "Leaf Green";
 </script>
@@ -79,6 +90,7 @@
                 <ToolButton
                     icon="mdi:edit"
                     title="Change the mapsec's string"
+                    on:click={renameMapSection}
                 />
             </LongNotchedRow>
             <!-- ANCHOR Floor Number -->

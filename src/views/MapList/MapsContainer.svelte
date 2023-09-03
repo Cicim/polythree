@@ -10,6 +10,7 @@
     } from "../MapList";
     import GroupSeparator from "./GroupSeparator.svelte";
     import MapCard, { type FilterReason } from "./MapCard.svelte";
+    import { getMapNames } from "src/systems/data/map_names";
 
     /** The data from which this component gets the info about the cards */
     export let allCards: MapCardProps[];
@@ -104,8 +105,9 @@
             }
 
             // Get the index of the filter in the card's name
-            const nameStart = card.name
-                ? card.name.toLowerCase().indexOf(filter.toLowerCase())
+            const cardName = getMapNames[card.mapsec];
+            const nameStart = cardName
+                ? cardName.toLowerCase().indexOf(filter.toLowerCase())
                 : -1;
 
             if (nameStart !== -1) {

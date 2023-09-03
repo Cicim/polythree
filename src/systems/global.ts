@@ -30,6 +30,3 @@ export const rom: Writable<Rom | null> = writable(null);
 
 /** The current config */
 export const config: Writable<Config> = writable(null);
-
-/** The cached list of loaded map names */
-export const mapNames: Writable<string[]> = writable(null);

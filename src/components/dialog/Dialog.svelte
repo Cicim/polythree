@@ -60,7 +60,6 @@
 
 <script lang="ts">
     import type { SvelteComponent } from "svelte";
-    import { fade } from "svelte/transition";
 
     /** The component of the dialog content */
     export let dialogComponent: typeof SvelteComponent;
@@ -112,10 +111,13 @@
     }
 </script>
 
-<svelte:window on:keydown={closeOnEscape} on:mousedown={closeOnClickOutside} />
-
 <!-- The dialog -->
-<dialog class="dialog modal anim-{animation}" bind:this={dialogElement} in:fade>
+<dialog
+    class="dialog modal anim-{animation}"
+    bind:this={dialogElement}
+    on:keydown={closeOnEscape}
+    on:mousedown={closeOnClickOutside}
+>
     <!-- The dialog content container -->
     <svelte:component
         this={dialogComponent}

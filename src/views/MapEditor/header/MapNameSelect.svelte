@@ -1,9 +1,10 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api";
     import Select from "src/components/Select.svelte";
+    import { getMapNamesOptions } from "src/systems/data/map_names";
     import type { NavigatePath } from "src/systems/navigate";
     import { onMount } from "svelte";
-    import type { Writable } from "svelte/store";
+    import { readable, type Readable, type Writable } from "svelte/store";
 
     interface GetMapNamesResponse {
         /** List of names. Starts at 0, 0 is actually start_index. Ends at none_index - start_index */
@@ -19,19 +20,13 @@
     export let edits: NavigatePath;
 
     /** Options start as a thing to avoid loading pains */
-    let nameOptions: [number, string][] = [[0, "Loading"]];
+    let nameOptions: Readable<[number, string][]> = readable([[0, "Loading"]]);
 
     onMount(async () => {
-        const { names, start_index } = (await invoke(
-            "get_map_names"
-        )) as GetMapNamesResponse;
-
-        nameOptions = names.map((nameString, index) => {
-            return [index + start_index, nameString];
-        });
+        nameOptions = await getMapNamesOptions();
     });
 </script>
 
 {#key nameOptions}
-    <Select options={nameOptions} {store} {edits} valueTag="number" />
+    <Select options={$nameOptions} {store} {edits} valueTag="number" />
 {/key}
