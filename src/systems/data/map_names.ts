@@ -76,3 +76,10 @@ export async function getMapNamesOptions(): Promise<Readable<[number, string][]>
         }) as [number, string][];
     });
 }
+
+/** To be ran every time the rom is closed */
+export function resetMapNames() {
+    mapNames = null;
+    mapsecStartIndex = null;
+    mapsecNoneIndex = null;
+}

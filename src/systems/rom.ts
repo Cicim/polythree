@@ -7,6 +7,7 @@ import { HomePageContext } from "src/views/HomePage";
 import { openViews } from "./views";
 import { config, rom, type Config } from "./global";
 import { lastClosedViews } from "./views";
+import { resetData } from "./data/common";
 
 type RomOpenResponse = {
     rom_type: RomType,
@@ -85,6 +86,8 @@ export async function closeRom() {
 
     // Set the rom
     rom.set(null);
+    // Reset previously loaded data
+    resetData();
 
     // Close all recently opened views
     lastClosedViews.set([]);
