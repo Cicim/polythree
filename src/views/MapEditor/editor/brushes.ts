@@ -419,6 +419,7 @@ export class NinePatchBrush extends BrushMaterial {
                 serialized.permissions.push(this.blocks.getPermission(x, y));
             }
         }
+        delete serialized.blocks;
         return serialized;
     }
 

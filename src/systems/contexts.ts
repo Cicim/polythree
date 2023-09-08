@@ -286,7 +286,7 @@ export abstract class EditorContext extends ViewContext {
         // Applies the changes
         this.changes.setSaved();
         // Close the editor if it was slated for closing
-        if (this.slatedForClose) super.close();
+        if (this.slatedForClose) this.onBeforeClose().then(() => super.close());
 
         return true;
     }

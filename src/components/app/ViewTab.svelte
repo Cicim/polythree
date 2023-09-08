@@ -204,6 +204,7 @@
 
         &.dropzone {
             background: var(--accent-shadow);
+            transition: background 100ms ease-in;
         }
 
         .icon {
