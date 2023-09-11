@@ -2,33 +2,27 @@ import { invoke, RustFn } from "src/systems/invoke";
 import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 
-interface MapSectionDump {
-    start_index: number,
-    names: string[],
-}
-
 type MapNames = string[];
 
 export let mapNames: Writable<MapNames> = null;
 export let mapsecStartIndex: number;
-export let mapsecNoneIndex: number;
 
 /** Returns the mapNames store */
 export async function getMapNamesStore(): Promise<Writable<MapNames>> {
     if (mapNames === null) {
         // Fill the names array with 256 nulls
-        let names: string[] = Array(256).fill(null);
+        let names: string[] = [];
 
         mapNames = writable(null);
 
         try {
             const mapsecDump = await invoke(RustFn.get_map_names);
+            mapsecStartIndex = mapsecDump.start_index;
 
             // Copy each name from the dump into the names array
             for (let i = 0; i < mapsecDump.names.length; i++)
-                names[i + mapsecDump.start_index] = mapsecDump.names[i];
+                names[i + mapsecStartIndex] = mapsecDump.names[i];
 
-            mapsecStartIndex = mapsecDump.start_index;
             // Set the name writable
             mapNames.set(names);
         } catch (err) {
@@ -66,18 +60,13 @@ export async function setMapName(index: number, newName: string): Promise<boolea
 export async function getMapNamesOptions(): Promise<Readable<[number, string][]>> {
     // Get the map names
     const mapNames = await getMapNamesStore();
-
     // Create the derived for the map names options
-    return derived([mapNames], ([mapNames]) => {
-        return mapNames.slice(0, mapsecNoneIndex).map((nameString, index) => {
-            return [index + mapsecStartIndex, nameString];
-        }) as [number, string][];
-    });
+    return derived([mapNames], ([names]) =>
+        names.flat().map((name, i) => [i + mapsecStartIndex, name]) as [number, string][]);
 }
 
 /** To be ran every time the rom is closed */
 export function resetMapNames() {
     mapNames = null;
     mapsecStartIndex = null;
-    mapsecNoneIndex = null;
 }

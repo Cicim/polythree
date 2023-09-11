@@ -213,10 +213,12 @@ export class MapModule {
 
         // Load the new layout data
         const layoutResults = await this.queryLayoutUntilValid(headerData.header.layout_id);
+
         if (layoutResults === null) {
             // If the user asked to quit exit
             return null;
         }
+
         // Parse the new layout data
         const [layoutId, layoutOffset, layoutData] = layoutResults;
 
@@ -548,8 +550,9 @@ export class MapModule {
         const metatiles = new Uint16Array(imported.metatiles.length * 8);
         let written = 0;
         for (const metatile of imported.metatiles)
-            for (const tile of metatile)
-                metatiles[written++] = tile;
+            for (const layer of metatile)
+                for (const tile of layer)
+                    metatiles[written++] = tile;
 
         // Palettes are more complicated, since colors need to be extracted
         const palettes = new Uint8Array(16 * 16 * 4);
@@ -626,9 +629,11 @@ export class MapModule {
         while (true) {
             try {
                 const result = await this.loadLayoutData(id);
+
                 if (typeof result === 'string') {
-                    throw result;
+                    throw new Error(result);
                 }
+
                 return result;
             }
             catch (message) {
@@ -651,6 +656,7 @@ export class MapModule {
             // Get the layout offset
             const offset = await invoke(RustFn.get_layout_offset, { id });
             const importedLayoutData = await invoke(RustFn.get_map_layout_data, { id });
+
             // Convert the imported data to a map layout data
             const layoutData: MapLayoutData = {
                 header: importedLayoutData.header,

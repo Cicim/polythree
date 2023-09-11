@@ -14,9 +14,8 @@ export interface Animation {
     start_tile: number;
     graphics: Uint8Array[];
     start_time: number;
-    interval: number;
+    interval: number
 }
-
 
 export class AnimationsModule {
     /** Tileset animations */
@@ -83,32 +82,33 @@ export class AnimationsModule {
 
     // ANCHOR Private Method
     private async loadAnimations() {
-        // TODO Redo
-        // this.list = null;
+        this.list = null;
 
-        // // Load the animations
-        // const animations = await invoke(RustFn.get_tilesets_animations, {
-        //     tileset1: this.tileset1Offset,
-        //     tileset2: this.tileset2Offset,
-        // });
+        // Load the animations
+        const animations = await invoke(RustFn.get_tilesets_animations, {
+            tileset1: this.tileset1Offset,
+            tileset2: this.tileset2Offset,
+        });
 
-        // // Convert the animations graphics into Uint8Arrays
-        // for (const anim of animations.primary) {
-        //     for (let i = 0; i < anim.graphics.length; i++) {
-        //         const frame = Uint8Array.from(anim.graphics[i]);
-        //         anim.graphics[i] = frame;
-        //     }
-        // }
-        // for (const anim of animations.secondary) {
-        //     for (let i = 0; i < anim.graphics.length; i++) {
-        //         const frame = Uint8Array.from(anim.graphics[i]);
-        //         anim.graphics[i] = frame;
-        //     }
-        // }
+        this.list = {
+            primary: animations.primary.map((anim) => {
+                return {
+                    ...anim,
+                    graphics: anim.graphics.map((frame) => Uint8Array.from(frame)),
+                }
+            }),
+            primary_max_frames: animations.primary_max_frames,
+            secondary: animations.secondary.map((anim) => {
+                return {
+                    ...anim,
+                    graphics: anim.graphics.map((frame) => Uint8Array.from(frame)),
+                }
+            }),
+            secondary_max_frames: animations.secondary_max_frames,
+        };
 
-        // this.list = animations;
-        // this.primaryCounter = 0;
-        // this.secondaryCounter = 0;
+        this.primaryCounter = 0;
+        this.secondaryCounter = 0;
     }
 
     private async animationTick() {

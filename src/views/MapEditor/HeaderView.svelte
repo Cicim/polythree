@@ -32,8 +32,8 @@
     async function renameMapSection() {
         const names = await getMapNames();
         spawnRenameMapSectionDialog({
-            mapsec: $headerData.header.region_map_section_id,
-            originalName: names[$headerData.header.region_map_section_id],
+            mapsec: $headerData.header.mapsec_id,
+            originalName: names[$headerData.header.mapsec_id],
         });
     }
 
@@ -83,10 +83,7 @@
                 title="The map's section id.<br> Also determines the map's<br> display name"
                 text="Location"
             >
-                <MapNameSelect
-                    store={headerData}
-                    edits="header.region_map_section_id"
-                />
+                <MapNameSelect store={headerData} edits="header.mapsec_id" />
                 <ToolButton
                     icon="mdi:edit"
                     title="Change the mapsec's string"

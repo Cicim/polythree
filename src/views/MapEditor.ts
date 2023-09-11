@@ -7,7 +7,7 @@ import { EditorTool, Tool, toolFunctions } from "./MapEditor/editor/tools";
 import { BlocksData } from "./MapEditor/editor/blocks_data";
 import { BrushesModule } from "./MapEditor/modules/brushes_module";
 import { PaletteModule } from "./MapEditor/modules/palette_module";
-import { MapModule, type MapData, type MapLayoutData, type TilesetsData } from "./MapEditor/modules/map_module";
+import { MapModule, type TilesetsData } from "./MapEditor/modules/map_module";
 import { AnimationsModule } from "./MapEditor/modules/animations_module";
 import { ActionsModule } from "./MapEditor/modules/actions_module";
 

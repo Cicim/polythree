@@ -36,9 +36,11 @@ interface MapLayoutData {
     border_data: BlocksData,
 }
 
+type MetatileLayerData = [number, number, number, number];
+
 interface TilesetPairRenderingData {
     palettes: [number, number, number][][],
-    metatiles: [[number, number, number, number][2]][],
+    metatiles: [MetatileLayerData, MetatileLayerData][],
     tiles: number[][][],
     layer_types: number[],
 }

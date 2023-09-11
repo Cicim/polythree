@@ -15,7 +15,7 @@ export interface ImportedBlocksData {
     width: number;
     height: number;
     metatiles: number[];
-    levels: number[];
+    permissions: number[];
 }
 
 
@@ -57,7 +57,7 @@ export class BlocksData {
     public static fromImportedBlockData(data: ImportedBlocksData): BlocksData {
         const blocks = new BlocksData(data.width, data.height);
         blocks.metatiles = Uint16Array.from(data.metatiles);
-        blocks.permissions = Uint8Array.from(data.levels);
+        blocks.permissions = Uint8Array.from(data.permissions);
         return blocks;
     }
 
