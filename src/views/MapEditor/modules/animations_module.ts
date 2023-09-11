@@ -27,7 +27,7 @@ export class AnimationsModule {
     /** Listener for the tileset animations. Updates when animations need to be updated */
     public changeStore: Writable<boolean> = writable(false);
     /** if the animations are being played */
-    public playing: Writable<boolean> = writable(true);
+    public playing: Writable<boolean> = writable(false);
     /** The animation timeout */
     private timeout: NodeJS.Timeout;
     /** Function to unsubscribe from activeView */
