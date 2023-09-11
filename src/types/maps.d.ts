@@ -1,11 +1,23 @@
+interface MapData {
+    group: number,
+    index: number,
+    offset: VoidPointer,
+
+    header: MapHeader,
+    connections?: unknown,
+    events?: unknown,
+    scripts?: unknown,
+}
+
 interface MapHeader {
-    map_layout: VoidPointer;
+    layout: VoidPointer;
     events: VoidPointer;
-    map_scripts: VoidPointer;
+    scripts: VoidPointer;
     connections: VoidPointer;
+
     music: number;
-    map_layout_id: number;
-    region_map_section_id: number;
+    layout_id: number;
+    mapsec_id: number;
     cave: number;
     weather: number;
     map_type: number;
@@ -17,6 +29,34 @@ interface MapHeader {
     battle_type: number;
 }
 
+interface MapLayoutData {
+    index: number,
+    header: MapLayout,
+    map_data: BlocksData,
+    border_data: BlocksData,
+}
+
+interface TilesetPairRenderingData {
+    palettes: [number, number, number][][],
+    metatiles: [[number, number, number, number][2]][],
+    tiles: number[][][],
+    layer_types: number[],
+}
+
+type LayoutCreationOptions = {
+    Use: {
+        layout: number,
+    },
+} | {
+    New: {
+        width: number,
+        height: number,
+        tileset1: number,
+        tileset2: number,
+        name: string,
+    },
+}
+
 interface MapLayout {
     width: number;
     height: number;
@@ -26,6 +66,20 @@ interface MapLayout {
     secondary_tileset: VoidPointer;
     border_width: number;
     border_height: number;
+}
+
+interface MapHeaderDump {
+    group: number,
+    index: number,
+    offset: number,
+    tileset1: number?,
+    tileset2: number?,
+    header: MapHeader,
+}
+
+interface MapNamesDump {
+    names: string[],
+    start_index: number,
 }
 
 interface Point {

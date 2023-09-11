@@ -2116,7 +2116,9 @@ dependencies = [
 name = "polythree"
 version = "0.0.2"
 dependencies = [
+ "base64 0.21.3",
  "byte-unit",
+ "image",
  "poly3lib",
  "reqwest",
  "serde",

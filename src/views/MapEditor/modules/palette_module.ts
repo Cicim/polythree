@@ -5,7 +5,7 @@ import { get, writable, type Writable } from "svelte/store";
 import { BlocksData, NULL_METATILE, NULL_PERMISSION } from "../editor/blocks_data";
 import type MapCanvas from "../editor/MapCanvas.svelte";
 import { config } from "src/systems/global";
-import { invoke } from "@tauri-apps/api";
+import { invoke, RustFn } from "src/systems/invoke";
 import { PaletteMaterial } from "../editor/materials";
 
 export class PaletteModule {
@@ -170,8 +170,8 @@ export class PaletteModule {
             return config;
         });
         // Update the tileset the configs jsons too
-        await invoke("update_tileset_level", { tileset: this.tileset1Offset, levels: t1PermissionChars });
-        await invoke("update_tileset_level", { tileset: this.tileset2Offset, levels: t2PermissionChars });
+        await invoke(RustFn.update_tileset_level, { tileset: this.tileset1Offset, levels: t1PermissionChars });
+        await invoke(RustFn.update_tileset_level, { tileset: this.tileset2Offset, levels: t2PermissionChars });
     }
 
     /** Returns the tileset permissions for the specified tileset. 

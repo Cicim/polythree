@@ -56,7 +56,7 @@ fn main() {
             create_map,
             delete_maps,
             // Map editor
-            get_map_header_data,
+            get_map_data,
             get_map_layout_data,
             get_tilesets_rendering_data,
             get_tilesets_animations,

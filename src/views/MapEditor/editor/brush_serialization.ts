@@ -1,38 +1,9 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke, RustFn } from "src/systems/invoke";
 import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { config } from "src/systems/global";
 import { get } from "svelte/store";
-import type { SerializedBlocksData } from "./blocks_data";
 import { BrushMaterial, type BrushType } from "./brushes";
 
-export interface SerializedBrush {
-    /** The brushe's type */
-    type: BrushType;
-    /** The brush name */
-    name: string;
-    /** The serialized blocks */
-    blocks?: SerializedBlocksData;
-    /** The current pinned state */
-    pinned: boolean;
-    /** The brush's primary tileset offset */
-    primary: number;
-    /** The brush's secondary tileset offeset (or undefined) */
-    secondary?: number;
-}
-
-export interface SerializedSimpleBrush extends SerializedBrush {
-    type: BrushType.Simple;
-    /** The serialized blocks */
-    blocks?: SerializedBlocksData;
-}
-
-export interface SerializedNinePatchBrush extends SerializedBrush {
-    type: BrushType.NinePatch;
-    /** The serialized metatiles */
-    metatiles: number[];
-    /** The serialized levels */
-    permissions: number[];
-}
 
 function getPrimaryTilesetBrushes(tileset1: number): SerializedBrush[] {
     // If no configs were loaded for the tileset1
@@ -121,7 +92,7 @@ export async function saveBrushesForTilesets(
 
     try {
         // Save the brushes in the file
-        await invoke("update_brushes", {
+        await invoke(RustFn.update_brushes, {
             tileset1, tileset2, tileset1Brushes, tileset2Brushes
         });
     }

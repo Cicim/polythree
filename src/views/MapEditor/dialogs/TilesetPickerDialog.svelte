@@ -19,7 +19,7 @@
 </script>
 
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api";
+    import { invoke, RustFn } from "src/systems/invoke";
     import Button from "src/components/Button.svelte";
     import ErrorDiv from "src/components/ErrorDiv.svelte";
     import Select from "src/components/Select.svelte";
@@ -38,8 +38,7 @@
     let tileset2: number = null;
 
     onMount(async () => {
-        const tilesets: { offset: number; is_primary: boolean }[] =
-            await invoke("get_tilesets");
+        const tilesets = await invoke(RustFn.get_tilesets);
 
         tileset1Options = Object.values(tilesets)
             .filter((v) => v.is_primary)

@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke, RustFn } from "src/systems/invoke";
 import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { EditorContext } from "src/systems/contexts";
 import MapList from "src/views/MapList.svelte";
@@ -16,7 +16,6 @@ export interface MapCardProps {
     layout: number;
 
     music: number;
-    mapLayoutId: number;
     cave: number;
     weather: number;
     mapType: number;
@@ -87,15 +86,6 @@ export const groupCriteriaTable: Record<GroupCriteria, GroupCriteriaMethods> = {
     },
 }
 
-export interface MapHeaderDump {
-    group: number,
-    index: number,
-    offset: number,
-    tileset1: number,
-    tileset2: number,
-    header: MapHeader,
-}
-
 
 export function mapDumpToCardProps(map: MapHeaderDump): MapCardProps {
     return {
@@ -104,11 +94,10 @@ export function mapDumpToCardProps(map: MapHeaderDump): MapCardProps {
         offset: map.offset,
         tileset1: map.tileset1,
         tileset2: map.tileset2,
-        layout: map.header.map_layout_id,
-        mapsec: map.header.region_map_section_id,
+        layout: map.header.layout_id,
+        mapsec: map.header.mapsec_id,
 
         music: map.header.music,
-        mapLayoutId: map.header.map_layout_id,
         cave: map.header.cave,
         weather: map.header.weather,
         mapType: map.header.map_type,
@@ -141,7 +130,7 @@ export class MapListContext extends EditorContext {
 
         // Load the map list from the backend
         try {
-            const res: MapHeaderDump[] = await invoke("get_map_list");
+            const res: MapHeaderDump[] = await invoke(RustFn.get_map_list);
 
             let mapCards: MapCardProps[] = [];
             for (const map of res) {

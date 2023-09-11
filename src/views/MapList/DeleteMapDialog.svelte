@@ -21,7 +21,7 @@
 
 <script lang="ts">
     import type { MapCardProps, MapId, MapListContext } from "../MapList";
-    import { invoke } from "@tauri-apps/api";
+    import { invoke, RustFn } from "src/systems/invoke";
     import { config } from "src/systems/global";
     import { tooltip } from "src/systems/tooltip";
     import { getAllViews } from "src/systems/views";
@@ -56,7 +56,7 @@
     $: noOutsideClose = state === State.Deleting;
 
     /** The list of map {group, index} to be deleted */
-    export let toDelete: { group: number; index: number; layout?: number }[];
+    export let toDelete: { group: number; index: number; layout: number }[];
     /** The reference to the MapList $data */
     export let all: MapCardProps[];
     /** The MapListContext reference */
@@ -132,7 +132,7 @@
         state = State.Deleting;
 
         try {
-            const deleted: MapId[] = await invoke("delete_maps", {
+            const deleted = await invoke(RustFn.delete_maps, {
                 maps: toDelete,
                 actions: actionableLayoutToMap ?? {},
             });

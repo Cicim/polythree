@@ -1,6 +1,9 @@
-use std::sync::Mutex;
+use std::{io::Cursor, sync::Mutex};
 
-use poly3lib::rom::Rom;
+use base64::{engine::general_purpose, Engine};
+use image::{ImageFormat, RgbaImage};
+
+use poly3lib::Rom;
 
 use crate::config::RomConfig;
 
@@ -29,7 +32,7 @@ pub trait AppStateFunctions {
     fn update_rom<T>(&self, callback: impl FnOnce(&mut Rom) -> AppResult<T>) -> AppResult<T>;
 }
 
-pub struct RomData {
+pub struct RomWithPath {
     /// The path to the ROM.
     path: String,
     /// The rom object itself
@@ -38,7 +41,7 @@ pub struct RomData {
 
 pub struct PolythreeState {
     /// Info about the open ROM, if any.
-    rom: Mutex<Option<RomData>>,
+    rom: Mutex<Option<RomWithPath>>,
     /// Open Rom configuration
     pub(crate) config: Mutex<Option<RomConfig>>,
 }
@@ -59,7 +62,7 @@ pub type AppResult<T> = Result<T, String>;
 impl AppStateFunctions for AppState<'_> {
     fn set_rom(&self, path: String, rom: Rom, config: RomConfig) {
         let mut rom_data = self.rom.lock().unwrap();
-        *rom_data = Some(RomData { path, rom });
+        *rom_data = Some(RomWithPath { path, rom });
 
         let mut config_data = self.config.lock().unwrap();
         *config_data = Some(config);
@@ -68,7 +71,8 @@ impl AppStateFunctions for AppState<'_> {
     fn clear_rom(&self) {
         let mut rom_data = self.rom.lock().unwrap();
         *rom_data = None;
-        let mut config_data = self.config.lock().unwrap();
+        let mut config_data: std::sync::MutexGuard<'_, Option<RomConfig>> =
+            self.config.lock().unwrap();
         *config_data = None;
     }
 
@@ -119,4 +123,17 @@ pub fn get_rom_path(state: &AppState) -> AppResult<String> {
     let rom_data = rom_data.as_ref().ok_or("No ROM is open")?;
 
     Ok(rom_data.path.clone())
+}
+
+/// Serializes a [`RgbaImage`] to a base64 string for use in HTML.
+pub fn rgba_image_to_base64(image: &RgbaImage) -> String {
+    // Create a buffer that looks like a file (a cursor over a vector)
+    let mut buffer = Cursor::new(Vec::new());
+    // Write the image as png to that buffer
+    image.write_to(&mut buffer, ImageFormat::Png).unwrap();
+    // Encode the buffer as base64
+    let b64 = general_purpose::STANDARD.encode(&buffer.into_inner());
+
+    // Return the base64 string with the header
+    format!("data:image/png;base64,{}", b64)
 }

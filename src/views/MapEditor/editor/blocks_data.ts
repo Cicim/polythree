@@ -18,12 +18,6 @@ export interface ImportedBlocksData {
     levels: number[];
 }
 
-export interface SerializedBlocksData {
-    width: number;
-    height: number;
-    metatiles: number[];
-    permissions: number[];
-};
 
 type MetatilesArray = Uint16Array;
 type PermissionsArray = Uint8Array;

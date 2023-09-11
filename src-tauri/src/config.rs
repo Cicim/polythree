@@ -3,7 +3,7 @@ use std::{
     path::Path,
 };
 
-use poly3lib::rom::RomType;
+use poly3lib::RomBase;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 use tauri::AppHandle;
@@ -38,7 +38,7 @@ where
 }
 
 impl RomConfig {
-    pub fn init(handle: AppHandle, rom_path: &str, rom_type: &RomType) -> AppResult<Self> {
+    pub fn init(handle: AppHandle, rom_path: &str, rom_type: &RomBase) -> AppResult<Self> {
         let config_path = format!("{}.config.json", rom_path);
 
         let config = if !Path::new(&config_path).exists() {
@@ -52,12 +52,12 @@ impl RomConfig {
         Ok(config)
     }
 
-    pub fn default_for(handle: AppHandle, rom_type: &RomType) -> Self {
+    pub fn default_for(handle: AppHandle, rom_type: &RomBase) -> Self {
         // Read the config file from the configs folder
-        use RomType::*;
+        use RomBase as B;
         let template_path_str = match rom_type {
-            FireRed | LeafGreen => "configs/bpre.json",
-            Ruby | Sapphire | Emerald => "configs/bpee.json",
+            B::FireRed | B::LeafGreen => "configs/bpre.json",
+            B::Ruby | B::Sapphire | B::Emerald => "configs/bpee.json",
         };
         let template_path = handle
             .path_resolver()
@@ -160,6 +160,7 @@ pub fn update_config(state: AppState, callback: impl FnOnce(&mut RomConfig)) -> 
     Ok(())
 }
 
+// TODO Rename level(s) to permissions
 #[tauri::command]
 pub fn update_tileset_level(state: AppState, tileset: u32, levels: String) -> AppResult<()> {
     update_config(state, |config| {

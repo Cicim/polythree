@@ -1,19 +1,9 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api";
     import Select from "src/components/Select.svelte";
     import { getMapNamesOptions } from "src/systems/data/map_names";
     import type { NavigatePath } from "src/systems/navigate";
     import { onMount } from "svelte";
     import { readable, type Readable, type Writable } from "svelte/store";
-
-    interface GetMapNamesResponse {
-        /** List of names. Starts at 0, 0 is actually start_index. Ends at none_index - start_index */
-        names: string[];
-        /** First invalid index */
-        none_index: number;
-        /** First valid index */
-        start_index: number;
-    }
 
     export let store: Writable<any>;
     /** Edits for the Select */

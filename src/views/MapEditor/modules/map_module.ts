@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke, RustFn } from "src/systems/invoke";
 import { config } from "src/systems/global";
 import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { getPtrOffset } from "src/systems/rom";
@@ -11,21 +11,6 @@ import { spawnTilesetPickerDialog } from "../dialogs/TilesetPickerDialog.svelte"
 import type MapCanvas from "../editor/MapCanvas.svelte";
 import { Change } from "src/systems/changes";
 
-export interface MapHeaderData {
-    header: MapHeader,
-    connections?: unknown,
-    events?: unknown,
-    map_scripts?: unknown,
-}
-
-export interface MapLayoutData {
-    index: number;
-    bits_per_block: number;
-    map_data: BlocksData;
-    border_data: BlocksData;
-    header: MapLayout;
-}
-
 export interface ImportedMapLayoutData {
     index: number;
     bits_per_block: number;
@@ -34,22 +19,11 @@ export interface ImportedMapLayoutData {
     header: MapLayout;
 }
 
-interface ImportedTilesetsData {
-    tiles: number[][][];
-    metatiles: number[][];
-    metatile_layers: number[];
-    palettes: number[][];
-    tile_limit: number;
-    metatile_limit: number;
-}
 export interface TilesetsData {
     tiles: Uint8Array;
     metatiles: Uint16Array;
     metatileLayers: Uint8Array;
     palettes: Uint8Array;
-
-    tileLimit: number;
-    metatileLimit: number;
 }
 
 export class UpdateLayoutChange extends Change {
@@ -61,7 +35,7 @@ export class UpdateLayoutChange extends Change {
 
     constructor(private context: MapEditorContext, private newLayoutId: number) {
         super();
-        this.oldLayoutId = context.map.$header.header.map_layout_id;
+        this.oldLayoutId = context.map.$header.header.layout_id;
         this.oldLayoutData = context.map.cloneLayoutData(context.map.$layout);
     }
 
@@ -210,12 +184,12 @@ export class MapModule {
     }
 
     /** Loads the header data */
-    public async loadHeader(): Promise<MapHeaderData> {
+    public async loadHeader(): Promise<MapData> {
         try {
-            return await invoke('get_map_header_data', {
+            return await invoke(RustFn.get_map_data, {
                 group: this.identifier.group,
                 index: this.identifier.index,
-            }) as MapHeaderData;
+            }) as MapData;
         }
         catch (e) {
             // If the map header failed to load, close the editor
@@ -227,18 +201,18 @@ export class MapModule {
     /** Loads and validates the layout. Asks the user to input another one if the given one is invalid.
      * Returns if it failed to update the layout or if the user cancelled to dialog. */
     /** Loads the layout data */
-    public async loadLayout(headerData: MapHeaderData): Promise<MapLayoutData> {
+    public async loadLayout(headerData: MapData): Promise<MapLayoutData> {
         const isData = !headerData;
         // If no layout was passed, use the context data
         if (isData)
             headerData = this.$header;
 
         // Save the old layout data
-        const oldLayoutId = headerData.header.map_layout_id;
-        const oldLayoutOffset = getPtrOffset(headerData.header.map_layout);
+        const oldLayoutId = headerData.header.layout_id;
+        const oldLayoutOffset = getPtrOffset(headerData.header.layout);
 
         // Load the new layout data
-        const layoutResults = await this.queryLayoutUntilValid(headerData.header.map_layout_id);
+        const layoutResults = await this.queryLayoutUntilValid(headerData.header.layout_id);
         if (layoutResults === null) {
             // If the user asked to quit exit
             return null;
@@ -249,9 +223,9 @@ export class MapModule {
         // Update the rom with the new layout id
         try {
             // Update the header
-            headerData.header.map_layout_id = layoutId;
-            headerData.header.map_layout = { offset: layoutOffset };
-            await invoke('update_map_header', {
+            headerData.header.layout_id = layoutId;
+            headerData.header.layout = { offset: layoutOffset };
+            await invoke(RustFn.update_map_header, {
                 group: this.identifier.group, index: this.identifier.index,
                 header: headerData.header
             });
@@ -265,8 +239,8 @@ export class MapModule {
         // Failed to update the map header
         catch (e) {
             // Restore old layout indices
-            headerData.header.map_layout_id = oldLayoutId;
-            headerData.header.map_layout = { offset: oldLayoutOffset };
+            headerData.header.layout_id = oldLayoutId;
+            headerData.header.layout = { offset: oldLayoutOffset };
             // If the map header failed to load, close the editor
             await spawnErrorDialog(e, "Failed to update map header");
             return null;
@@ -294,7 +268,7 @@ export class MapModule {
 
         // Update the rom with the new tileset ids
         try {
-            await invoke('update_layout_header', {
+            await invoke(RustFn.update_layout_header, {
                 id: this.layoutId,
                 header: layoutData.header
             });
@@ -311,7 +285,7 @@ export class MapModule {
         // Get the tilesets lengths
         try {
             [this.tileset1Length, this.tileset2Length] =
-                await invoke('get_tilesets_lengths', { tileset1, tileset2 }) as [number, number];
+                await invoke(RustFn.get_tilesets_lengths, { tileset1, tileset2 });
             this.tileset1Offset = tileset1;
             this.tileset2Offset = tileset2;
         }
@@ -352,8 +326,8 @@ export class MapModule {
         this.layoutId = layoutId;
         this.layoutOffset = layoutOffset;
         this.header.update(header => {
-            header.header.map_layout_id = layoutId;
-            header.header.map_layout = { offset: layoutOffset };
+            header.header.layout_id = layoutId;
+            header.header.layout = { offset: layoutOffset };
             return header;
         });
         this.layout.set(this.updateLayoutData(this.$layout, layoutData));
@@ -364,7 +338,7 @@ export class MapModule {
     public async setLayout(index: number, layoutData: MapLayoutData): Promise<boolean> {
         // Get the offset from the index
         try {
-            const offset: number = await invoke('get_layout_offset', { id: index });
+            const offset = await invoke(RustFn.get_layout_offset, { id: index });
 
             // Create a clone of the layoutData
             layoutData = this.cloneLayoutData(layoutData);
@@ -380,8 +354,8 @@ export class MapModule {
             this.layoutId = index;
             this.layoutOffset = offset;
             this.header.update(header => {
-                header.header.map_layout_id = index;
-                header.header.map_layout = { offset };
+                header.header.layout_id = index;
+                header.header.layout = { offset };
                 return header;
             });
             this.layout.set(this.updateLayoutData(this.$layout, layoutData));
@@ -404,7 +378,6 @@ export class MapModule {
     }
     /** Updates the given layoutData with the given data and returns the same updated reference */
     public updateLayoutData(toUpdate: MapLayoutData, data: MapLayoutData): MapLayoutData {
-        toUpdate.bits_per_block = data.bits_per_block;
         toUpdate.border_data.update(data.border_data);
         toUpdate.map_data.update(data.map_data);
         toUpdate.index = data.index;
@@ -414,10 +387,10 @@ export class MapModule {
 
     /** Updates the tilesets to the given offsets. Returns true if all went well, false otherwise */
     public async updateTilesets(tileset1: number, tileset2: number): Promise<boolean> {
-        let loadedTilesetsData: ImportedTilesetsData;
+        let loadedTilesetsData: TilesetPairRenderingData;
         try {
             loadedTilesetsData =
-                await invoke('get_tilesets_rendering_data', { tileset1, tileset2 });
+                await invoke(RustFn.get_tilesets_rendering_data, { tileset1, tileset2 });
         }
         catch (err) {
             await spawnErrorDialog(err, "Could not load tilesets");
@@ -431,7 +404,7 @@ export class MapModule {
         // Update the tilesetLength and offsets
         try {
             [this.tileset1Length, this.tileset2Length] =
-                await invoke('get_tilesets_lengths', { tileset1, tileset2 }) as [number, number];
+                await invoke(RustFn.get_tilesets_lengths, { tileset1, tileset2 });
             this.tileset1Offset = tileset1;
             this.tileset2Offset = tileset2;
         }
@@ -565,11 +538,11 @@ export class MapModule {
     }
 
     // ANCHOR Private Methods
-    /** Constructs the tileset data used by the renderers from the `ImportedTilesetsData` */
-    private loadTilesetsData(imported: ImportedTilesetsData): TilesetsData {
+    /** Constructs the tileset data used by the renderers from the `TilesetPairRenderingData` */
+    private loadTilesetsData(imported: TilesetPairRenderingData): TilesetsData {
         // Compress everything to UIntArrays
         // Metatile layers are straightforward
-        const metatileLayers = Uint8Array.from(imported.metatile_layers);
+        const metatileLayers = Uint8Array.from(imported.layer_types);
 
         // Metatiles need to be flattened
         const metatiles = new Uint16Array(imported.metatiles.length * 8);
@@ -582,12 +555,7 @@ export class MapModule {
         const palettes = new Uint8Array(16 * 16 * 4);
         written = 0;
         for (const palette of imported.palettes) {
-            for (const color of palette) {
-                // Get the color from GBA format
-                const r = (color & 0x1F) << 3;
-                const g = ((color >> 5) & 0x1F) << 3;
-                const b = ((color >> 10) & 0x1F) << 3;
-
+            for (const [r, g, b] of palette) {
                 // Save them in RGBA format
                 palettes[written++] = r;
                 palettes[written++] = g;
@@ -616,9 +584,6 @@ export class MapModule {
             metatileLayers,
             palettes,
             tiles,
-
-            tileLimit: imported.tile_limit,
-            metatileLimit: imported.metatile_limit,
         };
     }
     /** Caches the tilesets */
@@ -684,11 +649,10 @@ export class MapModule {
     private async loadLayoutData(id: number): Promise<[index: number, offset: number, importedData: MapLayoutData] | string> {
         try {
             // Get the layout offset
-            const offset: number = await invoke('get_layout_offset', { id });
-            const importedLayoutData: ImportedMapLayoutData = await invoke('get_map_layout_data', { id });
+            const offset = await invoke(RustFn.get_layout_offset, { id });
+            const importedLayoutData = await invoke(RustFn.get_map_layout_data, { id });
             // Convert the imported data to a map layout data
             const layoutData: MapLayoutData = {
-                bits_per_block: importedLayoutData.bits_per_block,
                 header: importedLayoutData.header,
                 index: importedLayoutData.index,
                 border_data: BlocksData.fromImportedBlockData(importedLayoutData.border_data),
@@ -701,12 +665,12 @@ export class MapModule {
         }
     }
     /** Ask the user for tilesets until they are valid for this map */
-    private async queryTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, ImportedTilesetsData]> {
+    private async queryTilesetsUntilValid(tileset1: number, tileset2: number): Promise<[number, number, TilesetPairRenderingData]> {
         while (true) {
             try {
                 return [
                     tileset1, tileset2,
-                    await invoke('get_tilesets_rendering_data', { tileset1, tileset2 })
+                    await invoke(RustFn.get_tilesets_rendering_data, { tileset1, tileset2 })
                 ];
             }
             catch (message) {

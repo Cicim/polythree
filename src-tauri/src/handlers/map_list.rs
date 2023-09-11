@@ -1,29 +1,30 @@
 use std::collections::{HashMap, HashSet};
 
-use gba_types::pointers::PointedData;
-use poly3lib::maps::{header::MapHeaderDump, mapsec::MapSectionDump};
+use poly3lib::Offset;
+use serde::{Deserialize, Serialize};
+
+use poly3lib::maps::sections::MapNamesDump;
+use poly3lib::{maps::map::MapHeaderDump, types::RomPointer};
 
 use crate::{
     config::update_config,
-    state::{AppResult, AppState, AppStateFunctions, PolythreeState},
+    state::{rgba_image_to_base64, AppResult, AppState, AppStateFunctions, PolythreeState},
 };
-use serde::{Deserialize, Serialize};
 
 #[tauri::command]
 pub fn get_map_list(state: AppState) -> AppResult<Vec<MapHeaderDump>> {
     state.with_rom(|rom| {
         // Dump all the map headers
-        rom.map_headers()
-            .dump_headers()
-            .map_err(|err| err.to_string())
+        rom.dump_map_headers().map_err(|err| err.to_string())
     })
 }
 
 #[tauri::command]
-pub fn get_map_names(state: AppState) -> AppResult<MapSectionDump> {
+pub fn get_map_names(state: AppState) -> AppResult<MapNamesDump> {
     state.with_rom(|rom| {
         // Dump all the map headers
-        rom.mapsec().dump_names().map_err(|err| err.to_string())
+        rom.read_region_map_sections_names()
+            .map_err(|err| err.to_string())
     })
 }
 
@@ -35,25 +36,16 @@ pub async fn get_map_preview<'r>(
 ) -> AppResult<String> {
     state.with_rom(|rom| {
         // Read the header
-        let header = rom
-            .map_headers()
-            .read_header(group, index)
+        let image = rom
+            .read_map_header(group, index)
+            .map_err(|err| err.to_string())?
+            .read_layout_data(rom)
+            .map_err(|err| err.to_string())?
+            .load_tilesets_and_render_map(rom)
             .map_err(|err| err.to_string())?;
-
-        // Read the layout
-        let layout = rom
-            .map_layouts()
-            .read_data(header.map_layout_id)
-            .map_err(|err| err.to_string())?;
-
-        // Render the tileset
-        let tilesets = layout
-            .read_tilesets(&rom)
-            .map_err(|_| "Error while reading the tileset")?;
-        let rendered = tilesets.render();
 
         // Render the map
-        Ok(layout.render_to_base64(&rendered))
+        Ok(rgba_image_to_base64(&image))
     })
 }
 
@@ -129,57 +121,48 @@ pub fn delete_maps(
     println!("Layouts to Delete: \n{:?}", layouts_to_delete);
 
     let res = state.update_rom(|rom| {
-        let mut headers = rom.map_headers();
         let mut scripts_to_remove = vec![];
 
         // Delete all maps
         for MapId { group, index } in maps_to_delete.iter() {
-            let scripts = headers
-                .delete_header(*group, *index)
+            let scripts = rom
+                .delete_map(*group, *index)
                 .map_err(|e| format!("Error while deleting map {}.{}: {}", group, index, e))?;
 
             scripts_to_remove.extend(scripts);
         }
         // Delete these map's scripts
-        rom.clear_scripts(scripts_to_remove);
+        let res = rom.clear_scripts(&scripts_to_remove);
+        if let Err(err) = res {
+            println!("Error while clearing scripts: {}", err);
+        }
 
         // Delete the layouts
-        let mut layouts = rom.map_layouts();
         for layout in layouts_to_delete.iter() {
-            layouts
-                .delete_layout(*layout)
+            rom.delete_map_layout(*layout)
                 .map_err(|e| format!("Error while deleting layout {}: {}", layout, e))?;
         }
 
         // Change the requested headers
-        let mut headers = rom.map_headers();
         for (layout, maps) in maps_to_update {
             for MapId { group, index } in maps {
-                let mut map_header = headers.read_header(group, index).map_err(|e| {
+                let mut map_header = rom.read_map_header(group, index).map_err(|e| {
                     format!(
                         "Error while updating map {}.{} to layout {}: {}",
                         group, index, layout, e
                     )
                 })?;
-                map_header.map_layout_id = layout;
+                map_header.layout_id = layout;
+
                 if layout == 0 {
-                    map_header.map_layout = PointedData::Null;
+                    map_header.layout = RomPointer::Null;
                 } else {
-                    map_header.map_layout = PointedData::NoData(
-                        headers
-                            .rom
-                            .map_layouts()
-                            .get_header_offset(layout)
-                            .map_err(|e| {
-                                format!(
-                                    "Error while getting layout offset for id {}: {}",
-                                    layout, e
-                                )
-                            })? as u32,
-                    );
+                    map_header.layout =
+                        RomPointer::NoData(rom.get_map_layout_offset(layout).map_err(|e| {
+                            format!("Error while getting layout offset for id {}: {}", layout, e)
+                        })?);
                 }
-                headers
-                    .write_header(group, index, map_header)
+                rom.write_map_header(group, index, map_header)
                     .map_err(|e| {
                         format!("Error while writing header {}.{}: {}", group, index, e)
                     })?;
@@ -213,14 +196,14 @@ pub struct TilesetType {
 
 #[tauri::command]
 pub fn get_tilesets(state: AppState) -> AppResult<Vec<TilesetType>> {
-    state.with_rom(|rom| match rom.refs.tilesets_table {
+    state.with_rom(|rom| match rom.refs.map_tilesets {
         Some(ref table) => {
             let mut tilesets = vec![];
 
-            for (offset, (_, is_secondary)) in table {
+            for (offset, info) in table {
                 tilesets.push(TilesetType {
                     offset: *offset,
-                    is_primary: !is_secondary,
+                    is_primary: info.is_primary,
                 });
             }
             Ok(tilesets)
@@ -232,8 +215,7 @@ pub fn get_tilesets(state: AppState) -> AppResult<Vec<TilesetType>> {
 #[tauri::command]
 pub fn get_layout_ids(state: AppState) -> AppResult<Vec<u16>> {
     state.with_rom(|rom| {
-        rom.map_layouts()
-            .dump_valid()
+        rom.dump_map_layouts()
             .map_err(|e| format!("Error while loading layout ids: {}", e))
     })
 }
@@ -273,33 +255,15 @@ pub fn create_map(
                 tileset2,
                 ..
             } => rom
-                .map_layouts()
-                .create_data(tileset1, tileset2, width, height)
+                .create_map_layout(tileset1 as Offset, tileset2 as Offset, width, height)
                 .map_err(|e| format!("Error while creating new layout: {}", e))?,
         };
 
-        rom.map_headers()
-            .create_header(group, index, layout_id)
+        rom.create_map(group, index, layout_id)
             .map_err(|e| format!("Error while creating new map: {}", e))?;
 
-        let offset = rom
-            .map_headers()
-            .get_header_offset(group, index)
-            .map_err(|e| {
-                format!(
-                    "Error while getting offset for new map {}.{}: {}",
-                    group, index, e
-                )
-            })?;
-
-        let map_header = rom
-            .map_headers()
-            .read_header(group, index)
-            .map_err(|e| format!("Error while reading new map header: {}", e))?;
-
-        rom.map_headers()
-            .dump_header(group, index, offset, map_header)
-            .ok_or("Error while dumping new map header".to_string())
+        rom.dump_map_header(group, index)
+            .map_err(|e| format!("Error while dumping new map header: {}", e))
     })?;
 
     update_config(state, |config| match layout_options {

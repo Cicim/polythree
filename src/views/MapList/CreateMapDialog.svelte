@@ -22,14 +22,13 @@
     import {
         mapDumpToCardProps,
         type MapCardProps,
-        type MapHeaderDump,
         type MapListContext,
     } from "../MapList";
     import { config } from "src/systems/global";
     import Input from "src/components/Input.svelte";
     import Button from "src/components/Button.svelte";
     import { onMount } from "svelte";
-    import { invoke } from "@tauri-apps/api";
+    import { invoke, RustFn } from "src/systems/invoke";
     import CheckBox from "src/components/CheckBox.svelte";
     import ErrorDiv from "src/components/ErrorDiv.svelte";
     import WarningDiv from "src/components/WarningDiv.svelte";
@@ -72,7 +71,7 @@
     let index: number;
     // If building by layout
     /** Layout of the new map */
-    let layout: string;
+    let layout: number;
     // If creating new layout as well
     /** Name of new layout */
     let layoutName: string = "";
@@ -163,7 +162,7 @@
         state = State.Creating;
 
         try {
-            let options = usingLayout
+            let options: LayoutCreationOptions = usingLayout
                 ? { Use: { layout } }
                 : {
                       New: {
@@ -174,7 +173,7 @@
                           name: layoutName,
                       },
                   };
-            let res: MapHeaderDump = await invoke("create_map", {
+            let res = await invoke(RustFn.create_map, {
                 group,
                 index,
                 layoutOptions: options,
@@ -183,8 +182,7 @@
             // If you use a new layout, update the name too
             if (!usingLayout)
                 config.update((config) => {
-                    config.layout_names[res.header.map_layout_id + ""] =
-                        layoutName;
+                    config.layout_names[res.header.layout_id + ""] = layoutName;
                     return config;
                 });
 
@@ -221,9 +219,8 @@
     let layoutOptions: [number, string][];
 
     onMount(async () => {
-        const tilesets: { offset: number; is_primary: boolean }[] =
-            await invoke("get_tilesets");
-        const layoutIds: number[] = await invoke("get_layout_ids");
+        const tilesets = await invoke(RustFn.get_tilesets);
+        const layoutIds = await invoke(RustFn.get_layout_ids);
 
         tileset1Options = Object.values(tilesets)
             .filter((v) => v.is_primary)

@@ -18,7 +18,7 @@
 </script>
 
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api";
+    import { invoke, RustFn } from "src/systems/invoke";
     import Button from "src/components/Button.svelte";
     import ErrorDiv from "src/components/ErrorDiv.svelte";
     import Select from "src/components/Select.svelte";
@@ -34,7 +34,7 @@
     let layoutOptions: [number, string][] = null;
 
     onMount(async () => {
-        const layoutIds: number[] = await invoke("get_layout_ids");
+        const layoutIds = await invoke(RustFn.get_layout_ids);
 
         layoutOptions = layoutIds.map((v) => [
             v,

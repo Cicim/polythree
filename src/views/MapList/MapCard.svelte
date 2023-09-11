@@ -32,7 +32,7 @@
     export let group: number;
     export let index: number;
     export let mapsec: number = null;
-    export let mapLayoutId: number = 0;
+    export let layout: number = 0;
     export let selected = false;
     export let lastSelected = false;
     export let reason: FilterReason;
@@ -218,11 +218,11 @@
             {/if}
             <span class="title">Layout: </span>
             <span class="value">
-                {#if !$config.layout_names[mapLayoutId]}
+                {#if !$config.layout_names[layout]}
                     <i>Unnamed</i>
                 {:else}
                     <UnderLinedReason
-                        string={$config.layout_names[mapLayoutId]}
+                        string={$config.layout_names[layout]}
                         reason={layoutReason}
                     />
                 {/if}

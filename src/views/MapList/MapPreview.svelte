@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api";
+    import { invoke, RustFn } from "src/systems/invoke";
     import ImagePreview from "src/components/ImagePreview.svelte";
 
     export let group: number;
@@ -8,7 +8,7 @@
     export let windowScroll = true;
 
     async function load(): Promise<string> {
-        return await invoke("get_map_preview", {
+        return await invoke(RustFn.get_map_preview, {
             group,
             index,
         });

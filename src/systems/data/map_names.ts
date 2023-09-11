@@ -1,11 +1,10 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke, RustFn } from "src/systems/invoke";
 import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 
 interface MapSectionDump {
     start_index: number,
-    none_index: number,
-    names: (string | null)[],
+    names: string[],
 }
 
 type MapNames = string[];
@@ -23,14 +22,13 @@ export async function getMapNamesStore(): Promise<Writable<MapNames>> {
         mapNames = writable(null);
 
         try {
-            const mapsecDump: MapSectionDump = await invoke("get_map_names");
+            const mapsecDump = await invoke(RustFn.get_map_names);
 
             // Copy each name from the dump into the names array
             for (let i = 0; i < mapsecDump.names.length; i++)
                 names[i + mapsecDump.start_index] = mapsecDump.names[i];
 
             mapsecStartIndex = mapsecDump.start_index;
-            mapsecNoneIndex = mapsecDump.none_index;
             // Set the name writable
             mapNames.set(names);
         } catch (err) {

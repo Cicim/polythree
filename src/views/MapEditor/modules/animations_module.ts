@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke, RustFn } from "src/systems/invoke";
 import type { MapEditorContext } from "src/views/MapEditor";
 import { replace_tiles } from "src/wasm/map-canvas/pkg/map_canvas";
 import { type Writable, writable, type Unsubscriber, get } from "svelte/store";
@@ -83,31 +83,32 @@ export class AnimationsModule {
 
     // ANCHOR Private Method
     private async loadAnimations() {
-        this.list = null;
+        // TODO Redo
+        // this.list = null;
 
-        // Load the animations
-        const animations: TilesetsAnimations = await invoke('get_tilesets_animations', {
-            tileset1: this.tileset1Offset,
-            tileset2: this.tileset2Offset,
-        });
+        // // Load the animations
+        // const animations = await invoke(RustFn.get_tilesets_animations, {
+        //     tileset1: this.tileset1Offset,
+        //     tileset2: this.tileset2Offset,
+        // });
 
-        // Convert the animations graphics into Uint8Arrays
-        for (const anim of animations.primary) {
-            for (let i = 0; i < anim.graphics.length; i++) {
-                const frame = Uint8Array.from(anim.graphics[i]);
-                anim.graphics[i] = frame;
-            }
-        }
-        for (const anim of animations.secondary) {
-            for (let i = 0; i < anim.graphics.length; i++) {
-                const frame = Uint8Array.from(anim.graphics[i]);
-                anim.graphics[i] = frame;
-            }
-        }
+        // // Convert the animations graphics into Uint8Arrays
+        // for (const anim of animations.primary) {
+        //     for (let i = 0; i < anim.graphics.length; i++) {
+        //         const frame = Uint8Array.from(anim.graphics[i]);
+        //         anim.graphics[i] = frame;
+        //     }
+        // }
+        // for (const anim of animations.secondary) {
+        //     for (let i = 0; i < anim.graphics.length; i++) {
+        //         const frame = Uint8Array.from(anim.graphics[i]);
+        //         anim.graphics[i] = frame;
+        //     }
+        // }
 
-        this.list = animations;
-        this.primaryCounter = 0;
-        this.secondaryCounter = 0;
+        // this.list = animations;
+        // this.primaryCounter = 0;
+        // this.secondaryCounter = 0;
     }
 
     private async animationTick() {

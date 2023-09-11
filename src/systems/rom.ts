@@ -1,19 +1,13 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke, RustFn } from "src/systems/invoke";
 import { get } from "svelte/store";
 import { open } from "@tauri-apps/api/dialog";
 import { spawnErrorDialog } from "src/components/dialog/ErrorDialog.svelte";
 import { spawnCloseViewsDialog } from "src/components/dialog/CloseViewsDialog.svelte";
 import { HomePageContext } from "src/views/HomePage";
 import { openViews } from "./views";
-import { config, rom, type Config } from "./global";
+import { config, rom } from "./global";
 import { lastClosedViews } from "./views";
 import { resetData } from "./data/common";
-
-type RomOpenResponse = {
-    rom_type: RomType,
-    rom_size: number,
-    rom_size_fmt: string,
-};
 
 export async function openRom() {
     if (get(rom) !== null)
@@ -39,11 +33,12 @@ export async function openRom() {
 
     try {
         // Initialize the ROM
-        const res = await invoke("init_rom", { path: filePath }) as RomOpenResponse;
+        const res = await invoke(RustFn.init_rom, { path: filePath });
         rom.set({
             size: res.rom_size,
             sizePretty: res.rom_size_fmt,
-            type: res.rom_type,
+            // TODO Modify init_rom to return the ROM type (both pretty and code)
+            type: "Sapphire",
             path: filePath,
         });
     } catch (err) {
@@ -52,7 +47,7 @@ export async function openRom() {
 
     try {
         // Load the configs too
-        const configs: Config = await invoke("get_config");
+        const configs = await invoke(RustFn.get_config);
         // Update the config store
         config.set(configs);
     }
@@ -82,7 +77,7 @@ export async function closeRom() {
         return console.error("No rom is open");
 
     // Close the rom
-    await invoke("close_rom");
+    await invoke(RustFn.close_rom);
 
     // Set the rom
     rom.set(null);
@@ -95,6 +90,9 @@ export async function closeRom() {
 
 
 export function getPtrOffset<T>(voidPointer: PointedData<T>): number {
+    if (voidPointer === undefined)
+        return null;
+
     // In case it's unusable or invalid
     if (typeof voidPointer === "number")
         return null;
