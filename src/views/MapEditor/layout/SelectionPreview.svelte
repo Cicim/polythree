@@ -41,50 +41,22 @@
 </script>
 
 <div class="selection-preview">
-    <div class="title">
-        {#if showPermissions}
-            Selected Permissions
-        {:else}
-            Selected Blocks
-        {/if}
-    </div>
-    <div class="container">
-        <canvas bind:this={canvas} />
-    </div>
+    <canvas bind:this={canvas} />
 </div>
 
 <style lang="scss">
     $padding: 8px;
 
     .selection-preview {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-template-rows: calc(1em + 4px) 1fr;
+        padding: $padding;
+        overflow: hidden;
+        text-align: center;
 
-        .title {
-            padding: 2px;
-
-            font-size: 14px;
-            text-align: center;
-            text-transform: uppercase;
-
-            color: var(--weak-fg);
-            background: var(--main-bg);
-            border-bottom: 1px solid var(--light-shadow);
-        }
-
-        .container {
-            padding: $padding;
-            overflow: hidden;
-            text-align: center;
-
-            :global(canvas) {
-                width: max-content;
-                max-width: 100%;
-                max-height: calc(256px - 4 * $padding - 1em);
-                image-rendering: pixelated;
-            }
+        :global(canvas) {
+            width: max-content;
+            max-width: 100%;
+            max-height: calc(256px - 4 * $padding - 1em);
+            image-rendering: pixelated;
         }
     }
 </style>

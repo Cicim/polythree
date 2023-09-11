@@ -2,6 +2,7 @@
     import { getContext, onMount } from "svelte";
     import type { MapEditorContext } from "src/views/MapEditor";
     import MapCanvas from "../editor/MapCanvas.svelte";
+    import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
 
     export let editPermissions: boolean;
     let mapCanvas: MapCanvas;
@@ -30,10 +31,12 @@
         }}
         debug={true}
     />
+    <SelectionPreviewContainer bind:permissionMode={editPermissions} />
 </div>
 
 <style lang="scss">
     .container {
+        position: relative;
         display: grid;
         height: 100%;
     }

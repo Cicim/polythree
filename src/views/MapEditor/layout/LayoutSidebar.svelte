@@ -19,7 +19,6 @@
     import PermissionPaletteContainer from "./sidebar/PermissionPaletteContainer.svelte";
     import TilePaletteContainer from "./sidebar/TilePaletteContainer.svelte";
     import TilesetPermissionEditorContainer from "./sidebar/TilesetPermissionEditorContainer.svelte";
-    import SelectionPreviewContainer from "./sidebar/SelectionPreviewContainer.svelte";
     import { SelectionMaterial } from "../editor/materials";
     import LoadingScreen from "src/components/LoadingScreen.svelte";
 
@@ -90,8 +89,6 @@
     <TilePaletteContainer {permissionMode} bind:state bind:this={tilePalette} />
     <!-- Palette Permissions Editing -->
     <TilesetPermissionEditorContainer {permissionMode} />
-    <!-- Mutliselect preview -->
-    <SelectionPreviewContainer {permissionMode} bind:state />
 </div>
 
 <style lang="scss">
