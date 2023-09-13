@@ -2,6 +2,7 @@
     import { get } from "svelte/store";
     import { GroupCriteria } from "../MapList";
     import { config } from "src/systems/global";
+    import { mapNames } from "src/systems/data/map_names";
 
     export let id: string;
     export let criteria: GroupCriteria;
@@ -14,7 +15,7 @@
                 html = `Group #${id}`;
                 break;
             case GroupCriteria.Name:
-                html = id;
+                html = $mapNames[id];
                 break;
             case GroupCriteria.Tilesets:
                 let [t1, t2] = id.split("+");
