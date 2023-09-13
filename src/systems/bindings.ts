@@ -256,10 +256,16 @@ export function redefineBinding(id: string, callback: BindingFunction) {
     else throw new Error(`Binding ${id} does not exist`);
 }
 
-/** Given an id, returns the keybinding's shortcut (good for printing) and whether the action is active or not */
-export function getActionsShortcut(id: string): [binding: BindingFunction, shortcut: string] {
+/** Returns the keybinding given the id. Throws an error if the given id is invalid */
+function getKeybinding(id: string): KeyBinding {
     const keybinding = keybindings[id];
     if (!keybinding) throw Error(`Invalid keybinding ${id}`);
+    return keybinding;
+}
+
+/** Given an id, returns the keybinding's shortcut (good for printing) and whether the action is active or not */
+export function getActionBindingAndShortcut(id: string): [binding: BindingFunction, shortcut: string] {
+    const keybinding = getKeybinding(id);
     return [keybinding.binding, keybinding.shortcutPretty];
 }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
         getActionEnabledStore,
-        getActionsShortcut,
+        getActionBindingAndShortcut,
     } from "src/systems/bindings";
     import { showContextMenu, Menu } from "src/systems/context_menu";
     import { tooltip } from "src/systems/tooltip";
@@ -27,7 +27,7 @@
     $: disabled = actionCallback ? !$enabledStore : false;
 
     if (action) {
-        const actionData = getActionsShortcut(action);
+        const actionData = getActionBindingAndShortcut(action);
         if (!action) console.error(`No action found for shortcut ${action}`);
         else {
             [actionCallback, shortcut] = actionData;

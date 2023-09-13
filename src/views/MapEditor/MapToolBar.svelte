@@ -97,9 +97,13 @@
         {#key $changed}
             <ToolButton
                 icon="mdi:undo"
-                title="Undo {changes.stack[
-                    changes.top - 1
-                ]?.getName?.()} ({changes.stack[changes.top - 1]?.tab})"
+                title={`Undo ${
+                    changes.top === 0
+                        ? ""
+                        : `${changes.stack[changes.top - 1]?.getName?.()} (${
+                              changes.stack[changes.top - 1]?.tab
+                          })`
+                }`}
                 disabled={changes.top === 0}
                 on:click={() => context.undo()}
             />
@@ -107,8 +111,13 @@
         {#key $changed}
             <ToolButton
                 icon="mdi:redo"
-                title="Redo {changes.stack[changes.top]?.getName?.()} ({changes
-                    .stack[changes.top]?.tab})"
+                title={`Redo ${
+                    changes.top === changes.stack.length
+                        ? ""
+                        : `${changes.stack[changes.top]?.getName?.()} (${
+                              changes.stack[changes.top]?.tab
+                          })`
+                }`}
                 disabled={changes.stack.length === changes.top}
                 on:click={() => context.redo()}
             />

@@ -2,6 +2,7 @@
     import { getActionEnabledStore } from "src/systems/bindings";
     import {
         type MenuItem,
+        MenuOption,
         Separator,
         IconOption,
         SubMenuOption,
@@ -11,18 +12,23 @@
     } from "src/systems/context_menu";
     import { activeView } from "src/systems/views";
     import { tick } from "svelte";
-    import { readable } from "svelte/store";
+    import { readable, type Writable } from "svelte/store";
 
-    /** The menu item this component represents */
+    /** The original menuitem this button or separator is created from */
     export let item: MenuItem;
-    /** The level of this item */
+    /** How deep in submenus this item is in */
     export let level: number = 0;
-    /** The element of this item */
-    let element: HTMLElement;
+    item.level = level;
+    /** The top level menu's selected option */
+    export let selectedOption: Writable<MenuItem>;
+    /** True if the currently selected item is this item */
+    $: selected = $selectedOption === item;
+    /** The element of this option */
+    let optionEl: HTMLElement;
     /** Store that is false if the button is disabled */
     let enabled = readable(true);
     // Get the above store if it exists
-    if (item instanceof TextOption || item instanceof IconOption) {
+    if (item instanceof MenuOption) {
         if (item.actionId !== null) {
             enabled = getActionEnabledStore(item.actionId, $activeView);
         }
@@ -31,77 +37,59 @@
     // ANCHOR Methods for submenus
 
     /** The submenu of this item */
-    let submenu: HTMLDivElement;
+    let submenuEl: HTMLDivElement;
+    /** Writable that stores whether the submenu is open or not */
+    let isOpen = (<SubMenuOption>item).isOpen;
 
-    let openSubMenu = async () => {
-        // Shake the menu
-        onButtonEnter();
-
+    /** Opens this option's submenu. Runs only when `item instanceof SubMenuItem` */
+    async function openSubMenu() {
         // Show the submenu
-        (<SubMenuOption>item).isVisible = true;
-        submenu.style.top = "0px";
-        submenu.style.left = "0px";
+        submenuEl.style.top = "0px";
+        submenuEl.style.left = "0px";
         await tick();
 
         // Get the element's bounding rect
-        let rect = element.getBoundingClientRect();
+        let rect = optionEl.getBoundingClientRect();
 
         // Get the value of the css chonkiness variable
         let chonkiness = parseInt(
-            getComputedStyle(element).getPropertyValue("--chonkiness").trim()
+            getComputedStyle(optionEl).getPropertyValue("--chonkiness").trim()
         );
 
         // Set the submenu's position
-        submenu.style.top = `${rect.top - chonkiness}px`;
-        submenu.style.left = `${rect.right}px`;
+        submenuEl.style.top = `${rect.top - chonkiness}px`;
+        submenuEl.style.left = `${rect.right}px`;
 
         // Move back inbounds if it's outside the window
-        if (submenu.offsetLeft + submenu.offsetWidth > window.innerWidth) {
-            submenu.style.left = `${rect.left - submenu.offsetWidth}px`;
+        if (submenuEl.offsetLeft + submenuEl.offsetWidth > window.innerWidth) {
+            submenuEl.style.left = `${rect.left - submenuEl.offsetWidth}px`;
         }
 
         // Move back inbounds if it's outside the window
-        if (submenu.offsetTop + submenu.offsetHeight > window.innerHeight) {
-            submenu.style.top = `${rect.bottom - submenu.offsetHeight}px`;
+        if (submenuEl.offsetTop + submenuEl.offsetHeight > window.innerHeight) {
+            submenuEl.style.top = `${rect.bottom - submenuEl.offsetHeight}px`;
         }
 
         // If the submenu is still out of bounds from the top,
         // move it down all you can and resize it to fit
-        if (submenu.offsetTop < 0) {
-            submenu.style.top = "20px";
-            submenu.style.height = `${window.innerHeight - 40}px`;
+        if (submenuEl.offsetTop < 0) {
+            submenuEl.style.top = "20px";
+            submenuEl.style.height = `${window.innerHeight - 40}px`;
         }
 
         // Scroll to the submenu's top
-        submenu.scrollTop = 0;
-    };
-
-    function onButtonEnter() {
-        // Shake the menu
-        closeSubMenus();
-        // Focus the element
-        element.focus();
+        submenuEl.scrollTop = 0;
     }
 
-    function closeSubMenus() {
-        // Close all submenus
-        ctxMenu.update((menu) => menu.shake(level));
-    }
-
-    function runAction() {
-        $ctxMenu.shake(0);
-        // @ts-ignore
-        item.action();
-        // Close the context menu
-        closeContextMenu();
+    $: {
+        // If the submenu is open, open it
+        if (isOpen) {
+            if ($isOpen) openSubMenu();
+        }
     }
 
     function keyboardHandler(event: KeyboardEvent) {
-        switch (event.key) {
-            case "Tab":
-                event.preventDefault();
-                break;
-        }
+        event.preventDefault();
     }
 </script>
 
@@ -110,22 +98,24 @@
     <span
         class="ctx-item ctx-separator"
         class:with-caption={item.text}
-        bind:this={element}
+        bind:this={optionEl}
     >
         {#if item.text}
             <span class="ctx-separator-caption">{item.text}</span>
         {/if}
-        <hr class="ctx-separator-hr" bind:this={element} />
+        <hr class="ctx-separator-hr" bind:this={optionEl} />
     </span>
     <!-- Text Button -->
 {:else if item instanceof TextOption}
     <button
-        bind:this={element}
+        bind:this={optionEl}
         on:keydown={keyboardHandler}
-        on:mouseenter={onButtonEnter}
+        on:mouseenter={() => $ctxMenu.select(item)}
         class="ctx-item ctx-text-item"
-        on:click={runAction}
+        class:selected
+        on:click={() => item.callAction()}
         disabled={!$enabled}
+        tabindex="-1"
     >
         <span />
         <span>{item.text}</span>
@@ -137,12 +127,14 @@
     <!-- Icon Button -->
 {:else if item instanceof IconOption}
     <button
-        bind:this={element}
+        bind:this={optionEl}
         on:keydown={keyboardHandler}
-        on:mouseenter={onButtonEnter}
+        on:mouseenter={() => $ctxMenu.select(item)}
         class="ctx-item ctx-icon-item"
-        on:click={runAction}
+        class:selected
+        on:click={() => item.callAction()}
         disabled={!$enabled}
+        tabindex="-1"
     >
         <iconify-icon class="ctx-icon" icon={item.icon} />
         <span>{item.text}</span>
@@ -152,27 +144,34 @@
     <!-- Sub Menu Button -->
 {:else if item instanceof SubMenuOption}
     <button
-        bind:this={element}
+        bind:this={optionEl}
         on:keydown={keyboardHandler}
-        on:mouseenter={openSubMenu}
+        on:mouseenter={() => $ctxMenu.select(item)}
         class="ctx-item ctx-submenu-item"
+        class:selected={$isOpen || selected}
+        tabindex="-1"
     >
         <span />
         <span>{item.text}</span>
         <iconify-icon icon="ep:arrow-right-bold" />
-        <!-- Submenu -->
-        <div
-            class:hidden={!item.isVisible}
-            class="submenu ctx-menu hidden"
-            bind:this={submenu}
-        >
-            <div class="submenu-container">
-                {#each item.menu.items as subitem}
-                    <svelte:self item={subitem} level={level + 1} />
-                {/each}
-            </div>
-        </div>
     </button>
+    <!-- Submenu -->
+    <div
+        class:hidden={!$isOpen}
+        class="submenu ctx-menu"
+        bind:this={submenuEl}
+        on:mouseleave={($selectedOption = null)}
+    >
+        <div class="submenu-container">
+            {#each item.menu.items as subitem (subitem.id)}
+                <svelte:self
+                    item={subitem}
+                    level={level + 1}
+                    {selectedOption}
+                />
+            {/each}
+        </div>
+    </div>
 {/if}
 
 <style lang="scss">
@@ -197,7 +196,7 @@
             color: var(--ctx-fg);
             cursor: pointer;
 
-            &:hover {
+            &.selected {
                 background: var(--ctx-bg-hover);
                 color: var(--ctx-fg-hover);
                 box-shadow: inset 0 0 0 1px var(--ctx-outline-hover) !important;
@@ -208,6 +207,11 @@
                 color: var(--ctx-fg-disabled) !important;
                 box-shadow: inset 0 0 0 1px var(--ctx-outline-disabled) !important;
                 outline: none;
+
+                &.selected {
+                    outline: 2fpx solid var(--ctx-outline-hover) !important;
+                    outline-offset: -1px;
+                }
             }
 
             &:focus {
@@ -234,11 +238,11 @@
         display: grid;
         grid-template-columns: var(--left-padding) 1fr min-content;
 
-        & iconify-icon.ctx-icon {
+        .ctx-icon {
             width: 1em;
             height: 1em;
             padding-right: calc(0.5em - 2px);
-            transform: scale(1.4);
+            transform: scale(1.25) translateY(-0.0625em);
             place-self: center;
         }
     }

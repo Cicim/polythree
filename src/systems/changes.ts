@@ -168,7 +168,7 @@ export abstract class Change {
     /** The Tab the editor was in when the change was created. */
     public tab: string = null;
 
-    /** Returns a simple HTML description for the change */
+    /** Returns a simple HTML formatted description for the change */
     public getName(): string {
         // @ts-ignore
         return this.constructor.changeName ?? Change.changeName;

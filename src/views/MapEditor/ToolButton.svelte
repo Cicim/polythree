@@ -1,7 +1,7 @@
 <script lang="ts">
     import {
         getActionEnabledStore,
-        getActionsShortcut,
+        getActionBindingAndShortcut,
     } from "src/systems/bindings";
     import { tooltip } from "src/systems/tooltip";
     import { createEventDispatcher, getContext } from "svelte";
@@ -32,7 +32,7 @@
     let enabled = readable(true);
 
     if (action) {
-        const actionData = getActionsShortcut(action);
+        const actionData = getActionBindingAndShortcut(action);
         if (!actionData) console.error(`Action ${action} not found`);
         else {
             [actionCB, shortcut] = actionData;

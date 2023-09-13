@@ -1,6 +1,6 @@
 import { tick } from "svelte";
-import { get, readable, writable, type Readable } from "svelte/store";
-import { getActionEnabledStore, getActionsShortcut } from "./bindings";
+import { get, writable, type Writable } from "svelte/store";
+import { getActionBindingAndShortcut } from "./bindings";
 import { activeView } from "./views";
 
 /** A context menu action definition */
@@ -8,50 +8,220 @@ export type ContextMenuAction = () => void;
 
 /** A context menu definition */
 export class Menu {
-    public items: MenuItem[] = [];
+    /** False if this menu is not a submenu.
+     * 
+     * If this menu is a submenu, the option is the option that opens it.
+     */
+    public submenuOption: false | SubMenuOption = false;
 
-    public addItem(item: MenuItem) {
-        this.items.push(item);
+    /** The currently selected option in the menu */
+    public selectedOption: Writable<MenuItem | null> = writable(null);
+
+    public get $selectedOption() { return get(this.selectedOption) }
+
+    constructor(public items: MenuItem[] = []) {
+        // Assign to each of the items an increasing id
+        let counter = 0;
+        for (const item of this.items) {
+            item.id = counter++;
+            item.parentMenu = this;
+        }
     }
 
-    public addSeparator() {
-        this.items.push(new Separator());
-    }
-
-    constructor(items: MenuItem[] = []) {
-        this.items = items;
-    }
-
-    /** Shakes the menu, removing open submenus */
-    public shake(level: number = 0, currentLevel: number = 1): Menu {
+    /** Travels down the menu's items and closes open submenus */
+    public closeOpenSubmenus(level: number = 0, currentLevel: number = 1): Menu {
         for (const item of this.items) {
             if (item instanceof SubMenuOption) {
                 if (currentLevel > level)
-                    item.isVisible = false;
+                    item.isOpen.set(false);
 
-                item.menu.shake(level, currentLevel + 1);
+                item.menu.closeOpenSubmenus(level, currentLevel + 1);
             }
         }
         return this;
+    }
+
+    /** Returns the first option that isn't a separator */
+    private getFirstOption(): MenuItem {
+        // Skip it if the item is a separator
+        for (const item of this.items) {
+            if (!(item instanceof Separator)) return item;
+        }
+        return null;
+    }
+
+    private getLastOption(): MenuItem {
+        // Skip it if the item is a separator
+        for (let i = this.items.length - 1; i >= 0; i--) {
+            const item = this.items[i];
+            if (!(item instanceof Separator)) return item;
+        }
+        return null;
+    }
+
+    public select(option: MenuItem) {
+        this.selectedOption.set(option);
+        ctxMenu.update((menu) => menu.closeOpenSubmenus(option.level));
+        // If the option is a submenu
+        if (option instanceof SubMenuOption) {
+            // Open the submenu
+            option.isOpen.set(true);
+        }
+    }
+
+    /** Allows the user to move in the given direction */
+    public navigate(dir: "up" | "down" | "left" | "right") {
+        let selected = get(this.selectedOption);
+
+        switch (dir) {
+            case "down":
+                // If there is no selected option
+                if (!selected) {
+                    // Select the first option
+                    this.select(this.getFirstOption());
+                    return;
+                }
+                const below = selected.getBelow();
+                if (!below) {
+                    // If there is no option below, select the first option
+                    this.select(selected.parentMenu.getFirstOption());
+                    return;
+                }
+                this.select(below);
+                break;
+            case "up":
+                // If there is no selected option
+                if (!selected) {
+                    // Select the last option
+                    this.select(this.getLastOption());
+                    return;
+                }
+                const above = selected.getAbove();
+                if (!above) {
+                    // If there is no option above, select the last option
+                    this.select(selected.parentMenu.getLastOption());
+                    return;
+                }
+                this.select(above);
+                break;
+            case "right":
+                // If there is no selected option
+                if (!selected) {
+                    // Select the first option
+                    this.select(this.getFirstOption());
+                    return;
+                }
+                const right = selected.getRight();
+                if (!right) {
+                    // If there is no option to the right, don't do anything
+                    return;
+                }
+                this.select(right);
+                break;
+            case "left":
+                // If there is no selected option
+                if (!selected) {
+                    // Select the last option
+                    this.select(this.getLastOption());
+                    return;
+                }
+                const left = selected.getLeft();
+                if (!left) {
+                    // If there is no option to the left, select the last option
+                    this.select(this.getLastOption());
+                    return;
+                }
+                this.select(left);
+                break;
+        }
+    }
+
+    public close() {
+        this.selectedOption.set(null);
     }
 }
 
 /** A context menu item */
 export abstract class MenuItem {
+    /** This item's id in its parent menu */
+    public id: number;
+    /** This option's parent menu */
+    public parentMenu: Menu;
+    /** This option's level. Calculated by the svelte component */
+    public level: number = 0;
+
+    public constructor(public text: string) { }
+
+    public getAbove(): MenuItem {
+        const items = this.parentMenu.items;
+
+        // Return the item above this that isn't a separator
+        for (let i = this.id - 1; i >= 0; i--) {
+            const item = items[i];
+            if (!(item instanceof Separator)) return item;
+        }
+        return null;
+    }
+
+    public getBelow(): MenuItem {
+        const items = this.parentMenu.items;
+
+        // Return the item below this that isn't a separator
+        for (let i = this.id + 1; i < items.length; i++) {
+            const item = items[i];
+            if (!(item instanceof Separator)) return item;
+        }
+        return null;
+    }
+
+    public getRight(): MenuItem {
+        if (this instanceof SubMenuOption) {
+            // Open the submenu
+            return this.menu.items[0];
+        }
+        return null;
+    }
+
+    public getLeft(): MenuItem {
+        // If this option's parent is a submenu
+        const submenu = this.parentMenu.submenuOption;
+        if (submenu) {
+            // Go to the submenu's parent
+            return submenu;
+        }
+        return null;
+    }
+
+    public callAction() {
+        ctxMenu.update((menu) => menu.closeOpenSubmenus(0));
+        closeContextMenu();
+    }
 }
 
 /** A context menu separator */
 export class Separator extends MenuItem {
-    public constructor(public text: string = null) {
-        super();
+    public constructor(text: string = null) {
+        super(text);
     }
 }
 
-/** A context menu text only button */
-export class TextOption extends MenuItem {
-    /** The button's text */
-    public text: string;
-    /** The buttons's action */
+/** A context menu option with a submenu */
+export class SubMenuOption extends MenuItem {
+    /** The button's submenu */
+    public menu: Menu;
+    /** If the submenu has been opened */
+    public isOpen = writable(false);
+
+    public constructor(text: string, menu: Menu | MenuItem[]) {
+        super(text);
+        this.menu = menu instanceof Menu ? menu : new Menu(menu);
+        this.menu.submenuOption = this;
+    }
+}
+
+/** A menu option that can has an action or onclick associated to its click event */
+export class MenuOption extends MenuItem {
+    /** The buttons's onclick callback */
     public action: ContextMenuAction;
     /** The action's associated keybinding */
     public keybinding: string;
@@ -59,13 +229,12 @@ export class TextOption extends MenuItem {
     public actionId: string;
 
     public constructor(text: string, action: string | ContextMenuAction) {
-        super();
-        this.text = text;
+        super(text);
         if (typeof action === "string") {
-            const [binding, shortcut] = getActionsShortcut(action);
-            this.action = () => binding(get(activeView));
-            this.keybinding = shortcut;
             this.actionId = action;
+            const [binding, shortcutPretty] = getActionBindingAndShortcut(action);
+            this.action = () => binding(get(activeView));
+            this.keybinding = shortcutPretty;
         }
         else {
             this.action = action
@@ -73,52 +242,21 @@ export class TextOption extends MenuItem {
             this.actionId = null;
         };
     }
-}
 
-/** A context menu icon and text button */
-export class IconOption extends MenuItem {
-    /** The button's text */
-    public text: string;
-    /** The button's icon */
-    public icon: string;
-    /** The button's action */
-    public action: ContextMenuAction;
-    /** The action's associated keybinding */
-    public keybinding: string;
-    /** The action's name */
-    public actionId: string;
-
-    public constructor(text: string, icon: string, action: string | ContextMenuAction) {
-        super();
-        this.text = text;
-        this.icon = icon;
-        if (typeof action === "string") {
-            const [binding, shortcut] = getActionsShortcut(action);
-            this.action = () => binding(get(activeView));
-            this.keybinding = shortcut;
-            this.actionId = action;
-        }
-        else {
-            this.action = action
-            this.keybinding = "";
-            this.actionId = null;
-        };
+    public callAction() {
+        this.action();
+        // Close the menu right after
+        super.callAction();
     }
 }
 
-/** A context menu button with a submenu */
-export class SubMenuOption extends MenuItem {
-    /** The button's text */
-    public text: string;
-    /** The button's submenu */
-    public menu: Menu;
-    /** If the submenu has been opened */
-    public isVisible = false;
+/** A context menu option without an icon */
+export class TextOption extends MenuOption { }
 
-    public constructor(text: string, menu: Menu) {
-        super();
-        this.text = text;
-        this.menu = menu;
+/** A context menu option with an icon */
+export class IconOption extends MenuOption {
+    public constructor(text: string, public icon: string, action: string | ContextMenuAction) {
+        super(text, action);
     }
 }
 
@@ -187,7 +325,7 @@ export function showContextMenu(e: MouseEvent | HTMLElement | EventTarget, menu:
         if (isBody(e)) return;
     }
     // Update the menu
-    ctxMenu.set(menu.shake());
+    ctxMenu.set(menu.closeOpenSubmenus());
     // Close the menu, in case it was already open
     ctx.close();
     // Open the menu
@@ -202,6 +340,7 @@ export function showContextMenu(e: MouseEvent | HTMLElement | EventTarget, menu:
 }
 
 export function closeContextMenu(e?: MouseEvent) {
+    get(ctxMenu).close();
     // If the target is the list, don't do anything
     if (!e || !isBody(e)) getMenu().close();
 }
